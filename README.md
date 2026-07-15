@@ -202,7 +202,15 @@ it: `tools/test_security.py` (auth/roles/audit) and `tools/test_app.py`
 (recommend, the chat builder, the routes) — both run on demo data with no PDC or
 LLM. Runs end-to-end in demo mode today.
 
-Still to do against a live 10.2.11 instance: wire the dashboard panels to live
-PDC reads (they’re demo-backed now), verify the trust-score read paths (see the
-note in `pdc_client.py`), and validate the MCP HTTP OAuth handshake against your
-IdP.
+The target build is now **PDC 11.0.0** (the shared demo lab). The sibling apps
+([Glossary](https://github.com/jporeilly/PDC-Glossary-Generator) /
+[Policy](https://github.com/jporeilly/PDC-Policy-Generator) Generators) have
+already confirmed the endpoints this client depends on against live 11.0:
+Keycloak-first auth (`pdc-client`), `POST /search`, and `POST /entities/filter`
+all work with the same bearer token, and the authenticated OpenAPI spec is at
+`/api/public/v3/openapi.json`.
+
+Still to do against the live 11.0 instance: wire the dashboard panels to live
+PDC reads (they’re demo-backed now), verify `POST /search/facets` and the
+trust-score read paths (see the note in `pdc_client.py`), and validate the MCP
+HTTP OAuth handshake against your IdP.

@@ -85,5 +85,7 @@ the piece the Dashboard Studio's CDA builder still needs.
 
 Reading trust scores via `search`/`facets` works on tested builds.
 *Triggering* Calculate Trust Score through the public API is
-version-dependent — confirm against the target 10.2.11 instance before any
-DA or panel depends on it.
+version-dependent — confirm against the target instance (PDC 11.0 in the
+lab) before any DA or panel depends on it. On 11.0 the authenticated
+OpenAPI spec at `/api/public/v3/openapi.json` is the fastest way to check
+what the build actually exposes.

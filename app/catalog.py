@@ -7,7 +7,7 @@ overall and per source.
 
 In demo mode (INSIGHTS_DEMO=true, or PDC unreachable) a bundled sample is
 returned and flagged demo=True, so the MCP server is usable for enablement
-before a live PDC 10.2.11 instance is wired up.
+before a live PDC 11.0 instance is wired up.
 """
 from __future__ import annotations
 

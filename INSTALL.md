@@ -75,7 +75,7 @@ defaults internally regardless of the host mapping you choose.
 | Need | For | Notes |
 | ---- | --- | ----- |
 | Docker + Docker Compose | running the app/MCP | Docker Desktop on Windows/macOS; Docker Engine on Linux |
-| A PDC 10.2.x instance + a read-only account | live data | optional — use `INSIGHTS_DEMO=true` to skip at first |
+| A PDC instance + a read-only account (11.0 is the target; 10.2.x also works) | live data | optional — use `INSIGHTS_DEMO=true` to skip at first |
 | Ollama (optional) | local LLM generation | recommended for governance data; needs a GPU for speed |
 | Python 3.12 (optional) | running tests / stdio MCP without Docker | only if you run outside containers |
 | An NVIDIA GPU (optional) | fast local inference | e.g. your 2× RTX 3060 |
@@ -596,12 +596,17 @@ returns suggestions (demo data is fine).
 
 ## 13. Version & upgrade notes
 
-- **PDC 10.2.x (you):** MongoDB backs operational metadata; OpenSearch backs
-  search/facets; BIDB is PostgreSQL-based (10.2.5+). The REST API abstracts all
-  of these — no app change needed across 10.2.x patches.
-- **PDC 11.0:** MongoDB is replaced by FerretDB on PostgreSQL. Because the app
-  only uses the REST API, this storage change shouldn't affect it — but
-  re-verify the auth and facet endpoints after any major PDC upgrade.
+- **PDC 11.0 (the target):** MongoDB is replaced by FerretDB on PostgreSQL;
+  OpenSearch still backs search/facets. Because the app only uses the REST API,
+  the storage change doesn't affect it — and the sibling Glossary/Policy
+  Generator apps have live-confirmed on 11.0 that Keycloak-first auth,
+  `POST /search`, and `POST /entities/filter` all work with the same bearer
+  token. The authenticated OpenAPI spec is at `/api/public/v3/openapi.json`
+  (the conventional `/v3/api-docs` returns 401). Still to re-verify here:
+  `POST /search/facets`.
+- **PDC 10.2.x:** MongoDB backs operational metadata; OpenSearch backs
+  search/facets; BIDB is PostgreSQL-based (10.2.5+). The app was originally
+  built and demoed against 10.2.11 — no app change needed across 10.2.x patches.
 - **Trust-score writes:** reading trust scores via search/facets is confirmed;
   *triggering* recalculation through the public API is version-dependent. Verify
   on your instance before any dashboard offers a "recalculate" action.

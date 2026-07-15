@@ -171,7 +171,8 @@ path with any headless-Chrome tool against the dashboard URL.
 
 - Trust-score *reads* via `search`/`facets` are confirmed; *triggering*
   recalculation through the public API is version-dependent — confirm on
-  10.2.11 before any panel offers a "recalculate" action.
+  the target build (PDC 11.0 in the lab) before any panel offers a
+  "recalculate" action.
 - Trend panels (anything "over time") need a stored snapshot; the API gives
   point-in-time state. A small nightly snapshot table is the cheapest fix —
   flagged for a later milestone.

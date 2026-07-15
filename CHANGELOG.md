@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.10.0 — re-target to PDC 11.0; adopted as its own GitHub project
+
+- The project now lives at github.com/jporeilly/PDC-Insights (public), a
+  sibling of the Glossary Generator, Policy Generator and PDC-Scenarios
+  repos. Seeded from the 1.9.11 zip; run.sh exec bit + eol rules added.
+- Docs and comments re-pointed from PDC 10.2.11 to **PDC 11.0.0** (the
+  shared demo lab). Folded in what the sibling apps have already
+  live-confirmed on 11.0: Keycloak-first auth (`pdc-client`), POST /search
+  and POST /entities/filter on the same bearer token, and the authenticated
+  OpenAPI spec at /api/public/v3/openapi.json (/v3/api-docs 401s).
+  INSTALL §13 now leads with 11.0 (FerretDB/PostgreSQL under the same REST
+  API); 10.2.x kept as the historical baseline.
+- Still to verify live on 11.0 (unchanged code paths): POST /search/facets,
+  the trust-score read paths, and the MCP HTTP OAuth handshake.
+
 ## 1.9.11 — live reads: fix data-source inventory (clears demo fallback)
 
 - run.bat: friendlier launcher — banner with version + a "what it is / what it
