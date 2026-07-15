@@ -1,0 +1,38 @@
+services:
+  insights:
+    build: .
+    ports:
+      - "${INSIGHTS_PORT:-8660}:8660"   # host:container — 8660 clears Pentaho/Tomcat (8080/8090) + PDC ports
+    env_file: .env
+    # Lets the container reach an Ollama instance on the host (local LLM).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # The container can't see the host's localhost, so when running via compose
+      # we point at the host. .env keeps the native default (localhost) for
+      # running the app directly on the host. Override here wins for the container.
+      LLM_BASE_URL: "${LLM_BASE_URL_DOCKER:-http://host.docker.internal:11434}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8660/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # MCP server entry point (HTTP transport). Same image, shares the PDC +
+  # generator layer with the web app. For Claude Desktop use stdio instead
+  # (see docs/MCP-SERVER.md) — no container needed.
+  insights-mcp:
+    build: .
+    command: ["python", "-m", "mcp_server.server"]
+    environment:
+      MCP_HTTP: "1"
+      MCP_PORT: "8765"
+      LLM_BASE_URL: "${LLM_BASE_URL_DOCKER:-http://host.docker.internal:11434}"
+    ports:
+      - "8765:8765"
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    profiles: ["mcp"]   # start with: docker compose --profile mcp up

@@ -1,0 +1,12 @@
+%% One security model, enforced by both front doors
+flowchart TB
+  REQ["Request / tool call<br/>Authorization: Bearer …"] --> AUTH{"authenticate()<br/>mode: none / apikey / jwt"}
+  AUTH -- "no / bad token" --> E401["401 Unauthorized<br/>(audited)"]
+  AUTH -- "ok" --> PR["Principal<br/>id · role · source"]
+  PR --> AUTHZ{"authorize(role)<br/>viewer < steward < admin"}
+  AUTHZ -- "role too low" --> E403["403 Forbidden<br/>(audited: denied)"]
+  AUTHZ -- "ok" --> AUD["audit(ok)"] --> H["handler / tool<br/>reads = viewer<br/>save·generate = steward"]
+  H --> PDC["PDC service account<br/>(read-only, scoped in PDC)"]
+  classDef bad fill:#fbeaea,stroke:#d64545,color:#5c1010;
+  classDef ok fill:#e7f4ec,stroke:#1c8f4d,color:#0a3d1f;
+  class E401,E403 bad; class AUD,H ok;

@@ -1,0 +1,74 @@
+{
+  "overview": [
+    {
+      "id": "catalog-health",
+      "title": "Catalog health",
+      "subtitle": "Trust, quality & coverage at a glance"
+    },
+    {
+      "id": "risk-hotspots",
+      "title": "Risk hotspots",
+      "subtitle": "Where governance needs attention"
+    }
+  ],
+  "system": [
+    {
+      "id": "profiling-health",
+      "title": "Profiling health",
+      "subtitle": "Scan & profile status"
+    },
+    {
+      "id": "source-inventory",
+      "title": "Source inventory",
+      "subtitle": "What is connected & how much"
+    }
+  ],
+  "user": [
+    {
+      "id": "stewardship",
+      "title": "Stewardship",
+      "subtitle": "Ownership coverage & workload"
+    },
+    {
+      "id": "activity-ratings",
+      "title": "Activity & ratings",
+      "subtitle": "Edits, ratings & freshness"
+    }
+  ],
+  "governance": [
+    {
+      "id": "glossary-coverage",
+      "title": "Glossary coverage",
+      "subtitle": "Term coverage & gaps"
+    },
+    {
+      "id": "policy-lineage",
+      "title": "Policy & lineage",
+      "subtitle": "Policy posture & lineage health"
+    }
+  ],
+  "quality": [
+    {
+      "id": "quality-scores",
+      "title": "Quality scores",
+      "subtitle": "Score distribution & laggards"
+    },
+    {
+      "id": "dq-dimensions",
+      "title": "DQ dimensions",
+      "subtitle": "The dimensions behind the score"
+    }
+  ],
+  "sensitivity": [
+    {
+      "id": "exposure-overview",
+      "title": "Exposure overview",
+      "subtitle": "Sensitivity levels & exposure"
+    },
+    {
+      "id": "pii-discoveries",
+      "title": "PII discoveries",
+      "subtitle": "Content-scan findings"
+    }
+  ]
+}

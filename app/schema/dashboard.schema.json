@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pentaho.space/schemas/dashboard.schema.json",
+  "title": "Catalog Insights Dashboard Spec",
+  "description": "The single editable source of truth for a dashboard. Produced by the editor (Save spec) and by the LLM generator; consumed by the editor (Open file) and the CDF/CDE/CDA exporters.",
+  "type": "object",
+  "required": ["version", "title", "category", "panels"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": 1},
+    "title": {"type": "string", "minLength": 1, "maxLength": 80},
+    "subtitle": {"type": "string", "maxLength": 160},
+    "category": {
+      "type": "string",
+      "description": "Drives which Analytics page the dashboard appears under.",
+      "enum": ["overview", "system", "user", "governance", "quality", "sensitivity"]
+    },
+    "filters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "facet"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "label": {"type": "string"},
+          "facet": {
+            "type": "string",
+            "description": "PDC search facet this filter writes to.",
+            "enum": ["rootIds", "type", "sensitivity", "trustScore", "qualityScore",
+                     "businessTerms", "tags", "domain", "fileFormats", "profiledAt"]
+          },
+          "default": {"type": ["array", "string", "number", "null"]}
+        }
+      }
+    },
+    "panels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/panel"}
+    }
+  },
+  "$defs": {
+    "panel": {
+      "type": "object",
+      "required": ["id", "kind", "title", "query"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"type": "string", "enum": ["kpi", "chart", "table", "text"]},
+        "title": {"type": "string", "maxLength": 80},
+        "span": {"type": "integer", "minimum": 1, "maximum": 4, "default": 1},
+        "query": {
+          "type": "string",
+          "description": "Name of a CDA data access in the Query Library. MUST exist in the grounding catalog passed to the generator — do not invent."
+        },
+        "chartType": {
+          "type": "string",
+          "description": "Required when kind=chart. Must be one of the editor's supported types.",
+          "enum": ["bar", "stackedBar", "line", "area", "donut", "pie", "treemap",
+                   "scatter", "heatmap", "calendarHeatmap", "histogram", "radar",
+                   "gauge", "bullet", "sankey", "table"]
+        },
+        "bindings": {
+          "type": "object",
+          "description": "Maps DA columns to chart roles. Column names MUST come from the query's column list in the grounding catalog.",
+          "additionalProperties": {"type": "string"},
+          "properties": {
+            "category": {"type": "string"},
+            "value": {"type": "string"},
+            "series": {"type": "string"},
+            "x": {"type": "string"},
+            "y": {"type": "string"},
+            "size": {"type": "string"}
+          }
+        },
+        "options": {
+          "type": "object",
+          "description": "Optional visual tuning (target lines, color scale, score bands).",
+          "additionalProperties": true
+        },
+        "markdown": {"type": "string", "description": "Body when kind=text."}
+      },
+      "allOf": [
+        {"if": {"properties": {"kind": {"const": "chart"}}},
+         "then": {"required": ["chartType", "bindings"]}},
+        {"if": {"properties": {"kind": {"const": "text"}}},
+         "then": {"required": ["markdown"]}}
+      ]
+    }
+  }
+}

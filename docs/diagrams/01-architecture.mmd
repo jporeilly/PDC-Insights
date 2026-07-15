@@ -1,0 +1,46 @@
+%% System architecture — two front doors over one shared engine
+flowchart TB
+  subgraph clients[" "]
+    direction LR
+    U1["Browser<br/>(analysts, stewards)"]
+    U2["LLM / agent<br/>(Claude Desktop, IDE)"]
+  end
+
+  subgraph insights["Catalog Insights (you deploy this)"]
+    direction TB
+    WEB["Web app<br/>Flask · :8660<br/>dashboards · Designer · AI drawer"]
+    MCP["MCP server<br/>:8765 / stdio<br/>tools: recommend · generate · save"]
+    subgraph engine["Shared engine (app/)"]
+      direction LR
+      SEC["security.py<br/>auth · roles · audit"]
+      PC["pdc_client.py<br/>read-only"]
+      GEN["generator.py<br/>ground·validate·repair"]
+      CAT["catalog.py<br/>snapshot + query library"]
+      REC["recommend.py<br/>suggestions"]
+    end
+    WEB --> engine
+    MCP --> engine
+  end
+
+  subgraph pdc["Pentaho Data Catalog (already exists)"]
+    direction TB
+    API["Public REST API"]
+    OS[("OpenSearch<br/>search / facets")]
+    MG[("MongoDB<br/>metadata<br/>→ FerretDB in 11.0")]
+    BI[("BIDB<br/>JDBC / ODBC")]
+    API --> OS
+    API --> MG
+    API --> BI
+  end
+
+  LLM["LLM endpoint<br/>Ollama (local GPU)<br/>or commercial API"]
+
+  U1 --> WEB
+  U2 --> MCP
+  PC -- "HTTPS (read-only)" --> API
+  GEN -- "complete()" --> LLM
+
+  classDef store fill:#eef2f7,stroke:#9aa4b2,color:#14181f;
+  classDef ours fill:#e3f1ef,stroke:#0f766e,color:#0a443f;
+  classDef ext fill:#fbf1e2,stroke:#dd8a26,color:#5c3b00;
+  class OS,MG,BI store; class WEB,MCP,SEC,PC,GEN,CAT,REC ours; class API,LLM ext;

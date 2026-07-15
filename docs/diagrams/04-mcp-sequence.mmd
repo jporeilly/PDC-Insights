@@ -1,0 +1,24 @@
+%% Suggest-then-build over MCP
+sequenceDiagram
+  participant U as User
+  participant H as Host LLM (Claude)
+  participant M as MCP server
+  participant E as Shared engine
+  participant P as PDC API
+
+  U->>H: "What dashboards should we build?"
+  H->>M: recommend_dashboards()
+  M->>E: catalog_snapshot()
+  E->>P: facets / data-sources (read)
+  P-->>E: scan & connection state
+  E-->>M: snapshot
+  M-->>H: ranked suggestions (+ why, template, prompt)
+  H-->>U: "S3 is 52% unowned — build Exposure · S3?"
+  U->>H: "Yes, build it"
+  H->>M: generate_dashboard(prompt)
+  M->>E: ground → generate → validate
+  E-->>M: {spec, valid}
+  H->>M: save_dashboard(spec)
+  Note over M: requires 'steward' role + audit
+  M-->>H: saved → app/dashboards/sensitivity/
+  H-->>U: "Done — it's in the Sensitivity section"

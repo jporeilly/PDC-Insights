@@ -1,0 +1,2 @@
+# MCP server entry point (in addition to requirements.txt)
+mcp[cli]>=1.2.0

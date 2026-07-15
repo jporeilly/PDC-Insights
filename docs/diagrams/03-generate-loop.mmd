@@ -1,0 +1,12 @@
+%% LLM generate–validate–repair loop (low-risk because the target is one schema)
+flowchart TB
+  P["prompt + Query Library"] --> GR["GROUND<br/>real DA names + columns<br/>+ chart vocabulary + schema"]
+  GR --> GEN["GENERATE<br/>provider.complete(json_mode)"]
+  GEN --> VAL{"VALIDATE<br/>① JSON schema<br/>② query/columns exist?"}
+  VAL -- "valid" --> OUT["return {spec, valid:true}"]
+  VAL -- "errors (first time)" --> REP["REPAIR<br/>feed errors back once"]
+  REP --> GEN
+  VAL -- "errors (after repair)" --> OUTBAD["return {spec, valid:false, errors}"]
+  classDef good fill:#e7f4ec,stroke:#1c8f4d,color:#0a3d1f;
+  classDef bad fill:#fbeaea,stroke:#d64545,color:#5c1010;
+  class OUT good; class OUTBAD bad;

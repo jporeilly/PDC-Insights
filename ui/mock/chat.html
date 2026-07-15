@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Catalog Insights — AI Dashboard Builder</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%230f766e%22/%3E%3Cpath d=%22M9 20h3v-6H9zm5 0h3V9h-3zm5 0h3v-9h-3z%22 fill=%22white%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#0f766e; --brand-700:#0a443f; --ink:#14181f; --muted:#5b6573;
+    --surface:#f4f6f8; --card:#ffffff; --line:#dfe4ea; --soft:#eef2f5;
+    --low:#d64545; --mid:#dd8a26; --high:#1c8f4d;
+    --shadow:0 1px 2px rgba(20,24,31,.04),0 6px 20px rgba(20,24,31,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--ink);
+    background:var(--surface);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:14px;padding:12px 18px;background:#0c1116;color:#e9eef2;border-bottom:1px solid #0a0e12}
+  header .logo{font-family:"Space Grotesk";font-weight:700;letter-spacing:.2px;font-size:15px}
+  header .dot{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,.25)}
+  header .badges{display:flex;gap:8px;margin-left:auto;align-items:center}
+  .badge{font:500 11px/1 "IBM Plex Mono";padding:5px 8px;border-radius:6px;background:#1a222b;color:#aeb9c4;border:1px solid #232c36}
+  .badge.ok{color:#8ee0b0;border-color:#1c5b3f}
+  .badge.warn{color:#f0c187;border-color:#6b4a14}
+  header input{background:#1a222b;border:1px solid #2a343e;color:#e9eef2;border-radius:6px;padding:6px 8px;font:400 12px "IBM Plex Mono";width:150px}
+  header select.badge{background:#1a222b;color:#aeb9c4;cursor:pointer}
+  header select.badge:focus{outline:none;border-color:var(--brand)}
+  main{flex:1;display:grid;grid-template-columns:minmax(360px,1fr) minmax(420px,1.1fr);gap:0;overflow:hidden}
+  /* chat column */
+  .chat{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--card);min-height:0}
+  .transcript{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+  .msg{max-width:88%;padding:11px 13px;border-radius:12px;font-size:14px;line-height:1.45}
+  .msg.user{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+  .msg.bot{align-self:flex-start;background:var(--soft);color:var(--ink);border-bottom-left-radius:4px}
+  .msg.sys{align-self:center;color:var(--muted);font-size:12.5px;background:transparent;text-align:center;max-width:100%}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 10px}
+  .chip{font-size:12.5px;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--brand-700);cursor:pointer}
+  .chip:hover{border-color:var(--brand);background:#f0faf8}
+  .composer{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}
+  .composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:400 14px "IBM Plex Sans";height:46px;max-height:120px}
+  .composer textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+  .send{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:0 16px;font-weight:600;cursor:pointer}
+  .send:disabled{opacity:.5;cursor:default}
+  /* preview column */
+  .preview{display:flex;flex-direction:column;min-height:0;background:var(--surface)}
+  .preview .pv-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .pv-head h2{margin:0;font-family:"Space Grotesk";font-size:16px;font-weight:600}
+  .cat{font:600 11px/1 "IBM Plex Mono";text-transform:uppercase;letter-spacing:.5px;color:var(--brand);background:#e3f1ef;padding:5px 8px;border-radius:6px}
+  .add{margin-left:auto;background:var(--brand-700);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-weight:600;cursor:pointer}
+  .add:disabled{opacity:.4;cursor:default}
+  .pvbtn{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:600 12.5px "IBM Plex Sans";cursor:pointer}
+  .pvbtn:first-of-type{margin-left:auto}
+  .pvbtn:hover:not(:disabled){border-color:var(--brand);color:var(--brand)}
+  .pvbtn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .pvbtn:disabled{opacity:.4;cursor:default}
+  .add{margin-left:8px}
+  .pv-summary{margin:0 16px 0;padding:13px 15px;background:#f0faf8;border:1px solid #cfe9e4;
+    border-radius:10px;color:#0a443f;font-size:13.5px;line-height:1.5}
+  .pv-summary h4{margin:0 0 6px;font-family:"Space Grotesk",sans-serif;font-size:13px;color:#0f766e}
+  .pv-summary ul{margin:6px 0 0;padding-left:18px}
+  .pv-summary li{margin:2px 0}
+  .data-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+  .data-badge.live{background:#e7f6ef;color:#1c8f4d}
+  .data-badge.demo{background:#fff7ed;color:#9a5b15}
+  .pbody{min-height:40px}
+  .ptbl{width:100%;border-collapse:collapse;font-size:11.5px}
+  .ptbl th{text-align:left;color:#5b6b73;font-weight:600;border-bottom:1px solid #e6edf0;padding:3px 6px}
+  .ptbl td{padding:3px 6px;border-bottom:1px solid #f2f5f7;color:#243038}
+  .kpi-num{font:700 30px "Space Grotesk",sans-serif;color:#0f766e;padding:6px 0}
+  /* print / PDF: show only the dashboard preview, drop the chat + chrome */
+  @media print{
+    @page{margin:14mm}
+    header,.chat,.pv-head .pvbtn,.pv-head .add,.saved{display:none !important}
+    body{height:auto;display:block}
+    main{display:block}
+    .preview{background:#fff}
+    .pv-head{border:none;padding:0 0 8px;border-bottom:2px solid var(--brand)}
+    .grid{overflow:visible !important;display:grid !important;grid-template-columns:repeat(2,1fr) !important}
+    .panel{break-inside:avoid;box-shadow:none !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .panel.span2{grid-column:span 2}
+  }
+  .grid{flex:1;overflow:auto;padding:16px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px;align-content:start}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-height:120px;display:flex;flex-direction:column;gap:8px}
+  .panel.span2{grid-column:span 2}
+  .panel .pt{font-family:"Space Grotesk";font-weight:600;font-size:13.5px}
+  .panel .meta{font:500 11px "IBM Plex Mono";color:var(--muted)}
+  .empty{grid-column:span 2;color:var(--muted);text-align:center;padding:48px 20px;font-size:14px}
+  .kpi-num{font-family:"Space Grotesk";font-weight:700;font-size:30px;color:var(--brand-700)}
+  svg{display:block}
+  .saved{padding:10px 16px;border-top:1px solid var(--line);font-size:13px;color:var(--high);display:none}
+  .saved.show{display:block}
+  .saved.err{color:var(--low)}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot"></span>
+  <span class="logo">Catalog Insights · AI Builder</span>
+  <a href="/ui/index.html" class="badge" style="text-decoration:none">← Dashboards</a>
+  <button class="badge" onclick="clearState()" title="Clear this section's saved conversation and start fresh" style="cursor:pointer;border:none">Clear chat</button>
+  <div class="badges">
+    <select id="section" class="badge" title="Suggestions and new dashboards target this Analytics section">
+      <option value="">Any section</option>
+      <option value="overview">Overview</option>
+      <option value="system">System</option>
+      <option value="user">User</option>
+      <option value="governance">Governance</option>
+      <option value="quality">Quality</option>
+      <option value="sensitivity">Sensitivity</option>
+    </select>
+    <span class="badge" id="b-pdc">PDC…</span>
+    <span class="badge" id="b-llm">LLM…</span>
+    <input id="apikey" placeholder="API key (if auth on)" autocomplete="off"/>
+  </div>
+</header>
+
+<main>
+  <section class="chat">
+    <div class="transcript" id="transcript">
+      <div class="msg sys">Describe the dashboard you want — I’ll build it and you can add it to the catalog. Try a starter below.</div>
+    </div>
+    <div class="chips" id="chips">
+      <span class="chip">Build a PII exposure dashboard</span>
+      <span class="chip">Glossary coverage by source with a trend</span>
+      <span class="chip">Profiling health and failed scans</span>
+      <span class="chip">Quality scores and worst tables</span>
+      <span class="chip">What should I build from my scans?</span>
+    </div>
+    <div class="composer">
+      <textarea id="input" placeholder="e.g. Show sensitive, unowned assets by source…"></textarea>
+      <button class="send" id="send">Send</button>
+    </div>
+  </section>
+
+  <section class="preview">
+    <div class="pv-head">
+      <h2 id="pv-title">No dashboard yet</h2>
+      <span class="cat" id="pv-cat" style="display:none"></span>
+      <span class="data-badge" id="pv-data" style="display:none"></span>
+      <button class="pvbtn" id="sum" disabled onclick="toggleSummary()" title="Show a plain-language summary of this dashboard">Summary</button>
+      <button class="pvbtn" id="dl" disabled onclick="downloadSpecChat()" title="Download this dashboard as a .studio.json spec file">Download</button>
+      <button class="pvbtn" id="pr" disabled onclick="window.print()" title="Print the dashboard or save it as a PDF">Print</button>
+      <button class="add" id="add" disabled title="Save this dashboard into the catalog (needs the steward role when auth is on)">Add to dashboards</button>
+    </div>
+    <div id="pv-summary" class="pv-summary" style="display:none"></div>
+    <div class="grid" id="grid">
+      <div class="empty">The dashboard you build will preview here.</div>
+    </div>
+    <div class="saved" id="saved"></div>
+  </section>
+</main>
+
+<script>
+/*
+ * Catalog Insights — in-app AI dashboard builder (chat window).
+ *
+ * A self-contained page (served at /chat) that talks to the same-origin API:
+ *   POST /api/chat        → build/refine a dashboard spec from the conversation
+ *   GET  /api/recommend   → section-aware suggestions shown as starter chips
+ *   POST /api/dashboards  → save the built spec into the catalog (needs steward)
+ *   GET  /api/snapshot, /health/llm → header status badges
+ *
+ * State is intentionally tiny and in-memory (no storage): the running `messages`
+ * array, the current `spec` being previewed, and the active `section`. Each turn
+ * sends the whole conversation + current spec so the server can refine in place.
+ * The section (from ?section= or the header selector) pins suggestions and the
+ * built dashboard's category to the Analytics section the user came from.
+ */
+const $ = s => document.querySelector(s);
+let messages = [];      // running chat transcript: [{role:'user'|'assistant', content}]
+let spec = null;        // the dashboard spec currently previewed (null until first build)
+let busy = false;       // guard so a second send can't overlap an in-flight request
+let section = new URLSearchParams(location.search).get('section') || '';  // active Analytics section
+
+// Build request headers, adding a bearer token only if the user supplied an API
+// key (needed when INSIGHTS_AUTH=apikey|jwt; ignored when auth is off).
+const authHeaders = () => {
+  const k = $('#apikey').value.trim();
+  const h = {'Content-Type':'application/json'};
+  if (k) h['Authorization'] = 'Bearer ' + k;
+  return h;
+};
+
+// ── persistence ──────────────────────────────────────────────
+// Save the conversation so context survives a refresh or navigating away and
+// back. Keyed by section so each section keeps its own thread. Uses
+// localStorage (a real browser feature on the served page).
+const STORE_KEY = () => 'pdc-chat:' + (section || 'any');
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY(), JSON.stringify({messages, spec, ts:Date.now()})); }catch(e){}
+}
+function restoreState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY()); if(!raw) return false;
+    const d = JSON.parse(raw);
+    if(!d || !Array.isArray(d.messages) || !d.messages.length) return false;
+    messages = d.messages; spec = d.spec || null;
+    // replay the transcript, keeping the section greeting at the top for consistency
+    const t = $('#transcript');
+    t.innerHTML = '<div class="msg sys"></div>'; setSectionHint();
+    messages.forEach(m => addMsg(m.role, m.content));
+    if(spec) renderPreview(spec, true);
+    return true;
+  }catch(e){ return false; }
+}
+function clearState(){
+  try{ localStorage.removeItem(STORE_KEY()); }catch(e){}
+  messages = []; spec = null;
+  $('#transcript').innerHTML = ''; addMsg('system', 'Conversation cleared.');
+  $('#grid').innerHTML = '<div class="empty">The dashboard you build will preview here.</div>';
+  $('#pv-title').textContent = 'No dashboard yet'; $('#pv-cat').style.display='none';
+  ['add','dl','pr'].forEach(id=>{const b=$('#'+id); if(b) b.disabled=true;});
+}
+
+function addMsg(role, text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (role==='user'?'user':role==='assistant'?'bot':'sys');
+  d.textContent = text;
+  $('#transcript').appendChild(d);
+  $('#transcript').scrollTop = $('#transcript').scrollHeight;
+  return d;
+}
+
+// Send one user turn: optimistic-render the message, call /api/chat, then show
+// the assistant reply and (re)render the spec preview from the result.
+async function send(text){
+  if (busy || !text.trim()) return;          // ignore empty / overlapping sends
+  busy = true; $('#send').disabled = true;
+  addMsg('user', text);
+  messages.push({role:'user', content:text});
+  $('#input').value = '';
+  const thinking = addMsg('system', '…thinking');   // placeholder until the server responds
+
+  try{
+    // Whole conversation + current spec + section go up every turn (the server
+    // is stateless; `spec` is what makes follow-ups refine instead of restart).
+    const r = await fetch('/api/chat', {method:'POST', headers:authHeaders(),
+      body: JSON.stringify({messages, spec, section})});
+    if (r.status === 401){ thinking.textContent='Unauthorized — enter an API key above.'; return; }
+    if (r.status === 403){ thinking.textContent='Forbidden — your role can’t do that.'; return; }
+    const d = await r.json();
+    thinking.remove();
+    addMsg('assistant', d.reply || 'Done.');
+    messages.push({role:'assistant', content:d.reply||''});
+    if (d.spec){ spec = d.spec; renderPreview(spec, d.valid); }   // update the live preview
+    saveState();   // persist conversation + spec for context across refreshes
+  }catch(e){
+    thinking.textContent = 'Error: ' + e.message;
+  }finally{
+    busy = false; $('#send').disabled = false; $('#input').focus();
+  }
+}
+
+// A governance-aware palette: petrol-teal brand family + the trust spectrum
+// (red→amber→green), so categorical charts read as distinct, meaningful colours
+// rather than one flat teal.
+const PALETTE = ['#0f766e','#1c8f4d','#dd8a26','#d64545','#2f6f9f','#7c5cbf','#0a443f','#caa53a'];
+function miniChart(type){
+  if (type==='donut'||type==='pie'){
+    // multi-segment ring coloured from the palette
+    const segs=[38,24,18,12,8]; const R=24, C=2*Math.PI*R; let off=0;
+    const rings=segs.map((v,i)=>{ const len=C*v/100; const el=`<circle cx="32" cy="32" r="${R}" fill="none" stroke="${PALETTE[i%PALETTE.length]}" stroke-width="12" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 32 32)"/>`; off+=len; return el; }).join('');
+    return `<svg width="100%" height="72" viewBox="0 0 64 64"><circle cx="32" cy="32" r="${R}" fill="none" stroke="#eef2f5" stroke-width="12"/>${rings}</svg>`;
+  }
+  if (type==='line'||type==='area'){
+    const a='#0f766e', b='#dd8a26';
+    return `<svg width="100%" height="72" viewBox="0 0 160 64" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}" stop-opacity=".25"/><stop offset="1" stop-color="${a}" stop-opacity="0"/></linearGradient></defs><polygon points="0,50 30,38 60,42 90,22 120,28 160,10 160,64 0,64" fill="url(#g)"/><polyline points="0,50 30,38 60,42 90,22 120,28 160,10" fill="none" stroke="${a}" stroke-width="3"/><polyline points="0,58 30,52 60,48 90,40 120,36 160,30" fill="none" stroke="${b}" stroke-width="2.5" stroke-dasharray="4 3"/></svg>`;
+  }
+  if (type==='gauge'||type==='bullet')
+    return `<svg width="100%" height="72" viewBox="0 0 160 24"><rect width="160" height="10" rx="5" fill="#eef2f5"/><rect width="52" height="10" rx="5" fill="#d64545"/><rect x="52" width="40" height="10" fill="#dd8a26"/><rect x="92" width="44" height="10" rx="5" fill="#1c8f4d"/><rect x="100" y="-3" width="3" height="16" fill="#14181f"/></svg>`;
+  // bars (default) — each bar a different palette colour
+  const bars=[34,52,28,46,60,38]; const w=18, g=8;
+  return `<svg width="100%" height="72" viewBox="0 0 ${bars.length*(w+g)} 64">`+
+    bars.map((h,i)=>`<rect x="${i*(w+g)}" y="${64-h}" width="${w}" height="${h}" rx="3" fill="${PALETTE[i%PALETTE.length]}"/>`).join('')+`</svg>`;
+}
+
+function panelCard(p){
+  const span = (p.span && p.span>=2) ? ' span2':'';
+  const binds = Object.entries(p.bindings||{}).map(([k,v])=>`${k}: ${v}`).join(' · ');
+  let body = '';
+  if (p.kind==='kpi') body = `<div class="kpi-num">—</div>`;
+  else if (p.kind==='table') body = `<svg width="100%" height="64" viewBox="0 0 160 64"><rect width="160" height="12" fill="#eef2f5"/><rect y="18" width="160" height="10" fill="#f4f6f8"/><rect y="32" width="160" height="10" fill="#f4f6f8"/><rect y="46" width="160" height="10" fill="#f4f6f8"/></svg>`;
+  else if (p.kind==='text') body = `<div class="meta">${(p.markdown||'').slice(0,80)}</div>`;
+  else body = miniChart(p.chartType);
+  const tag = p.kind==='chart' ? p.chartType : p.kind;
+  return `<div class="panel${span}" data-pid="${p.id||''}"><div class="pt">${p.title}</div>
+    <div class="pbody">${body}</div>
+    <div class="meta">${tag} · ${p.query}${binds?' · '+binds:''}</div></div>`;
+}
+
+// ── live data renderers (real series from the resolver) ──────
+function fmtNum(n){ return (typeof n==='number') ? n.toLocaleString() : (n??'—'); }
+function barsReal(series){
+  const vals=series.map(s=>s.value||0); const max=Math.max(1,...vals); const w=18,g=8;
+  return `<svg width="100%" height="72" viewBox="0 0 ${series.length*(w+g)} 64">`+
+    series.map((s,i)=>{const h=Math.max(2,Math.round(56*(s.value||0)/max));
+      return `<rect x="${i*(w+g)}" y="${64-h}" width="${w}" height="${h}" rx="3" fill="${PALETTE[i%PALETTE.length]}"><title>${s.label}: ${fmtNum(s.value)}</title></rect>`;}).join('')+`</svg>`;
+}
+function donutReal(series){
+  const total=series.reduce((a,s)=>a+(s.value||0),0)||1; const R=24,C=2*Math.PI*R; let off=0;
+  const rings=series.map((s,i)=>{const len=C*(s.value||0)/total; const el=`<circle cx="32" cy="32" r="${R}" fill="none" stroke="${PALETTE[i%PALETTE.length]}" stroke-width="12" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 32 32)"><title>${s.label}: ${fmtNum(s.value)}</title></circle>`; off+=len; return el;}).join('');
+  return `<svg width="100%" height="72" viewBox="0 0 64 64"><circle cx="32" cy="32" r="${R}" fill="none" stroke="#eef2f5" stroke-width="12"/>${rings}</svg>`;
+}
+function lineReal(series){
+  const vals=series.map(s=>s.value||0); const max=Math.max(1,...vals),min=Math.min(...vals,0);
+  const pts=series.map((s,i)=>{const x=series.length>1?i/(series.length-1)*160:0; const y=58-52*((s.value-min)/((max-min)||1)); return `${x.toFixed(0)},${y.toFixed(0)}`;}).join(' ');
+  return `<svg width="100%" height="72" viewBox="0 0 160 64" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#0f766e" stroke-width="3"/></svg>`;
+}
+function stackedReal(d){
+  const cats=d.categories||[], groups=d.groups||[]; const w=22,g=14;
+  const totals=cats.map((_,i)=>groups.reduce((a,gr)=>a+(gr.values[i]||0),0)); const max=Math.max(1,...totals);
+  return `<svg width="100%" height="80" viewBox="0 0 ${cats.length*(w+g)} 70">`+
+    cats.map((c,i)=>{let y=64; return groups.map((gr,gi)=>{const h=Math.round(58*(gr.values[i]||0)/max); y-=h; return `<rect x="${i*(w+g)}" y="${y}" width="${w}" height="${h}" fill="${PALETTE[gi%PALETTE.length]}"><title>${c} · ${gr.name}: ${fmtNum(gr.values[i])}</title></rect>`;}).join('');}).join('')+`</svg>`;
+}
+function tableReal(cols,rows){
+  if(!rows||!rows.length) return `<div class="meta">No rows.</div>`;
+  return `<table class="ptbl"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`+
+    rows.slice(0,6).map(r=>`<tr>${r.map(c=>`<td>${fmtNum(c)}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
+}
+function fillPanel(el, data){
+  const body = el.querySelector('.pbody'); if(!body||!data) return;
+  if(data.kind==='kpi'){ body.innerHTML = `<div class="kpi-num">${fmtNum(data.value)}${data.unit||''}</div>`; return; }
+  if(data.kind==='table'){ body.innerHTML = tableReal(data.columns, data.rows); return; }
+  if(data.kind==='chart'){
+    const t=data.chartType;
+    if(data.groups){
+      // stacked types keep all series; otherwise show the primary group as a
+      // single series so the declared chart type (donut/bar/line) is honoured.
+      if(t==='stackedBar'||t==='stacked'){ body.innerHTML = stackedReal(data); return; }
+      const cats=data.categories||[], g0=(data.groups[0]||{}).values||[];
+      const s=cats.map((c,i)=>({label:c, value:g0[i]||0}));
+      body.innerHTML = (t==='donut'||t==='pie') ? donutReal(s) : (t==='line'||t==='area') ? lineReal(s) : barsReal(s);
+      return;
+    }
+    const s=data.series||[];
+    body.innerHTML = (t==='donut'||t==='pie') ? donutReal(s)
+      : (t==='line'||t==='area') ? lineReal(s) : barsReal(s);
+  }
+}
+// Fetch resolved values for the built spec and render real numbers in the preview.
+async function fillLiveData(spec){
+  try{
+    const r = await fetch('/api/dashboards/resolve', {method:'POST', headers:authHeaders(), body:JSON.stringify(spec)});
+    if(!r.ok) return; const d = await r.json();
+    (spec.panels||[]).forEach(p=>{
+      const el = document.querySelector(`.panel[data-pid="${p.id}"]`);
+      if(el && d.panels && d.panels[p.id]) fillPanel(el, d.panels[p.id]);
+    });
+    const badge = $('#pv-data'); if(badge){ badge.textContent = d.demo ? 'demo data' : 'live data';
+      badge.className = 'data-badge ' + (d.demo ? 'demo' : 'live'); badge.style.display='inline-block'; }
+  }catch(e){ /* leave placeholder shapes if resolve isn't reachable */ }
+}
+
+function renderPreview(spec, valid){
+  $('#pv-title').textContent = spec.title || 'Dashboard';
+  const cat = $('#pv-cat'); cat.textContent = spec.category; cat.style.display='inline-block';
+  $('#grid').innerHTML = (spec.panels||[]).map(panelCard).join('') ||
+    '<div class="empty">No panels.</div>';
+  $('#add').disabled = !valid;          // can only SAVE a valid spec …
+  $('#dl').disabled = false;            // … but you can always download / print
+  $('#pr').disabled = false;            // whatever was built, for review
+  $('#sum').disabled = false;           // and read a summary of it
+  if ($('#pv-summary').style.display !== 'none') renderSummary();  // keep an open summary fresh
+  $('#saved').className = 'saved';
+  fillLiveData(spec);                   // overlay real numbers from the catalog snapshot
+}
+
+// A plain-language summary of the built dashboard, derived from the spec — no
+// extra model call. Describes what the dashboard covers and what each panel shows.
+function summaryText(spec){
+  const panels = spec.panels||[];
+  const kpis = panels.filter(p=>p.kind==='kpi');
+  const charts = panels.filter(p=>p.kind==='chart');
+  const tables = panels.filter(p=>p.kind==='table');
+  const parts = [];
+  parts.push(`This <b>${spec.category}</b> dashboard, “${spec.title}”, has ${panels.length} panel(s).`);
+  if(kpis.length)   parts.push(`${kpis.length} headline metric(s): ${kpis.map(p=>p.title).join(', ')}.`);
+  if(charts.length) parts.push(`${charts.length} chart(s): ${charts.map(p=>`${p.title} (${p.chartType})`).join(', ')}.`);
+  if(tables.length) parts.push(`${tables.length} detail table(s): ${tables.map(p=>p.title).join(', ')}.`);
+  const items = panels.map(p=>{
+    const b = p.bindings||{};
+    const dims = b.category||b.x||''; const val = b.value||b.y||'';
+    const how = p.kind==='kpi' ? `headline value from <code>${p.query}</code>`
+      : p.kind==='table' ? `row-level detail from <code>${p.query}</code>`
+      : `${p.chartType} of <code>${p.query}</code>${dims?` by ${dims}`:''}${val?`, measuring ${val}`:''}`;
+    return `<li><b>${p.title}</b> — ${how}</li>`;
+  }).join('');
+  return `<h4>What this dashboard shows</h4>${parts.join(' ')}<ul>${items}</ul>`;
+}
+function renderSummary(){ if(spec) $('#pv-summary').innerHTML = summaryText(spec); }
+function toggleSummary(){
+  const el = $('#pv-summary');
+  if(el.style.display==='none'){ renderSummary(); el.style.display='block'; $('#sum').classList.add('on'); }
+  else { el.style.display='none'; $('#sum').classList.remove('on'); }
+}
+
+// Download the previewed spec as a .studio.json file (client-side; the spec is
+// already in memory, so this works regardless of auth or PDC state).
+function downloadSpecChat(){
+  if(!spec) return;
+  const slug=(spec.title||'dashboard').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const blob=new Blob([JSON.stringify(spec,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=slug+'.studio.json';a.click();URL.revokeObjectURL(a.href);
+}
+
+// Persist the previewed spec into the catalog via the normal (validated,
+// steward-gated) dashboards route. Surfaces auth/validation problems inline.
+async function addToDashboards(){
+  if (!spec) return;
+  $('#add').disabled = true;
+  const box = $('#saved');
+  try{
+    const r = await fetch('/api/dashboards', {method:'POST', headers:authHeaders(),
+      body: JSON.stringify(spec)});
+    const d = await r.json();
+    if (r.ok && d.saved){
+      box.textContent = `Added ✓  ${d.path} — open the ${spec.category} section in the app to see it.`;
+      box.className = 'saved show';
+    } else if (r.status===403){      // authenticated but not a steward
+      box.textContent = 'Saving needs the steward role. Enter a steward API key above.';
+      box.className = 'saved show err'; $('#add').disabled=false;
+    } else {                          // re-validation failed server-side
+      box.textContent = 'Could not save: ' + (d.errors? d.errors.join('; ') : 'unknown');
+      box.className = 'saved show err'; $('#add').disabled=false;
+    }
+  }catch(e){
+    box.textContent = 'Error saving: ' + e.message; box.className='saved show err'; $('#add').disabled=false;
+  }
+}
+
+// Populate the starter chips with section-aware recommendations. Clicking a chip
+// runs its generate_prompt, so a suggestion becomes a built dashboard in one tap.
+async function loadSuggestions(){
+  const chips = $('#chips'); chips.innerHTML = '';
+  // Scope the recommendations to the active section (server filters by category).
+  const url = '/api/recommend' + (section ? ('?section=' + encodeURIComponent(section)) : '');
+  try{
+    const recs = await (await fetch(url, {headers:authHeaders()})).json();
+    if (Array.isArray(recs) && recs.length){
+      recs.slice(0, 6).forEach(r => {
+        const c = document.createElement('span');
+        c.className = 'chip';
+        c.title = r.why + (r.priority ? `  ·  ${r.priority} priority` : '');   // signal shown on hover
+        c.textContent = (r.priority === 'high' ? '★ ' : '') + r.title;          // star the high-priority ones
+        c.onclick = () => send(r.generate_prompt || r.title);                   // build the suggested dashboard
+        chips.appendChild(c);
+      });
+      return;
+    }
+  }catch{}
+  // Fallback if recommend is unavailable (e.g. PDC unreachable and not in demo).
+  ['Build a dashboard for this section', 'Suggest dashboards from my scans']
+    .forEach(t => { const c=document.createElement('span'); c.className='chip';
+      c.textContent=t; c.onclick=()=>send(t); chips.appendChild(c); });
+}
+
+function setSectionHint(){
+  const label = section ? section[0].toUpperCase()+section.slice(1) : 'any';
+  $('#transcript .msg.sys').textContent =
+    `Describe the dashboard you want — I’ll build it for the ${label} section and you can add it to the catalog. Or pick a suggestion below.`;
+}
+
+$('#section').value = section;
+$('#section').onchange = e => {
+  saveState();                         // keep the current section's thread
+  section = e.target.value;
+  setSectionHint(); loadSuggestions();
+  if(!restoreState()){                 // load this section's saved thread, or reset
+    messages = []; spec = null;
+    $('#transcript').innerHTML = ''; setSectionHint();
+    $('#grid').innerHTML = '<div class="empty">The dashboard you build will preview here.</div>';
+    $('#pv-title').textContent='No dashboard yet'; $('#pv-cat').style.display='none';
+    ['add','dl','pr','sum'].forEach(id=>{const b=$('#'+id); if(b) b.disabled=true;});
+    $('#pv-summary').style.display='none';
+  }
+};
+
+async function status(){
+  try{ const h = await (await fetch('/api/snapshot', {headers:authHeaders()})).json();
+    $('#b-pdc').textContent = h.demo ? 'PDC: demo data' : 'PDC: live';
+    $('#b-pdc').className = 'badge ' + (h.demo?'warn':'ok');
+  }catch{ $('#b-pdc').textContent='PDC: ?'; }
+  try{ const l = await (await fetch('/health/llm', {headers:authHeaders()})).json();
+    $('#b-llm').textContent = 'LLM: ' + (l.ok ? (l.model||'ready') : 'offline');
+    $('#b-llm').className = 'badge ' + (l.ok?'ok':'warn');
+  }catch{ $('#b-llm').textContent='LLM: offline'; $('#b-llm').className='badge warn'; }
+}
+
+$('#send').onclick = () => send($('#input').value);
+$('#input').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send($('#input').value);} });
+$('#add').onclick = addToDashboards;
+setSectionHint();
+restoreState();        // bring back this section's conversation for context
+loadSuggestions();
+status();
+</script>
+</body>
+</html>

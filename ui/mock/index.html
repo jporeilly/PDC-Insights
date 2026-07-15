@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalog Insights — design mock</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%230f766e%22/%3E%3Cpath d=%22M9 20h3v-6H9zm5 0h3V9h-3zm5 0h3v-9h-3z%22 fill=%22white%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14181f; --ink-2:#39424f; --muted:#69748a; --faint:#98a2b3;
+  --surface:#edf0f4; --panel:#ffffff; --panel-2:#f6f8fb;
+  --border:#e3e8ee; --border-strong:#ccd5df;
+  --brand:#0f766e; --brand-deep:#0b5a54; --brand-tint:#e3f1ef; --brand-ink:#0a443f;
+  --low:#d64545; --mid:#dd8a26; --high:#1c8f4d;
+  --low-t:#fbeaea; --mid-t:#faf0e2; --high-t:#e6f4eb;
+  --c1:#0f766e; --c2:#3b5b94; --c3:#dd8a26; --c4:#7a5bb0; --c5:#c0566f; --c6:#2a9d9d;
+  --shadow:0 1px 2px rgba(20,24,31,.04), 0 2px 8px rgba(20,24,31,.05);
+  --shadow-lg:0 8px 30px rgba(20,24,31,.12);
+  --r:12px; --r-sm:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  background:var(--surface); color:var(--ink);
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.display{font-family:"Space Grotesk",sans-serif}
+h1,h2,h3{font-family:"Space Grotesk",sans-serif;margin:0;font-weight:600;letter-spacing:-.01em}
+button{font-family:inherit;cursor:pointer}
+
+/* ── shell ───────────────────────────────────────── */
+.app{display:grid;grid-template-columns:248px 1fr;height:100vh;overflow:hidden}
+
+.side{background:#0e1a1f;color:#cfe0dd;display:flex;flex-direction:column;border-right:1px solid #0a1316}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 18px}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(150deg,var(--brand) 0%,#13b3a3 100%);
+  display:grid;place-items:center;color:#fff;flex:0 0 auto;box-shadow:0 2px 8px rgba(19,179,163,.35)}
+.brand-mark svg{width:17px;height:17px}
+.brand-name{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15px;color:#fff;letter-spacing:-.01em;line-height:1.1}
+.brand-sub{font-size:11px;color:#6f8a86;letter-spacing:.02em}
+
+.nav{padding:6px 12px;overflow-y:auto;flex:1}
+.nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;color:#5f7d78;
+  padding:16px 10px 7px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;
+  color:#bcd0cc;font-size:13.5px;font-weight:500;border:none;background:none;width:100%;text-align:left;
+  transition:background .12s,color .12s}
+.nav-item:hover{background:#13242a;color:#eaf4f2}
+.nav-item.active{background:var(--brand);color:#fff}
+.nav-item.active .nav-ico{opacity:1}
+.nav-ico{width:17px;height:17px;opacity:.72;flex:0 0 auto}
+.nav-badge{margin-left:auto;font-size:10.5px;background:#1a2f35;color:#86a8a2;border-radius:20px;padding:1px 7px;font-weight:600}
+.nav-item.active .nav-badge{background:rgba(255,255,255,.18);color:#fff}
+
+.side-foot{padding:12px;border-top:1px solid #13242a}
+.conn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:12px;color:#9fb8b3}
+.dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.dot.ok{background:#27c08a;box-shadow:0 0 0 3px rgba(39,192,138,.16)}
+.dot.warn{background:var(--mid);box-shadow:0 0 0 3px rgba(221,138,38,.16)}
+
+/* ── main ────────────────────────────────────────── */
+.main{display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:16px;padding:0 28px;height:62px;
+  background:rgba(255,255,255,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);flex:0 0 auto}
+.crumb{font-size:12px;color:var(--faint);letter-spacing:.02em}
+.crumb b{color:var(--ink-2);font-weight:500}
+.page-title{font-size:17px;font-weight:600}
+.topbar-spacer{flex:1}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--border);
+  border-radius:9px;padding:7px 12px;width:260px;color:var(--muted)}
+.search input{border:none;background:none;outline:none;font-family:inherit;font-size:13px;width:100%;color:var(--ink)}
+.scope{display:flex;align-items:center;gap:7px;background:var(--panel-2);border:1px solid var(--border);
+  border-radius:9px;padding:7px 11px;font-size:12.5px;color:var(--ink-2);font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:9px;padding:8px 14px;font-size:13px;
+  font-weight:600;border:1px solid transparent;transition:transform .08s,box-shadow .12s,background .12s}
+.btn:active{transform:translateY(1px)}
+.btn-ai{background:linear-gradient(135deg,var(--brand) 0%,#13a596 100%);color:#fff;box-shadow:0 2px 10px rgba(15,118,110,.28)}
+.btn-ai:hover{box-shadow:0 4px 16px rgba(15,118,110,.36)}
+.btn-ghost{background:var(--panel);border-color:var(--border);color:var(--ink-2)}
+.btn-ghost:hover{border-color:var(--border-strong)}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(140deg,#3b5b94,#6a8bc4);
+  display:grid;place-items:center;color:#fff;font-size:12px;font-weight:600;flex:0 0 auto}
+
+.scroll{overflow-y:auto;flex:1;padding:24px 28px 60px}
+.view{display:none;animation:rise .25s ease}
+.view.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;gap:20px}
+.page-head h1{font-size:22px}
+.page-head p{margin:5px 0 0;color:var(--muted);font-size:13px;max-width:540px}
+.tablk{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px}
+.tablk button{border:none;background:none;padding:6px 13px;border-radius:7px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.tablk button.on{background:var(--brand-tint);color:var(--brand-ink)}
+
+/* standard-dashboard tab strip */
+.dash-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.dash-tab{border:1px solid var(--border);background:var(--panel);border-radius:10px;padding:10px 14px;text-align:left;
+  min-width:168px;transition:border .12s,box-shadow .12s}
+.dash-tab:hover{border-color:var(--border-strong);box-shadow:var(--shadow)}
+.dash-tab.on{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-tint)}
+.dash-tab .dt-name{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:7px}
+.dash-tab .dt-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.dash-tab .dt-badge{font-size:10px;font-weight:600;color:var(--brand);background:var(--brand-tint);border-radius:5px;padding:1px 6px;margin-left:auto}
+.std-flag{font-size:10.5px;color:var(--faint);display:inline-flex;align-items:center;gap:5px;margin-left:8px;font-weight:500}
+
+/* ── grid + cards ────────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px}
+.card.s2{grid-column:span 2}.card.s3{grid-column:span 3}.card.s4{grid-column:span 4}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-h h3{font-size:13.5px;font-weight:600;color:var(--ink)}
+.card-h .sub{font-size:11.5px;color:var(--faint);font-weight:400}
+.chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--panel-2);color:var(--muted);border:1px solid var(--border)}
+
+/* KPI */
+.kpi .kpi-top{display:flex;align-items:flex-start;justify-content:space-between}
+.kpi-label{font-size:12px;color:var(--muted);font-weight:500}
+.kpi-val{font-family:"Space Grotesk",sans-serif;font-size:30px;font-weight:600;letter-spacing:-.02em;margin-top:6px;line-height:1}
+.kpi-delta{font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:3px;margin-top:9px}
+.up{color:var(--high)}.down{color:var(--low)}
+.kpi-ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto}
+.spark{margin-top:10px}
+
+/* trust spectrum signature */
+.spectrum{margin-top:4px}
+.spectrum-bar{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.spectrum-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;position:relative}
+.spectrum-legend{display:flex;gap:18px;margin-top:12px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2)}
+.leg .sw{width:10px;height:10px;border-radius:3px}
+.leg b{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.leg span{color:var(--faint);font-size:11px}
+
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;
+  letter-spacing:.04em;padding:7px 10px;border-bottom:1px solid var(--border)}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--panel-2);color:var(--ink-2)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--panel-2)}
+.pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;display:inline-block}
+.pill.hi{background:var(--low-t);color:var(--low)}
+.pill.md{background:var(--mid-t);color:var(--mid)}
+.pill.lo{background:var(--high-t);color:var(--high)}
+
+.legend-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.lr{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.lr .sw{width:9px;height:9px;border-radius:2px}
+
+/* ── designer ────────────────────────────────────── */
+.designer{display:grid;grid-template-columns:230px 1fr 264px;gap:0;height:calc(100vh - 62px - 0px);
+  border-top:1px solid var(--border);margin:-24px -28px 0;background:var(--panel-2)}
+.dz-pane{display:flex;flex-direction:column;overflow:hidden;background:var(--panel)}
+.dz-pane.lib{border-right:1px solid var(--border)}
+.dz-pane.insp{border-left:1px solid var(--border)}
+.dz-h{padding:13px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dz-h h3{font-size:12.5px}
+.dz-h .mini{font-size:11px;color:var(--brand);font-weight:600;border:none;background:none}
+.dz-body{overflow-y:auto;padding:12px;flex:1}
+.da{border:1px solid var(--border);border-radius:9px;padding:10px 11px;margin-bottom:8px;background:var(--panel);cursor:grab}
+.da:hover{border-color:var(--brand);box-shadow:var(--shadow)}
+.da-name{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+.da-cols{font-size:11px;color:var(--faint);margin-top:3px;font-family:"IBM Plex Mono",monospace}
+.da-grp{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 4px 8px;font-weight:600}
+
+.canvas{background:var(--panel-2);overflow-y:auto;padding:18px;position:relative}
+.canvas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.canvas .card{cursor:pointer}
+.canvas .card.sel{outline:2px solid var(--brand);outline-offset:2px}
+.ai-bar{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--border);
+  border-radius:11px;padding:9px 9px 9px 14px;margin-bottom:16px;box-shadow:var(--shadow)}
+.ai-bar svg{color:var(--brand);flex:0 0 auto}
+.ai-bar input{border:none;outline:none;font-family:inherit;font-size:13.5px;flex:1;background:none;color:var(--ink)}
+
+.insp-field{margin-bottom:15px}
+.insp-field label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;display:block;margin-bottom:6px}
+.insp-field select,.insp-field input{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;
+  font-family:inherit;font-size:13px;background:var(--panel);color:var(--ink);outline:none}
+.insp-field select:focus,.insp-field input:focus{border-color:var(--brand)}
+.chart-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cp{aspect-ratio:1;border:1px solid var(--border);border-radius:7px;display:grid;place-items:center;color:var(--muted)}
+.cp.on{border-color:var(--brand);background:var(--brand-tint);color:var(--brand)}
+.cp:hover{border-color:var(--border-strong)}
+
+/* ── settings ────────────────────────────────────── */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:980px}
+.set-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:22px 24px}
+.set-card h3{font-size:15px;margin-bottom:4px}
+.set-card .desc{font-size:12.5px;color:var(--muted);margin-bottom:18px}
+.field{margin-bottom:15px}
+.field label{font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px}
+.field input,.field select{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 11px;
+  font-family:inherit;font-size:13px;outline:none;background:var(--panel);color:var(--ink)}
+.field input:focus,.field select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-tint)}
+.field .hint{font-size:11px;color:var(--faint);margin-top:5px}
+.combo{position:relative}
+.combo-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;background:#fff;
+  border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.10);
+  max-height:240px;overflow:auto;padding:4px}
+.combo-item{padding:8px 10px;border-radius:6px;font-size:13px;color:var(--ink);cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo-item:hover,.combo-item.active{background:var(--brand-tint)}
+.combo-empty{padding:8px 10px;font-size:12px;color:var(--faint)}
+.seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;width:fit-content}
+.seg button{border:none;background:var(--panel);padding:8px 16px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.seg button.on{background:var(--brand);color:#fff}
+.test{display:flex;align-items:center;gap:10px;margin-top:6px}
+.test-result{font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px}
+
+/* ── AI drawer ───────────────────────────────────── */
+.scrim{position:fixed;inset:0;background:rgba(14,26,31,.42);backdrop-filter:blur(2px);opacity:0;pointer-events:none;
+  transition:opacity .2s;z-index:40}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:440px;background:var(--panel);box-shadow:var(--shadow-lg);
+  transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);z-index:41;display:flex;flex-direction:column}
+.drawer.show{transform:none}
+.drawer-h{padding:20px 22px;border-bottom:1px solid var(--border)}
+.drawer-h h2{font-size:17px;display:flex;align-items:center;gap:9px}
+.drawer-h p{margin:5px 0 0;font-size:12.5px;color:var(--muted)}
+.drawer-body{padding:20px 22px;overflow-y:auto;flex:1}
+.prompt-box{border:1px solid var(--border);border-radius:11px;padding:13px 14px;margin-bottom:14px}
+.prompt-box textarea{width:100%;border:none;outline:none;resize:none;font-family:inherit;font-size:13.5px;color:var(--ink);min-height:60px}
+.examples{display:flex;flex-direction:column;gap:7px}
+.ex{text-align:left;border:1px solid var(--border);background:var(--panel-2);border-radius:9px;padding:9px 12px;
+  font-size:12.5px;color:var(--ink-2);transition:border .12s}
+.ex:hover{border-color:var(--brand)}
+.ex b{color:var(--brand);font-weight:600}
+.gen-out{margin-top:8px}
+.gen-step{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);padding:7px 0}
+.gen-step .gs-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex:0 0 auto}
+.gen-step.done .gs-dot{border-color:var(--high);background:var(--high)}
+.gen-step.done{color:var(--ink-2)}
+.gen-preview{border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-top:12px;opacity:0;transform:translateY(6px);transition:.3s}
+.gen-preview.show{opacity:1;transform:none}
+.gen-preview .gp-h{background:var(--brand-tint);padding:11px 14px;font-size:13px;font-weight:600;color:var(--brand-ink)}
+.gen-preview .gp-b{padding:13px 14px;font-size:12px;color:var(--ink-2)}
+.gp-panel{display:flex;align-items:center;gap:8px;padding:6px 0;color:var(--muted)}
+.gp-panel svg{color:var(--brand)}
+.drawer-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px}
+.btn-primary{background:var(--brand);color:#fff;flex:1;justify-content:center}
+.btn-primary:hover{background:var(--brand-deep)}
+.prov-tag{font-size:11px;color:var(--faint);display:flex;align-items:center;gap:6px;margin-top:14px;justify-content:center}
+
+svg .axis{stroke:var(--border);stroke-width:1}
+svg .gl{stroke:var(--panel-2);stroke-width:1}
+svg text{font-family:"IBM Plex Mono",monospace;fill:var(--faint);font-size:10px}
+.bar-lbl{fill:var(--ink-2);font-family:"IBM Plex Sans",sans-serif;font-size:11px}
+.drill-scrim{position:fixed;inset:0;background:rgba(10,20,24,.34);opacity:0;pointer-events:none;transition:opacity .18s;z-index:60}
+.drill-scrim.on{opacity:1;pointer-events:auto}
+.drill{position:fixed;top:0;right:0;height:100vh;width:420px;max-width:92vw;background:var(--panel);border-left:1px solid var(--border);box-shadow:-12px 0 36px rgba(10,20,24,.16);transform:translateX(100%);transition:transform .2s ease;z-index:61;display:flex;flex-direction:column}
+.drill.on{transform:translateX(0)}
+.drill-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 8px}
+.drill-head h3{margin:0;font-family:"Space Grotesk",sans-serif;font-size:17px;color:var(--ink)}
+.drill-x{border:none;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px}
+.drill-x:hover{color:var(--ink)}
+.drill-sub{padding:0 20px 10px;color:var(--muted);font-size:12.5px}
+.drill-body{flex:1;overflow:auto;padding:0 20px 20px}
+.drill-body table{width:100%;border-collapse:collapse;font-size:12.5px}
+.drill-body th{text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);padding:6px 8px;position:sticky;top:0;background:var(--panel)}
+.drill-body td{padding:6px 8px;border-bottom:1px solid var(--panel-2);color:var(--ink-2)}
+.card[data-q]{cursor:pointer}
+.card[data-q]:hover{box-shadow:0 0 0 2px var(--brand-tint)}
+.scope-sel{font:600 12px "IBM Plex Sans",system-ui,sans-serif;color:var(--ink-2);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:5px 8px;cursor:pointer}
+.scope-sel:hover{border-color:var(--brand)}
+.data-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;align-items:center}
+.data-badge.live{background:#e7f6ef;color:#1c8f4d}
+.data-badge.demo{background:#fff7ed;color:#9a5b15}
+/* ── demo-mode banner ── */
+.demo-banner{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:10px 14px;
+  background:#fff7ed;border:1px solid #f3d2a6;border-radius:10px;color:#9a5b15;font-size:13.5px}
+.demo-banner svg{flex:0 0 auto;color:#dd8a26}
+.demo-banner b{color:#7c4710}
+.demo-banner .db-btn{margin-left:auto;background:#0f766e;color:#fff;border:none;border-radius:7px;
+  padding:7px 12px;font:600 12.5px "IBM Plex Sans",system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.demo-banner .db-btn:hover{background:#0a443f}
+
+/* ── dashboard toolbar (Print / Download) ── */
+.dash-tools{display:flex;gap:8px;align-items:center}
+.dash-tools .btn-sm{display:inline-flex;align-items:center;gap:6px;font:600 12px "IBM Plex Sans",system-ui,sans-serif;
+  padding:7px 11px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer}
+.dash-tools .btn-sm:hover{border-color:var(--brand);color:var(--brand)}
+.print-only{display:none}
+.save-bar{display:flex;align-items:center;gap:14px;margin-top:18px;padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.save-bar .save-hint{font-size:12px;color:var(--muted)}
+.test-result.ok{color:#1c8f4d}.test-result.err{color:#d64545}
+
+/* ── print / PDF: isolate the active dashboard, drop the app chrome ── */
+@media print{
+  @page{margin:14mm}
+  .side,.topbar,.dash-tabs,.std-flag,.dash-tools,.drawer,.drawer-scrim{display:none !important}
+  .app{display:block !important}
+  .main{margin:0 !important}
+  .scroll{overflow:visible !important;padding:0 !important;height:auto !important}
+  .view{display:none !important}
+  .view.active{display:block !important}
+  .print-only{display:block}
+  .print-head{display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:2px solid #0f766e;padding-bottom:8px;margin-bottom:14px}
+  .print-head .pt{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:18px;color:#0a443f}
+  .print-head .pm{font:500 11px "IBM Plex Mono",monospace;color:#5b6573}
+  .dash-grid{display:grid !important;grid-template-columns:repeat(2,1fr) !important;gap:12px !important}
+  .card{break-inside:avoid;box-shadow:none !important;border:1px solid #cdd5dd !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card.s2,.card.span2{grid-column:span 2}
+  svg{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ════ SIDEBAR ════ -->
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V8m5 10V5m5 13v-7m5 7V9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+      <div><div class="brand-name">Catalog Insights</div><div class="brand-sub">Pentaho Data Catalog</div></div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-label">Analytics</div>
+      <button class="nav-item active" data-view="overview" title="Catalog-wide view: trust, quality, sensitivity & coverage across all sources">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6V11h-6v9Zm0-16v5h6V4h-6Z" stroke="currentColor" stroke-width="1.7"/></svg>
+        Overview</button>
+      <button class="nav-item" data-view="system" title="Operational health: profiling, scan freshness & ingestion per source">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="7" r="1.6" fill="currentColor"/><circle cx="14" cy="12" r="1.6" fill="currentColor"/><circle cx="10" cy="17" r="1.6" fill="currentColor"/></svg>
+        System <span class="nav-badge">4</span></button>
+      <button class="nav-item" data-view="user" title="Stewardship & activity: ownership, ratings and recent changes">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.3" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        User <span class="nav-badge">4</span></button>
+      <button class="nav-item" data-view="governance" title="Business glossary coverage and policy posture">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Governance <span class="nav-badge">4</span></button>
+      <button class="nav-item" data-view="quality" title="Data-quality scores and the dimensions behind them">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/></svg>
+        Quality <span class="nav-badge">4</span></button>
+      <button class="nav-item" data-view="sensitivity" title="Privacy exposure: sensitivity levels and PII discoveries">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7"/></svg>
+        Sensitivity <span class="nav-badge">4</span></button>
+      <div class="nav-label">Build</div>
+      <button class="nav-item" data-view="designer" title="Build and edit dashboards, or generate new ones with AI">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><path d="m4 20 4-1 10-10-3-3L5 16l-1 4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m14 6 4 4" stroke="currentColor" stroke-width="1.7"/></svg>
+        Dashboard Designer</button>
+      <div class="nav-label">Configure</div>
+      <button class="nav-item" data-view="settings" title="Connect your PDC, choose where generation runs, and switch to live data">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6.3 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4 13.6a1.7 1.7 0 0 0-1.5-1H2a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4 7.7a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 3.4 1.7 1.7 0 0 0 10 1.9V2a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" stroke="currentColor" stroke-width="1.4"/></svg>
+        Settings</button>
+    </nav>
+    <div class="side-foot">
+      <div class="conn"><span class="dot warn" id="foot-pdc-dot"></span> PDC&nbsp;·&nbsp;<span class="mono" id="foot-pdc-txt">checking…</span></div>
+      <div class="conn"><span class="dot warn" id="foot-llm-dot"></span> LLM&nbsp;·&nbsp;<span class="mono" id="foot-llm-txt">checking…</span></div>
+    </div>
+  </aside>
+
+  <!-- ════ MAIN ════ -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <div class="crumb">Analytics&nbsp;/&nbsp;<b id="crumb">Overview</b></div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input placeholder="Search assets, terms, sources…">
+      </div>
+      <div class="scope">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        All sources
+      </div>
+      <button class="btn btn-ai" title="Open the AI dashboard builder for the current section"
+        onclick="(function(){var a=document.querySelector('.nav-item.active');var s=a?a.getAttribute('data-view'):'';var ok=['overview','system','user','governance','quality','sensitivity'].indexOf(s)>=0;window.location.href='/chat'+(ok?'?section='+s:'');})()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z" fill="currentColor"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z" fill="currentColor"/></svg>
+        Build with AI
+      </button>
+      <div class="avatar">JP</div>
+    </header>
+
+    <div class="scroll">
+      <div id="demo-banner" class="demo-banner" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>You're viewing <b>demo data</b>. Connect your PDC and switch to live to run against real data.</span>
+        <button class="db-btn" onclick="document.querySelector('[data-view=&quot;settings&quot;]').click()">Open Settings</button>
+      </div>
+      <!-- ─── analytics sections are dashboard-driven ─── -->
+      <section class="view active" id="v-overview"><div class="dash-host" data-section="overview"></div></section>
+      <section class="view" id="v-system"><div class="dash-host" data-section="system"></div></section>
+      <section class="view" id="v-user"><div class="dash-host" data-section="user"></div></section>
+      <section class="view" id="v-governance"><div class="dash-host" data-section="governance"></div></section>
+      <section class="view" id="v-quality"><div class="dash-host" data-section="quality"></div></section>
+      <section class="view" id="v-sensitivity"><div class="dash-host" data-section="sensitivity"></div></section>
+
+      <!-- ─── DESIGNER ─── -->
+      <section class="view" id="v-designer">
+        <div class="designer">
+          <div class="dz-pane lib">
+            <div class="dz-h"><h3>Query Library</h3><button class="mini">+ New source</button></div>
+            <div class="dz-body" id="dz-lib"></div>
+          </div>
+          <div class="dz-pane">
+            <div class="canvas">
+              <div class="ai-bar">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z" fill="currentColor"/></svg>
+                <input placeholder="Describe a dashboard, or drag a query onto the canvas…" onclick="openDrawer()" readonly>
+                <button class="btn btn-ai" onclick="openDrawer()">Generate</button>
+              </div>
+              <div class="canvas-grid" id="dz-canvas"></div>
+            </div>
+          </div>
+          <div class="dz-pane insp">
+            <div class="dz-h"><h3>Inspector</h3><span class="chip">Panel</span></div>
+            <div class="dz-body">
+              <div class="insp-field"><label>Panel title</label><input value="Trust by source"></div>
+              <div class="insp-field"><label>Data access</label><select><option>trust_by_source</option><option>sensitivity_mix</option><option>quality_by_source</option></select></div>
+              <div class="insp-field"><label>Chart type</label>
+                <div class="chart-pick" id="dz-charts"></div>
+              </div>
+              <div class="insp-field"><label>Category (x)</label><select><option>source</option><option>bucket</option></select></div>
+              <div class="insp-field"><label>Value (y)</label><select><option>count</option></select></div>
+              <div class="insp-field"><label>Series</label><select><option>bucket</option><option>— none —</option></select></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── SETTINGS ─── -->
+      <section class="view" id="v-settings">
+        <div class="page-head"><div><h1>Settings</h1><p>Connect Catalog Insights to your PDC instance and choose where dashboard generation runs.</p></div></div>
+        <div class="set-grid">
+          <div class="set-card">
+            <h3>LLM connection</h3>
+            <p class="desc">Where natural-language dashboard generation runs. Local keeps catalog and PII metadata inside your environment.</p>
+            <div class="field"><label>Provider</label>
+              <div class="seg" id="set-llm-provider"><button data-prov="local" class="on">Local</button><button data-prov="anthropic">Anthropic</button><button data-prov="openai">OpenAI</button><button data-prov="disabled">Off</button></div>
+              <div class="hint">Recommended: <b>Local</b> for governance data — nothing leaves the box.</div>
+            </div>
+            <div class="field"><label>Endpoint</label><input id="set-llm-url" value="http://localhost:11434"></div>
+            <div class="field"><label>Model</label>
+              <div class="combo" id="set-llm-combo">
+                <input id="set-llm-model" autocomplete="off" value="qwen2.5:7b-instruct" placeholder="pick or type a model">
+                <div class="combo-menu" id="set-llm-menu" hidden></div>
+              </div>
+              <div class="hint" id="set-llm-models-hint">Type a name, or pick from models installed in your Ollama.</div></div>
+            <div class="field"><label>JSON mode</label><select id="set-llm-json"><option value="true">Constrained (format=json)</option><option value="false">Off</option></select>
+              <div class="hint">Forces valid spec output from smaller local models.</div></div>
+            <div class="field"><label>Model download</label>
+              <div class="hint" id="set-rec">Checking this machine…</div>
+              <div class="test" style="margin-top:6px">
+                <button class="btn btn-ghost" onclick="pullSuggested(this)" id="set-pull">Download model</button>
+                <span class="test-result" id="set-pull-res"></span>
+              </div>
+              <div class="hint" id="set-pull-prog" style="font-family:'IBM Plex Mono',monospace;display:none;margin-top:6px"></div>
+            </div>
+            <div class="test"><button class="btn btn-ghost" onclick="testLLM(this)" title="Check that the LLM endpoint is reachable">Test connection</button>
+              <span class="test-result" id="llm-res"></span></div>
+          </div>
+          <div class="set-card">
+            <h3>PDC connection</h3>
+            <p class="desc">The Pentaho Data Catalog instance to report on. Reads only — no writes are made to the catalog.</p>
+            <div class="field"><label>Base URL</label><input id="set-pdc-url" value="https://pdc.awc.local"></div>
+            <div class="field"><label>API version</label><select id="set-pdc-ver"><option>v3</option><option>v2</option><option>v1</option></select></div>
+            <div class="field"><label>Username</label><input id="set-pdc-user" value="pdc_user"></div>
+            <div class="field"><label>Password</label><input id="set-pdc-pass" type="password" placeholder="••••••••••"></div>
+            <div class="field"><label>Cache responses</label><select id="set-pdc-cache"><option value="300">5 minutes</option><option value="60">1 minute</option><option value="0">Off</option></select></div>
+            <div class="field"><label>Data source</label>
+              <div class="seg" id="set-demo-seg"><button data-demo="false" class="on">Live PDC</button><button data-demo="true">Demo data</button></div>
+              <div class="hint">Live reads from the PDC above; Demo serves the bundled sample.</div></div>
+            <div class="test"><button class="btn btn-ghost" onclick="testPDC(this)" title="Authenticate against the PDC and confirm the connection">Test connection</button>
+              <span class="test-result" id="pdc-res"></span></div>
+          </div>
+
+          <div class="set-card" style="grid-column:span 2">
+            <h3>Branding</h3>
+            <p class="desc">Genericise the product for delivery — the same pattern as the Glossary Generator's environment variables.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+              <div class="field"><label>Product name</label><input value="Catalog Insights"></div>
+              <div class="field"><label>Catalog label</label><input value="Pentaho Data Catalog"></div>
+              <div class="field"><label>Accent colour</label><input value="#0F766E"></div>
+            </div>
+          </div>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-ai" onclick="saveSettings(this)" title="Persist these settings to .env and apply them immediately (no restart)">Save &amp; apply</button>
+          <span class="test-result" id="set-save-res"></span>
+          <span class="save-hint">Saves to .env and applies immediately — the next snapshot, recommendation, and chat run against the live PDC.</span>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- ════ AI DRAWER ════ -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-h">
+    <h2><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z" fill="#0f766e"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z" fill="#0f766e"/></svg> Generate a dashboard</h2>
+    <p>Describe what you want to see. The model builds it from your real catalog queries — you refine before anything saves.</p>
+  </div>
+  <div class="drawer-body">
+    <div class="prompt-box">
+      <textarea id="prompt" placeholder="e.g. Trust score and PII coverage by data source, with the worst tables called out">Trust score and PII coverage by data source, with the worst tables called out</textarea>
+    </div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin:6px 2px 9px">Try one of these</div>
+    <div class="examples">
+      <button class="ex" onclick="setPrompt(this)"><b>Stewardship</b> — owned vs unowned assets per source, plus top owners</button>
+      <button class="ex" onclick="setPrompt(this)"><b>Privacy review</b> — sensitivity mix and every PII type discovered</button>
+      <button class="ex" onclick="setPrompt(this)"><b>Quality deep-dive</b> — score distribution and the five DQ dimensions</button>
+    </div>
+    <div class="gen-out" id="gen-out"></div>
+    <div class="prov-tag"><span class="dot warn" style="width:6px;height:6px"></span> Running locally · qwen2.5:7b-instruct · metadata stays in your environment</div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" onclick="closeDrawer()">Cancel</button>
+    <button class="btn btn-primary" id="gen-btn" onclick="runGen()">Generate</button>
+  </div>
+</aside>
+
+<script>
+/* ════ helpers ════ */
+const $=(s,e=document)=>e.querySelector(s), $$=(s,e=document)=>[...e.querySelectorAll(s)];
+const NS='http://www.w3.org/2000/svg';
+const C=['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
+const SCORE=['var(--low)','var(--mid)','var(--high)'];
+function el(t,a={},p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p!=null)e.textContent=p;return e;}
+function svg(w,h){const s=el('svg',{viewBox:`0 0 ${w} ${h}`,width:'100%',height:h});s.dataset.w=w;s.dataset.h=h;return s;}
+
+/* ════ chart renderers (lightweight SVG) ════ */
+function donut(host,data,{cx=78,r=58,thick=22,total}={}){
+  const W=200,H=148;const s=svg(W,H);const sum=total||data.reduce((a,d)=>a+d.v,0);
+  let ang=-Math.PI/2;const cy=H/2;
+  data.forEach((d,i)=>{const a2=ang+d.v/sum*2*Math.PI;
+    const x1=cx+r*Math.cos(ang),y1=cy+r*Math.sin(ang),x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    const large=(a2-ang)>Math.PI?1:0;
+    s.appendChild(el('path',{d:`M${x1} ${y1}A${r} ${r} 0 ${large} 1 ${x2} ${y2}`,
+      stroke:d.c||C[i%6],'stroke-width':thick,fill:'none','stroke-linecap':'butt'}));ang=a2;});
+  s.appendChild(el('text',{x:cx,y:cy-3,'text-anchor':'middle','font-size':22,'font-family':'Space Grotesk',fill:'var(--ink)','font-weight':600},sum.toLocaleString()));
+  s.appendChild(el('text',{x:cx,y:cy+14,'text-anchor':'middle','font-size':10},'total'));
+  // legend
+  const fo=el('foreignObject',{x:150,y:18,width:50,height:H-30});
+  const div=document.createElement('div');div.style.cssText='font:11px IBM Plex Sans';
+  host.appendChild(s);
+  const leg=document.createElement('div');leg.className='legend-row';leg.style.marginTop='6px';
+  data.forEach((d,i)=>{const l=document.createElement('span');l.className='lr';
+    l.innerHTML=`<span class="sw" style="background:${d.c||C[i%6]}"></span>${d.k} <b class="mono" style="margin-left:4px;color:var(--ink-2)">${d.v.toLocaleString()}</b>`;leg.appendChild(l);});
+  host.appendChild(leg);
+}
+function bars(host,data,{horizontal=true,h=200,max,color}={}){
+  const W=360,pad=8;const m=max||Math.max(...data.map(d=>d.v))*1.1;const s=svg(W,h);
+  if(horizontal){const bh=Math.min(26,(h-10)/data.length-8),gap=(h-10)/data.length;
+    data.forEach((d,i)=>{const y=8+i*gap;const bw=(d.v/m)*(W-120);
+      s.appendChild(el('text',{x:0,y:y+bh/2+4,class:'bar-lbl'},d.k));
+      s.appendChild(el('rect',{x:96,y,width:Math.max(2,bw),height:bh,rx:4,fill:d.c||color||'var(--c1)'}));
+      s.appendChild(el('text',{x:96+bw+7,y:y+bh/2+4,'font-size':11,fill:'var(--ink-2)','font-family':'IBM Plex Mono'},d.v.toLocaleString()));});
+  }else{const bw=(W-20)/data.length-12;
+    data.forEach((d,i)=>{const x=20+i*((W-20)/data.length);const bh=(d.v/m)*(h-28);
+      s.appendChild(el('rect',{x,y:h-22-bh,width:bw,height:bh,rx:4,fill:d.c||color||'var(--c1)'}));
+      s.appendChild(el('text',{x:x+bw/2,y:h-6,'text-anchor':'middle','font-size':10},d.k));});
+  }
+  host.appendChild(s);
+}
+function stacked(host,data,keys,colors,{h=200}={}){
+  const W=360,s=svg(W,h);const max=Math.max(...data.map(d=>keys.reduce((a,k)=>a+d[k],0)))*1.1;
+  const slot=(W-30)/data.length,bw=Math.min(46,slot-14);
+  data.forEach((d,i)=>{let y=h-24;const x=30+i*slot+(slot-bw)/2;
+    keys.forEach((k,j)=>{const bh=(d[k]/max)*(h-34);y-=bh;
+      s.appendChild(el('rect',{x,y,width:bw,height:bh,fill:colors[j],...(j===keys.length-1?{rx:4}:{})}));});
+    s.appendChild(el('text',{x:x+bw/2,y:h-8,'text-anchor':'middle','font-size':10},d.k));});
+  host.appendChild(s);
+  const leg=document.createElement('div');leg.className='legend-row';
+  keys.forEach((k,j)=>{const l=document.createElement('span');l.className='lr';
+    l.innerHTML=`<span class="sw" style="background:${colors[j]}"></span>${k}`;leg.appendChild(l);});
+  host.appendChild(leg);
+}
+function line(host,series,{h=190,area=true,color='var(--c1)',fmt=v=>v}={}){
+  const W=360,pad=28,s=svg(W,h);const max=Math.max(...series)*1.15,min=Math.min(...series)*.9;
+  const xs=i=>pad+i*((W-pad-8)/(series.length-1)), ys=v=>h-22-((v-min)/(max-min))*(h-36);
+  [0,.5,1].forEach(t=>{const y=22+t*(h-58);s.appendChild(el('line',{x1:pad,y1:y,x2:W-8,y2:y,class:'gl'}));});
+  let d=series.map((v,i)=>`${i?'L':'M'}${xs(i)} ${ys(v)}`).join(' ');
+  if(area){s.appendChild(el('path',{d:`${d} L${xs(series.length-1)} ${h-22} L${pad} ${h-22} Z`,fill:color,opacity:.10}));}
+  s.appendChild(el('path',{d,stroke:color,'stroke-width':2.4,fill:'none','stroke-linecap':'round','stroke-linejoin':'round'}));
+  s.appendChild(el('circle',{cx:xs(series.length-1),cy:ys(series.at(-1)),r:3.6,fill:color}));
+  s.appendChild(el('text',{x:xs(series.length-1),y:ys(series.at(-1))-9,'text-anchor':'middle','font-size':11,fill:'var(--ink-2)','font-family':'IBM Plex Mono'},fmt(series.at(-1))));
+  host.appendChild(s);
+}
+function spark(host,series,color){
+  const W=120,h=34,s=svg(W,h);const max=Math.max(...series),min=Math.min(...series);
+  const xs=i=>i*(W/(series.length-1)),ys=v=>h-4-((v-min)/(max-min||1))*(h-8);
+  let d=series.map((v,i)=>`${i?'L':'M'}${xs(i)} ${ys(v)}`).join(' ');
+  s.appendChild(el('path',{d:`${d} L${W} ${h} L0 ${h} Z`,fill:color,opacity:.12}));
+  s.appendChild(el('path',{d,stroke:color,'stroke-width':2,fill:'none'}));
+  host.appendChild(s);
+}
+function gauge(host,val){
+  const W=200,H=130,cx=100,cy=110,r=78,s=svg(W,H);
+  const arc=(a1,a2,col,w)=>{const p1=[cx+r*Math.cos(a1),cy+r*Math.sin(a1)],p2=[cx+r*Math.cos(a2),cy+r*Math.sin(a2)];
+    s.appendChild(el('path',{d:`M${p1[0]} ${p1[1]}A${r} ${r} 0 0 1 ${p2[0]} ${p2[1]}`,stroke:col,'stroke-width':w,fill:'none','stroke-linecap':'round'}));};
+  arc(Math.PI,2*Math.PI,'var(--panel-2)',16);
+  const a=Math.PI+(val/100)*Math.PI;arc(Math.PI,a,'var(--brand)',16);
+  s.appendChild(el('text',{x:cx,y:cy-8,'text-anchor':'middle','font-size':30,'font-family':'Space Grotesk',fill:'var(--ink)','font-weight':600},val+'%'));
+  s.appendChild(el('text',{x:cx,y:cy+10,'text-anchor':'middle','font-size':10},'have a term'));
+  host.appendChild(s);
+}
+function radar(host,axes){
+  const W=300,H=200,cx=150,cy=100,R=78,n=axes.length,s=svg(W,H);
+  const pt=(i,f)=>[cx+R*f*Math.cos(-Math.PI/2+i*2*Math.PI/n),cy+R*f*Math.sin(-Math.PI/2+i*2*Math.PI/n)];
+  [.25,.5,.75,1].forEach(f=>{let d='';for(let i=0;i<n;i++){const p=pt(i,f);d+=`${i?'L':'M'}${p[0]} ${p[1]} `;}s.appendChild(el('path',{d:d+'Z',fill:'none',stroke:'var(--border)','stroke-width':1}));});
+  let d='';axes.forEach((ax,i)=>{const p=pt(i,ax.v/100);d+=`${i?'L':'M'}${p[0]} ${p[1]} `;
+    const lp=pt(i,1.18);s.appendChild(el('text',{x:lp[0],y:lp[1]+3,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},ax.k));});
+  s.appendChild(el('path',{d:d+'Z',fill:'var(--brand)',opacity:.16,stroke:'var(--brand)','stroke-width':2}));
+  host.appendChild(s);
+}
+function histo(host,bins){
+  const W=360,h=190,s=svg(W,h);const max=Math.max(...bins.map(b=>b.v))*1.1;const bw=(W-30)/bins.length-4;
+  bins.forEach((b,i)=>{const x=24+i*((W-30)/bins.length);const bh=(b.v/max)*(h-30);
+    const col=b.lo<51?'var(--low)':b.lo<76?'var(--mid)':'var(--high)';
+    s.appendChild(el('rect',{x,y:h-22-bh,width:bw,height:bh,rx:2,fill:col,opacity:.85}));
+    if(i%2===0)s.appendChild(el('text',{x:x+bw/2,y:h-7,'text-anchor':'middle','font-size':9},b.lo));});
+  host.appendChild(s);
+}
+function bullet(host,rows){
+  const W=360,rowH=34,s=svg(W,rows.length*rowH+6);
+  rows.forEach((r,i)=>{const y=i*rowH+6,track=W-150;
+    s.appendChild(el('text',{x:0,y:y+15,class:'bar-lbl'},r.k));
+    s.appendChild(el('rect',{x:90,y:y+4,width:track,height:16,rx:3,fill:'var(--panel-2)'}));
+    s.appendChild(el('rect',{x:90,y:y+4,width:track*r.v/100,height:16,rx:3,fill:r.v>=r.t?'var(--high)':'var(--mid)'}));
+    s.appendChild(el('line',{x1:90+track*r.t/100,y1:y,x2:90+track*r.t/100,y2:y+24,stroke:'var(--ink)','stroke-width':2}));
+    s.appendChild(el('text',{x:90+track+8,y:y+16,'font-size':11,'font-family':'IBM Plex Mono',fill:'var(--ink-2)'},r.v));});
+  host.appendChild(s);
+}
+function calendar(host,weeks=12){
+  const W=360,cell=12,gap=3,s=svg(W,7*(cell+gap)+18);
+  for(let w=0;w<weeks;w++)for(let d=0;d<7;d++){const v=Math.random();
+    const col=v>.8?'var(--brand)':v>.55?'#5cab9f':v>.3?'#a9d4cc':'var(--panel-2)';
+    s.appendChild(el('rect',{x:w*(cell+gap),y:d*(cell+gap)+4,width:cell,height:cell,rx:2.5,fill:col}));}
+  host.appendChild(s);
+  const leg=document.createElement('div');leg.className='legend-row';leg.style.justifyContent='flex-end';
+  leg.innerHTML='<span class="lr">Less <span class="sw" style="background:var(--panel-2);margin:0 2px"></span><span class="sw" style="background:#a9d4cc;margin:0 2px"></span><span class="sw" style="background:#5cab9f;margin:0 2px"></span><span class="sw" style="background:var(--brand);margin:0 2px"></span> More</span>';
+  host.appendChild(leg);
+}
+
+/* ════ KPI + table builders ════ */
+function kpi(host,d){
+  const c=document.createElement('div');c.className='card kpi';
+  c.innerHTML=`<div class="kpi-top"><div><div class="kpi-label">${d.label}</div>
+    <div class="kpi-val">${d.val}</div>
+    <div class="kpi-delta ${d.dir}">${d.dir==='up'?'▲':d.dir==='down'?'▼':''} ${d.delta}</div></div>
+    <div class="kpi-ico" style="background:${d.tint};color:${d.col}">${d.ico}</div></div>
+    <div class="spark"></div>`;
+  host.appendChild(c);
+  spark($('.spark',c),d.spark,d.col);
+}
+function table(host,cols,rows){
+  const t=document.createElement('table');t.className='tbl';
+  t.innerHTML='<thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr></thead>';
+  const tb=document.createElement('tbody');
+  rows.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=r.map(c=>`<td>${c}</td>`).join('');tb.appendChild(tr);});
+  t.appendChild(tb);host.appendChild(t);
+}
+const pill=(t,c)=>`<span class="pill ${c}">${t}</span>`;
+
+/* ════ data + render ════ */
+function spectrum(host,seg){
+  const wrap=document.createElement('div');
+  const bar=document.createElement('div');bar.className='spectrum-bar';
+  const sum=seg.reduce((a,s)=>a+s.v,0);
+  seg.forEach((s,i)=>{const d=document.createElement('div');d.className='spectrum-seg';
+    d.style.cssText=`width:${s.v/sum*100}%;background:${SCORE[i]}`;d.textContent=Math.round(s.v/sum*100)+'%';bar.appendChild(d);});
+  wrap.appendChild(bar);
+  const lg=document.createElement('div');lg.className='spectrum-legend';
+  seg.forEach((s,i)=>{const l=document.createElement('div');l.className='leg';
+    l.innerHTML=`<span class="sw" style="background:${SCORE[i]}"></span>${s.k} <b>${s.v.toLocaleString()}</b> <span>${s.r}</span>`;lg.appendChild(l);});
+  wrap.appendChild(lg);host.appendChild(wrap);
+}
+
+/* ════ standard dashboards (pre-built, editable in Designer) ════ */
+const SECTION_META={
+  overview:{name:'Overview',desc:'A point-in-time read of the Arizona Water Company catalog — trust, quality, sensitivity, and coverage across all connected sources.'},
+  system:{name:'System',desc:'Operational health of the catalog: profiling, scan freshness, and ingestion across sources.'},
+  user:{name:'User',desc:'Stewardship and human activity — ownership, ratings, and recent changes across the catalog.'},
+  governance:{name:'Governance',desc:'Business-glossary coverage and policy posture across catalog assets.'},
+  quality:{name:'Quality',desc:'Data-quality scores and the dimensions behind them.'},
+  sensitivity:{name:'Sensitivity',desc:'Privacy exposure — sensitivity levels and content-scan (PII) discoveries.'},
+};
+const K=(label,val,dir,delta,col,ico,spark,tint)=>({kind:'kpi',label,val,dir,delta,col,ico,spark,tint:tint||'var(--brand-tint)'});
+const SENS=[{k:'Low',v:9180,c:'var(--high)'},{k:'Medium',v:2458,c:'var(--mid)'},{k:'High',v:842,c:'var(--low)'}];
+
+const DASHBOARDS={
+ overview:[
+  {id:'catalog-health',name:'Catalog health',desc:'Trust, quality & coverage at a glance',panels:[
+    K('Catalog assets','12,480','up','3.1% vs last wk','var(--brand)','◳',[9,10,10,11,11,12,12.4]),
+    K('Data sources','18','flat','no change','var(--c2)','⛁',[16,16,17,17,18,18,18],'#eef1f7'),
+    K('Glossary coverage','61%','up','+4 pts','var(--high)','❏',[48,52,53,55,57,59,61],'var(--high-t)'),
+    K('High sensitivity','842','down','−18 unowned','var(--low)','🔒',[60,58,55,52,50,46,42],'var(--low-t)'),
+    {kind:'chart',title:'Trust spectrum',sub:'8,214 scored assets',span:2,chart:'spectrum',q:'trust_distribution',
+      data:[{k:'Untrusted',v:2104,r:'0–50'},{k:'Trusted',v:3890,r:'51–75'},{k:'Highly Trusted',v:2220,r:'76–100'}]},
+    {kind:'chart',title:'Sensitivity mix',sub:'all assets',span:2,chart:'donut',q:'sensitivity_mix',data:SENS},
+    {kind:'chart',title:'Quality by source',sub:'mean quality score',span:2,chart:'bars',q:'quality_by_source',
+      data:[{k:'Snowflake',v:86},{k:'Postgres',v:78},{k:'S3-raw',v:64},{k:'Oracle',v:81},{k:'BigQuery',v:73}],opts:{h:170,max:100}},
+    {kind:'chart',title:'Glossary coverage trend',sub:'% with a term · 12 wk',span:2,chart:'line',q:'coverage_trend',
+      data:[48,50,51,53,53,55,56,57,58,59,60,61],opts:{fmt:v=>v+'%'}},
+  ]},
+  {id:'risk-hotspots',name:'Risk hotspots',desc:'Where governance needs attention',panels:[
+    K('Untrusted assets','2,104','down','−112','var(--low)','▽',[2400,2350,2300,2250,2200,2150,2104],'var(--low-t)'),
+    K('Unowned · high sens','63','down','−12','var(--low)','!',[90,84,80,76,72,68,63],'var(--low-t)'),
+    K('Untermed critical','47','down','−9','var(--mid)','❏',[68,64,60,56,53,50,47],'var(--mid-t)'),
+    K('Failed scans','12','down','−5 today','var(--low)','✕',[22,20,18,17,15,14,12],'var(--low-t)'),
+    {kind:'chart',title:'Highest-risk assets',chip:'review',span:2,chart:'table',q:'risk_assets',
+      cols:['Asset','Source','Issue'],rows:[
+        ['customer_pii','Oracle',pill('Untermed + High','hi')],
+        ['billing_export','S3-raw',pill('Unowned + High','hi')],
+        ['invoices_2019','Oracle',pill('Quality 34','md')],
+        ['meter_raw','S3-raw',pill('Scan failed','md')]]},
+    {kind:'chart',title:'Trust by source',sub:'bucket share',span:2,chart:'stacked',q:'trust_by_source',
+      data:[{k:'Snow',Untrusted:300,Trusted:600,High:900},{k:'S3',Untrusted:700,Trusted:400,High:200},{k:'PG',Untrusted:200,Trusted:700,High:500},{k:'Ora',Untrusted:340,Trusted:520,High:410}],
+      keys:['Untrusted','Trusted','High'],colors:SCORE},
+    {kind:'chart',title:'Sensitivity mix',span:2,chart:'donut',q:'sensitivity_mix',data:SENS},
+    {kind:'chart',title:'Coverage gap by source',sub:'% untermed',span:2,chart:'bars',q:'lineage_by_source',
+      data:[{k:'S3-raw',v:58,c:'var(--low)'},{k:'Oracle',v:41,c:'var(--mid)'},{k:'BigQuery',v:34,c:'var(--mid)'},{k:'Postgres',v:22,c:'var(--high)'}],opts:{h:170,max:100}},
+  ]},
+ ],
+ system:[
+  {id:'profiling-health',name:'Profiling health',desc:'Scan & profile status',panels:[
+    K('Profiled assets','94.2%','up','+1.4%','var(--brand)','◉',[88,90,91,92,93,94,94.2]),
+    K('Failed scans','12','down','−5 today','var(--low)','✕',[22,20,18,17,15,14,12],'var(--low-t)'),
+    K('Avg scan time','3.4m','flat','steady','var(--c2)','◷',[3.5,3.4,3.6,3.3,3.4,3.4,3.4],'#eef1f7'),
+    K('Workers active','6','up','2 running','var(--high)','⚙',[4,5,4,6,5,6,6],'var(--high-t)'),
+    {kind:'chart',title:'Profiling status',sub:'last run',span:2,chart:'donut',q:'profile_status',
+      data:[{k:'Completed',v:11760,c:'var(--high)'},{k:'Skipped',v:708,c:'var(--mid)'},{k:'Failed',v:12,c:'var(--low)'}]},
+    {kind:'chart',title:'Assets by data source',span:2,chart:'bars',q:'assets_by_source',
+      data:[{k:'Snowflake',v:4210},{k:'S3-raw',v:3120},{k:'Postgres',v:2480},{k:'Oracle',v:1690},{k:'BigQuery',v:980}],opts:{h:170}},
+    {kind:'chart',title:'Scan & profile activity',sub:'daily · last 24 wks',span:4,chart:'calendar',weeks:24},
+    {kind:'chart',title:'Stale & failed assets',chip:'12 need attention',span:4,chart:'table',q:'stale_failed',
+      cols:['Asset','Source','Status','Last attempt'],rows:[
+        ['billing.invoices_2019','Oracle',pill('Failed','hi'),'2h ago'],
+        ['meter_reads_raw','S3-raw',pill('Failed','hi'),'2h ago'],
+        ['cust_archive','Snowflake',pill('Skipped','md'),'1d ago'],
+        ['gis_parcels','Postgres',pill('Skipped','md'),'1d ago']]},
+  ]},
+  {id:'source-inventory',name:'Source inventory',desc:'What is connected & how much',panels:[
+    K('Connected sources','18','flat','no change','var(--brand)','⛁',[16,16,17,17,18,18,18]),
+    K('Total assets','12,480','up','+380','var(--high)','◳',[11.5,11.8,12,12.1,12.3,12.4,12.48],'var(--high-t)'),
+    K('Tables','9,640','up','+260','var(--c2)','▤',[9.1,9.2,9.3,9.4,9.5,9.6,9.64],'#eef1f7'),
+    K('Files','2,840','up','+120','var(--c4)','❐',[2.5,2.6,2.7,2.7,2.8,2.8,2.84],'#f3eefb'),
+    {kind:'chart',title:'Assets by data source',span:2,chart:'bars',q:'assets_by_source',
+      data:[{k:'Snowflake',v:4210},{k:'S3-raw',v:3120},{k:'Postgres',v:2480},{k:'Oracle',v:1690},{k:'BigQuery',v:980}],opts:{h:170}},
+    {kind:'chart',title:'Assets by type',span:2,chart:'donut',q:'assets_by_type',
+      data:[{k:'Table',v:9640,c:'var(--c1)'},{k:'File',v:2840,c:'var(--c2)'}]},
+    {kind:'chart',title:'Sources',chip:'18 connected',span:4,chart:'table',q:'source_inventory',
+      cols:['Source','Type','Assets','Last scan'],rows:[
+        ['Snowflake-PROD','Warehouse','4,210','12 min ago'],
+        ['S3-raw','Object store','3,120','1h ago'],
+        ['Postgres-billing','Database','2,480','40 min ago'],
+        ['Oracle-legacy','Database','1,690','3h ago']]},
+  ]},
+ ],
+ user:[
+  {id:'stewardship',name:'Stewardship',desc:'Ownership coverage & workload',panels:[
+    K('Assets owned','68%','up','+6 pts','var(--high)','☑',[55,58,60,62,64,66,68],'var(--high-t)'),
+    K('Active stewards','14','up','+2','var(--brand)','☺',[10,11,12,12,13,13,14]),
+    K('Unowned assets','3,994','down','−210','var(--mid)','○',[46,44,42,40,38,34,32],'var(--mid-t)'),
+    K('Avg time to own','4.2d','down','−0.6d','var(--c2)','◷',[6,5.5,5,4.8,4.5,4.3,4.2],'#eef1f7'),
+    {kind:'chart',title:'Owned vs unowned',sub:'by source',span:2,chart:'stacked',q:'owners_coverage',
+      data:[{k:'Snowflake',Owned:3100,Unowned:1110},{k:'S3-raw',Owned:1500,Unowned:1620},{k:'Postgres',Owned:1900,Unowned:580},{k:'Oracle',Owned:1200,Unowned:490}],
+      keys:['Owned','Unowned'],colors:['var(--brand)','var(--border-strong)']},
+    {kind:'chart',title:'Owner workload',sub:'assets per steward',span:2,chart:'bars',q:'owner_workload',
+      data:[{k:'a.ruiz',v:1240},{k:'m.chen',v:980},{k:'t.okafor',v:870},{k:'s.patel',v:640},{k:'j.diaz',v:520}],opts:{h:170}},
+    {kind:'chart',title:'Unowned · high value',chip:'assign',span:4,chart:'table',q:'unowned_high_value',
+      cols:['Asset','Source','Sensitivity','Trust'],rows:[
+        ['customer_master','Snowflake',pill('High','hi'),'82'],
+        ['payments_2024','Postgres',pill('High','hi'),'74'],
+        ['meter_events','S3-raw',pill('Medium','md'),'61'],
+        ['service_orders','Oracle',pill('Medium','md'),'58']]},
+  ]},
+  {id:'activity-ratings',name:'Activity & ratings',desc:'Edits, ratings & freshness',panels:[
+    K('Edits this week','327','up','+12%','var(--c4)','✎',[240,260,280,300,290,310,327],'#f3eefb'),
+    K('Avg rating','4.1','flat','of 5','var(--c3)','★',[3.9,4,4,4.1,4,4.1,4.1],'var(--mid-t)'),
+    K('Assets rated','58%','up','+4 pts','var(--high)','☆',[50,52,53,55,56,57,58],'var(--high-t)'),
+    K('Modified · 7d','892','up','+8%','var(--brand)','⟳',[760,800,820,840,860,880,892]),
+    {kind:'chart',title:'Ratings distribution',span:2,chart:'bars',q:'ratings_distribution',
+      data:[{k:'5★',v:3200,c:'var(--high)'},{k:'4★',v:4100,c:'var(--high)'},{k:'3★',v:2300,c:'var(--mid)'},{k:'2★',v:900,c:'var(--mid)'},{k:'1★',v:380,c:'var(--low)'}],opts:{h:170}},
+    {kind:'chart',title:'Recently modified',sub:'assets / day',span:2,chart:'line',q:'recently_modified',
+      data:[40,55,48,62,70,58,75,80,72,88,84,92],opts:{color:'var(--c4)'}},
+    {kind:'chart',title:'Edits by action',span:2,chart:'bars',q:'edit_activity',
+      data:[{k:'Term linked',v:142},{k:'Owner set',v:98},{k:'Rated',v:54},{k:'Tagged',v:33}],opts:{h:160,color:'var(--c4)'}},
+    {kind:'chart',title:'Most active stewards',span:2,chart:'bars',q:'owner_workload',
+      data:[{k:'a.ruiz',v:88},{k:'m.chen',v:71},{k:'t.okafor',v:60},{k:'s.patel',v:44}],opts:{h:160}},
+  ]},
+ ],
+ governance:[
+  {id:'glossary-coverage',name:'Glossary coverage',desc:'Term coverage & gaps',panels:[
+    K('Terms defined','412','up','+28 this mo','var(--brand)','❏',[360,372,384,392,400,408,412]),
+    K('Term coverage','61%','up','+4 pts','var(--high)','%',[52,54,56,57,59,60,61],'var(--high-t)'),
+    K('Critical untermed','47','down','−9','var(--low)','!',[68,64,60,56,53,50,47],'var(--low-t)'),
+    K('Terms in review','23','flat','pending','var(--mid)','◷',[20,22,21,23,22,23,23],'var(--mid-t)'),
+    {kind:'chart',title:'Term coverage',sub:'% of assets',span:2,chart:'gauge',q:'term_coverage',val:61},
+    {kind:'chart',title:'Top business terms',span:2,chart:'bars',q:'top_terms',
+      data:[{k:'Customer',v:1820},{k:'Meter',v:1340},{k:'Invoice',v:1100},{k:'Parcel',v:760},{k:'Reading',v:640}],opts:{h:170}},
+    {kind:'chart',title:'Coverage trend',sub:'% with a term · 12 wk',span:2,chart:'line',q:'coverage_trend',
+      data:[52,54,55,56,57,58,58,59,60,60,61,61],opts:{fmt:v=>v+'%'}},
+    {kind:'chart',title:'Untermed critical elements',chip:'action',span:2,chart:'table',q:'untermed_critical',
+      cols:['Element','Source','Sensitivity'],rows:[
+        ['ssn','Oracle',pill('High','hi')],
+        ['account_no','Snowflake',pill('High','hi')],
+        ['service_addr','Postgres',pill('Medium','md')],
+        ['meter_id','S3-raw',pill('Low','lo')]]},
+  ]},
+  {id:'policy-lineage',name:'Policy & lineage',desc:'Policy posture & lineage health',panels:[
+    K('Lineage verified','73%','up','+5 pts','var(--brand)','⇄',[62,65,67,69,70,72,73]),
+    K('Policies applied','9','up','+1','var(--high)','▤',[7,7,8,8,8,9,9],'var(--high-t)'),
+    K('Assets in policy','71%','up','+3 pts','var(--c2)','◑',[64,66,67,68,69,70,71],'#eef1f7'),
+    K('Unverified lineage','3,370','down','−240','var(--mid)','◌',[40,38,36,34,32,30,27],'var(--mid-t)'),
+    {kind:'chart',title:'Lineage verified',span:2,chart:'donut',q:'lineage_status',
+      data:[{k:'Verified',v:9110,c:'var(--high)'},{k:'Unverified',v:3370,c:'var(--border-strong)'}]},
+    {kind:'chart',title:'Assets per policy',span:2,chart:'bars',q:'policy_counts',
+      data:[{k:'PII handling',v:1840},{k:'Retention',v:1320},{k:'Access tier',v:980},{k:'Residency',v:540}],opts:{h:170}},
+    {kind:'chart',title:'Lineage coverage by source',span:4,chart:'stacked',q:'lineage_by_source',
+      data:[{k:'Snowflake',Verified:3100,Unverified:1110},{k:'S3-raw',Verified:1500,Unverified:1620},{k:'Postgres',Verified:1900,Unverified:580},{k:'Oracle',Verified:1200,Unverified:490},{k:'BigQuery',Verified:610,Unverified:370}],
+      keys:['Verified','Unverified'],colors:['var(--brand)','var(--border-strong)']},
+  ]},
+ ],
+ quality:[
+  {id:'quality-scores',name:'Quality scores',desc:'Score distribution & laggards',panels:[
+    K('Mean quality','76','up','+2','var(--brand)','◈',[70,72,73,74,75,75,76]),
+    K('Below target','214','down','−31 tables','var(--low)','▽',[280,270,255,245,235,224,214],'var(--low-t)'),
+    K('Completeness','88%','up','+1%','var(--high)','◔',[84,85,86,86,87,87,88],'var(--high-t)'),
+    K('Uniqueness','71%','flat','steady','var(--c3)','◑',[70,71,70,71,72,71,71],'var(--mid-t)'),
+    {kind:'chart',title:'Quality score distribution',span:2,chart:'histo',q:'quality_distribution',
+      data:[{lo:0,v:120},{lo:10,v:180},{lo:20,v:260},{lo:30,v:420},{lo:40,v:680},{lo:50,v:1100},{lo:60,v:1640},{lo:70,v:2200},{lo:80,v:1800},{lo:90,v:980}]},
+    {kind:'chart',title:'Quality vs target',sub:'by source · target 80',span:2,chart:'bullet',q:'quality_by_source',
+      data:[{k:'Snowflake',v:86,t:80},{k:'Postgres',v:78,t:80},{k:'Oracle',v:81,t:80},{k:'S3-raw',v:64,t:80},{k:'BigQuery',v:73,t:80}]},
+    {kind:'chart',title:'Lowest-scoring tables',span:2,chart:'bars',q:'worst_tables',
+      data:[{k:'invoices_2019',v:34,c:'var(--low)'},{k:'meter_raw',v:41,c:'var(--low)'},{k:'cust_arch',v:48,c:'var(--low)'},{k:'gis_old',v:52,c:'var(--mid)'},{k:'logs_2020',v:55,c:'var(--mid)'}],opts:{h:170,max:100}},
+    {kind:'chart',title:'Below-target tables',chip:'remediate',span:2,chart:'table',q:'worst_tables',
+      cols:['Table','Source','Score','Worst dim'],rows:[
+        ['invoices_2019','Oracle',pill('34','hi'),'Completeness'],
+        ['meter_raw','S3-raw',pill('41','hi'),'Validity'],
+        ['cust_arch','Snowflake',pill('48','hi'),'Uniqueness'],
+        ['gis_old','Postgres',pill('52','md'),'Accuracy']]},
+  ]},
+  {id:'dq-dimensions',name:'DQ dimensions',desc:'The dimensions behind the score',panels:[
+    K('Completeness','88%','up','+1%','var(--high)','◔',[84,85,86,86,87,87,88],'var(--high-t)'),
+    K('Accuracy','79%','up','+2%','var(--brand)','◎',[74,75,76,77,78,78,79]),
+    K('Validity','82%','flat','steady','var(--c2)','◍',[81,82,81,82,83,82,82],'#eef1f7'),
+    K('Consistency','76%','up','+3%','var(--c4)','◐',[70,71,72,73,74,75,76],'#f3eefb'),
+    {kind:'chart',title:'DQ dimensions',sub:'mean across sources',span:2,chart:'radar',q:'dq_dimensions',
+      data:[{k:'Complete',v:88},{k:'Accurate',v:79},{k:'Valid',v:82},{k:'Unique',v:71},{k:'Consistent',v:76}]},
+    {kind:'chart',title:'Dimension scores',span:2,chart:'bars',q:'dq_dimensions',
+      data:[{k:'Complete',v:88},{k:'Valid',v:82},{k:'Accurate',v:79},{k:'Consistent',v:76},{k:'Unique',v:71}],opts:{h:170,max:100}},
+    {kind:'chart',title:'Dimensions by source',span:4,chart:'stacked',q:'dq_by_source',
+      data:[{k:'Snowflake',Complete:90,Valid:88,Unique:82},{k:'Postgres',Complete:86,Valid:80,Unique:70},{k:'S3-raw',Complete:74,Valid:68,Unique:55},{k:'Oracle',Complete:85,Valid:84,Unique:76}],
+      keys:['Complete','Valid','Unique'],colors:['var(--c1)','var(--c2)','var(--c6)']},
+  ]},
+ ],
+ sensitivity:[
+  {id:'exposure-overview',name:'Exposure overview',desc:'Sensitivity levels & exposure',panels:[
+    K('High sensitivity','842','down','−18','var(--low)','🔒',[60,58,55,52,50,46,42],'var(--low-t)'),
+    K('Unowned sensitive','63','down','−12','var(--low)','!',[90,84,80,76,72,68,63],'var(--low-t)'),
+    K('Encrypted','58%','up','+7 pts','var(--high)','✔',[44,47,50,52,54,56,58],'var(--high-t)'),
+    K('In residency policy','81%','up','+4 pts','var(--c2)','▤',[72,74,76,77,79,80,81],'#eef1f7'),
+    {kind:'chart',title:'Sensitivity breakdown',span:2,chart:'donut',q:'sensitivity_mix',data:SENS},
+    {kind:'chart',title:'Sensitive by source',sub:'High / Medium',span:2,chart:'stacked',q:'sensitive_by_source',
+      data:[{k:'Snowflake',High:280,Medium:640},{k:'S3-raw',High:310,Medium:520},{k:'Oracle',High:160,Medium:410},{k:'Postgres',High:92,Medium:380}],
+      keys:['High','Medium'],colors:['var(--low)','var(--mid)']},
+    {kind:'chart',title:'High sensitivity · no owner',chip:'risk',span:4,chart:'table',q:'sensitive_unowned',
+      cols:['Asset','Source','PII','Trust'],rows:[
+        ['customer_pii','Oracle',pill('SSN','hi'),'82'],
+        ['billing_export','S3-raw',pill('Account','hi'),'74'],
+        ['support_tickets','Snowflake',pill('Email','md'),'66'],
+        ['field_notes','Postgres',pill('Phone','md'),'59']]},
+  ]},
+  {id:'pii-discoveries',name:'PII discoveries',desc:'Content-scan findings',panels:[
+    K('PII columns','1,604','flat','tracked','var(--mid)','⚑',[15,16,16,16,16,16,16],'var(--mid-t)'),
+    K('PII types','5','flat','EMAIL, SSN…','var(--c5)','⚑',[5,5,5,5,5,5,5],'#fbeaf0'),
+    K('Masked','62%','up','+9 pts','var(--high)','◑',[48,51,54,56,58,60,62],'var(--high-t)'),
+    K('In high-sens assets','71%','down','−4 pts','var(--low)','▽',[80,78,76,75,74,72,71],'var(--low-t)'),
+    {kind:'chart',title:'Content-scan discoveries',sub:'PII types',span:2,chart:'bars',q:'pii_discoveries',
+      data:[{k:'EMAIL',v:1203},{k:'PHONE',v:980},{k:'ADDRESS',v:760},{k:'DOB',v:540},{k:'SSN',v:412}],opts:{h:170,color:'var(--c5)'}},
+    {kind:'chart',title:'PII by source',span:2,chart:'bars',q:'sensitive_by_source',
+      data:[{k:'Oracle',v:980},{k:'S3-raw',v:840},{k:'Snowflake',v:620},{k:'Postgres',v:410}],opts:{h:170,color:'var(--c5)'}},
+    {kind:'chart',title:'Assets containing PII',chip:'protect',span:4,chart:'table',q:'pii_assets',
+      cols:['Asset','Source','PII types','Masked'],rows:[
+        ['customer_pii','Oracle',pill('SSN · Email','hi'),'No'],
+        ['billing_export','S3-raw',pill('Account · DOB','hi'),'Partial'],
+        ['support_tickets','Snowflake',pill('Email · Phone','md'),'Yes'],
+        ['field_notes','Postgres',pill('Phone','md'),'Yes']]},
+  ]},
+ ],
+};
+
+/* ════ panel + dashboard renderers ════ */
+function renderPanel(grid,p,idx){
+  if(p.kind==='kpi'){kpi(grid,p,idx);return;}
+  const c=document.createElement('div');c.className='card s'+(p.span||2);
+  if(p.q){ c.dataset.q=p.q; c.dataset.chart=p.chart; c.dataset.idx=idx; }
+  const meta=p.sub?`<span class="sub">${p.sub}</span>`:p.chip?`<span class="chip">${p.chip}</span>`:'';
+  c.innerHTML=`<div class="card-h"><h3>${p.title}</h3>${meta}</div><div class="pbody"></div>`;
+  grid.appendChild(c);const b=c.querySelector('.pbody');
+  drawChart(b,p.chart,p);                 // initial render from baked data (offline fallback)
+}
+// One place to draw a chart panel from a {data/keys/cols/rows/val/opts} bundle,
+// so both the initial (baked) render and the live re-render share code.
+function drawChart(b,chart,p){
+  b.innerHTML='';
+  switch(chart){
+    case 'spectrum':spectrum(b,p.data);break;
+    case 'donut':donut(b,p.data);break;
+    case 'bars':bars(b,p.data,p.opts||{h:170});break;
+    case 'line':line(b,p.data,p.opts||{});break;
+    case 'stacked':stacked(b,p.data,p.keys,p.colors,p.opts||{});break;
+    case 'gauge':gauge(b,p.val);break;
+    case 'radar':radar(b,p.data);break;
+    case 'histo':histo(b,p.data);break;
+    case 'bullet':bullet(b,p.data);break;
+    case 'calendar':calendar(b,p.weeks||24);break;
+    case 'table':table(b,p.cols,p.rows);break;
+  }
+  wireDrill(b,chart);
+}
+// Drill-through: clicking a chart (or a table row) opens the underlying assets.
+function wireDrill(b,chart){
+  const card=b.closest('.card[data-q]'); if(!card) return;
+  const q=card.dataset.q;
+  const scopeOf=()=>{const sel=card.closest('.view')?.querySelector('[data-scope]');return sel?sel.value:'all';};
+  if(chart==='table'){
+    b.querySelectorAll('tbody tr').forEach(tr=>{tr.style.cursor='pointer';
+      tr.onclick=(e)=>{e.stopPropagation(); const c0=tr.querySelector('td'); openDrill(q, c0?c0.textContent:null, scopeOf());};});
+  }else{
+    card.onclick=()=>openDrill(q, null, scopeOf());
+  }
+}
+async function openDrill(query, label, source){
+  const dr=$('#drill'), sc=$('#drill-scrim');
+  $('#drill-title').textContent='Loading…'; $('#drill-body').innerHTML=''; $('#drill-sub').textContent='';
+  dr.classList.add('on'); sc.classList.add('on'); dr.setAttribute('aria-hidden','false');
+  try{
+    const d=await (await fetch('/api/dashboards/drill',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query, label, source})})).json();
+    $('#drill-title').textContent=d.title||'Assets';
+    $('#drill-sub').textContent=`${(d.rows||[]).length} assets · ${query}`+(source&&source!=='all'?` · ${source}`:'');
+    $('#drill-body').innerHTML = (d.rows&&d.rows.length)
+      ? `<table><thead><tr>${d.columns.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`+
+        d.rows.map(r=>`<tr>${r.map(c=>`<td>${c==null?'—':c}</td>`).join('')}</tr>`).join('')+`</tbody></table>`
+      : `<div class="drill-sub">No assets to show.</div>`;
+  }catch(e){ $('#drill-title').textContent='Assets'; $('#drill-body').innerHTML=`<div class="drill-sub">Couldn’t load assets.</div>`; }
+}
+function closeDrill(){ $('#drill').classList.remove('on'); $('#drill-scrim').classList.remove('on'); $('#drill').setAttribute('aria-hidden','true'); }
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrill();});
+function renderDash(host,section,idx){
+  const dash=DASHBOARDS[section][idx];
+  CURRENT={section,idx,name:dash.name};
+  let grid=host.querySelector('.dash-grid');grid.innerHTML='';
+  dash.panels.forEach((p,i)=>renderPanel(grid,p,i));
+  host.querySelectorAll('.dash-tab').forEach((t,i)=>t.classList.toggle('on',i===idx));
+  // keep the print-only header in sync with what's on screen
+  const ph=host.querySelector('.print-head .pt'); if(ph) ph.textContent=dash.name;
+  overlayLive(host, dash);                // pull live values for KPIs, charts & tables
+}
+
+// Headline KPI tiles whose meaning maps exactly to a resolver query, so they can
+// show the real catalog value (live PDC or demo sample) instead of a baked one.
+const KPI_QUERY={
+  'Catalog assets':'asset_counts', 'Data sources':'source_counts',
+  'Glossary coverage':'term_coverage', 'High sensitivity':'sensitivity_mix',
+  'Profiled assets':'profile_status'
+};
+const TRUST_BANDS={'Untrusted':'0–50','Trusted':'51–75','Highly Trusted':'76–100'};
+function fmtNum(n){ return (typeof n==='number') ? n.toLocaleString() : (n??'—'); }
+function setDataBadge(host, demo){
+  const b=host.querySelector('[data-databadge]'); if(!b) return;
+  b.textContent = demo ? 'demo data' : 'live data';
+  b.className = 'data-badge ' + (demo ? 'demo' : 'live');
+  b.style.display='inline-flex';
+}
+// Map a mock chart type -> the resolver kind/chartType that yields the right shape.
+function resolverKind(chart){
+  if(chart==='table') return {kind:'table'};
+  if(chart==='gauge') return {kind:'kpi'};
+  if(chart==='stacked') return {kind:'chart', chartType:'stackedBar'};
+  if(chart==='donut') return {kind:'chart', chartType:'donut'};
+  if(chart==='line') return {kind:'chart', chartType:'line'};
+  return {kind:'chart', chartType:'bar'};   // spectrum/bars/radar/histo/bullet read a series
+}
+// Convert resolver output -> the shape each renderer expects, then draw it.
+function drawLive(card, chart, data){
+  const b=card.querySelector('.pbody'); if(!b||!data) return;
+  const series=data.series||[];
+  const asKV=()=>series.map(s=>({k:s.label, v:s.value}));
+  b.innerHTML='';
+  switch(chart){
+    case 'spectrum': spectrum(b, series.map(s=>({k:s.label, v:s.value, r:TRUST_BANDS[s.label]||''}))); break;
+    case 'donut': donut(b, asKV()); break;
+    case 'bars': bars(b, asKV(), {h:170, max:100}); break;
+    case 'line': line(b, series.map(s=>s.value), {fmt:v=>v}); break;
+    case 'stacked': {
+      const cats=data.categories||[], groups=data.groups||[];
+      const rows=cats.map((c,i)=>{const o={k:c}; groups.forEach(g=>o[g.name]=g.values[i]||0); return o;});
+      stacked(b, rows, groups.map(g=>g.name), ['#1c8f4d','#dd8a26','#d64545','#2f6f9f']); break;
+    }
+    case 'gauge': gauge(b, Math.round(data.value||0)); break;
+    case 'radar': radar(b, asKV()); break;
+    case 'histo': histo(b, series.map(s=>({lo:parseInt(s.label,10)||0, v:s.value}))); break;
+    case 'bullet': bullet(b, series.map(s=>({k:s.label, v:s.value, t:80}))); break;
+    case 'table': table(b, data.columns||[], data.rows||[]); break;
+  }
+  wireDrill(b, chart);
+}
+async function overlayLive(host, dash){
+  // collect wired KPI tiles (by label) + wired chart/table cards (by data-q)
+  const kpiTiles={};
+  host.querySelectorAll('.card.kpi').forEach(t=>{
+    const q=KPI_QUERY[((t.querySelector('.kpi-label')||{}).textContent||'').trim()];
+    if(q){(kpiTiles[q]=kpiTiles[q]||[]).push(t);}});
+  const cards=[...host.querySelectorAll('.card[data-q]')];
+  const panels=[];
+  Object.keys(kpiTiles).forEach((q,i)=>panels.push({id:'kpi'+i, kind:'kpi', title:q, query:q, _kpi:q}));
+  cards.forEach((c,i)=>{const rk=resolverKind(c.dataset.chart);
+    panels.push({id:'c'+i, ...rk, title:c.dataset.q, query:c.dataset.q, _card:c, _chart:c.dataset.chart});});
+  if(!panels.length){ try{const h=await (await fetch('/health/pdc')).json(); setDataBadge(host,!h.ok);}catch(e){} return; }
+  const scopeSel=host.querySelector('[data-scope]');
+  const source=scopeSel ? scopeSel.value : 'all';
+  try{
+    const spec={version:1, title:'live', category:dash.id||'overview', source,
+      panels:panels.map(({_kpi,_card,_chart,...p})=>p)};
+    const d=await (await fetch('/api/dashboards/resolve',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(spec)})).json();
+    panels.forEach(p=>{const data=(d.panels||{})[p.id]; if(!data) return;
+      if(p._kpi){const txt=fmtNum(data.value)+(data.unit||'');
+        (kpiTiles[p._kpi]||[]).forEach(t=>{const v=t.querySelector('.kpi-val'); if(v) v.textContent=txt;});}
+      else if(p._card){ drawLive(p._card, p._chart, data); }});
+    setDataBadge(host, d.demo);
+  }catch(e){ /* offline — leave the baked render */ }
+}
+function renderSection(host){
+  const section=host.dataset.section,meta=SECTION_META[section],list=DASHBOARDS[section];
+  host.innerHTML=`
+    <div class="page-head">
+      <div><h1>${meta.name}</h1><p>${meta.desc}</p></div>
+      <div class="dash-tools">
+        <span class="std-flag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3Z" stroke="var(--faint)" stroke-width="1.6"/></svg> ${list.length} standard dashboard${list.length>1?'s':''}</span>
+        <span class="data-badge demo" data-databadge style="display:none">demo data</span>
+        <select class="scope-sel" data-scope title="Narrow this dashboard to one connected data source"><option value="all">All sources</option></select>
+        <button class="btn-sm" onclick="downloadSpec()" title="Download this dashboard as a .studio.json spec">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Download</button>
+        <button class="btn-sm" onclick="printDash()" title="Print or save the current dashboard as a PDF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M8 14h8v7H8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Print / PDF</button>
+      </div>
+    </div>
+    <div class="print-only print-head"><span class="pt"></span><span class="pm">${meta.name} · Catalog Insights · generated ${new Date().toISOString().slice(0,10)}</span></div>
+    <div class="dash-tabs"></div>
+    <div class="dash-grid grid"></div>`;
+  const tabs=host.querySelector('.dash-tabs');
+  list.forEach((d,i)=>{const t=document.createElement('button');t.className='dash-tab'+(i===0?' on':'');
+    t.innerHTML=`<div class="dt-name">${d.name}<span class="dt-badge">Standard</span></div><div class="dt-desc">${d.desc}</div>`;
+    t.onclick=()=>renderDash(host,section,i);tabs.appendChild(t);});
+  renderDash(host,section,0);
+  // populate the data-source scope selector and re-render the board on change
+  const sel=host.querySelector('[data-scope]');
+  if(sel && !sel.dataset.ready){
+    sel.dataset.ready='1';
+    sel.onchange=()=>renderDash(host,section,CURRENT.idx);
+    fetch('/api/dashboards/sources').then(r=>r.ok?r.json():null).then(d=>{
+      if(d&&d.sources&&d.sources.length){
+        d.sources.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
+      }
+    }).catch(()=>{});
+  }
+}
+/* ════ Download & Print ════ */
+// Active dashboard (section + tab index), kept in sync by renderDash and the nav.
+let CURRENT={section:'overview',idx:0,name:''};
+// The real saved-spec index (section -> [{id,title}]), fetched once so Download
+// can stream the exact .studio.json. Best-effort: stays null if the API/auth
+// isn't reachable, and downloadSpec() falls back to a client-built export.
+let DASH_INDEX=null;
+fetch('/api/dashboards').then(r=>r.ok?r.json():null).then(j=>{DASH_INDEX=j;}).catch(()=>{});
+
+// Print / save-as-PDF: the @media print stylesheet hides the app chrome and
+// lays out just the active dashboard, so the browser dialog (Save as PDF) gets
+// a clean, branded page. No server round-trip or library needed.
+function printDash(){ window.print(); }
+
+// Download the current dashboard as a .studio.json spec — the portable artifact
+// the Designer and MCP server also consume.
+async function downloadSpec(){
+  const {section,idx,name}=CURRENT;
+  // Preferred: stream the real saved spec from the server (exact + validated).
+  if(DASH_INDEX && DASH_INDEX[section] && DASH_INDEX[section][idx]){
+    window.location.href=`/api/dashboards/${section}/${DASH_INDEX[section][idx].id}/download`;
+    return;
+  }
+  // Fallback (offline / file://): export what's on screen as a spec-shaped JSON.
+  const dash=DASHBOARDS[section][idx];
+  const spec={version:1,title:dash.name,category:section,
+    panels:(dash.panels||[]).map((p,i)=>({id:'p'+(i+1),kind:p.kind||'chart',
+      title:p.title,query:p.query||'',chartType:p.type||'bar'}))};
+  const blob=new Blob([JSON.stringify(spec,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(name||'dashboard').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.studio.json';
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ════ Settings: model suggestion + download ════ */
+// Ask the server what model suits this machine (GPU/CPU aware) and whether it's
+// already installed; fill the Model field and the recommendation hint.
+// Populate the Model picker with the models installed in the local Ollama as a
+// real combobox: clicking the field shows ALL installed models (a native
+// <datalist> hides the rest once the field holds a full name), while typing
+// filters the list — and you can still type any name to pull it.
+let _llmModels = [];
+async function loadModelList(){
+  try{
+    const d = await (await fetch('/api/llm/models')).json();
+    _llmModels = (d.models||[]).filter(Boolean);
+  }catch(e){ _llmModels = []; }
+  const hint = $('#set-llm-models-hint');
+  if(hint) hint.textContent = _llmModels.length
+    ? `${_llmModels.length} model(s) installed — click the field to see them all, or type a name.`
+    : 'No models installed yet — use Download model below, or type a name.';
+  _initModelCombo();
+}
+
+function _initModelCombo(){
+  const inp = $('#set-llm-model'), menu = $('#set-llm-menu');
+  if(!inp || !menu || inp.dataset.comboReady) return;
+  inp.dataset.comboReady = '1';
+  let active = -1;
+
+  const render = ()=>{
+    const q = inp.value.trim().toLowerCase();
+    // Show all on an empty field OR when the field equals a model exactly (so you
+    // can always switch); otherwise filter by substring.
+    const exact = _llmModels.some(m => m.toLowerCase() === q);
+    const list = (!q || exact) ? _llmModels
+                               : _llmModels.filter(m => m.toLowerCase().includes(q));
+    if(!list.length){
+      menu.innerHTML = _llmModels.length
+        ? '<div class="combo-empty">No match — press Enter to use what you typed.</div>'
+        : '<div class="combo-empty">No models installed. Type a name to pull it.</div>';
+    }else{
+      menu.innerHTML = list.map((m,i)=>
+        `<div class="combo-item${i===active?' active':''}" data-v="${m}">${m}</div>`).join('');
+    }
+    menu.hidden = false;
+  };
+  const close = ()=>{ menu.hidden = true; active = -1; };
+  const pick = (v)=>{ inp.value = v; inp.dataset.touched='1'; close(); };
+
+  inp.addEventListener('focus', ()=>{ active=-1; render(); });
+  inp.addEventListener('click', ()=>{ active=-1; render(); });
+  inp.addEventListener('input', ()=>{ inp.dataset.touched='1'; active=-1; render(); });
+  inp.addEventListener('keydown', (e)=>{
+    const items = [...menu.querySelectorAll('.combo-item')];
+    if(e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,items.length-1); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); active=Math.max(active-1,0); }
+    else if(e.key==='Enter'){ if(active>=0&&items[active]){ e.preventDefault(); pick(items[active].dataset.v);} else close(); return; }
+    else if(e.key==='Escape'){ close(); return; }
+    else return;
+    items.forEach((el,i)=>el.classList.toggle('active', i===active));
+    if(items[active]) items[active].scrollIntoView({block:'nearest'});
+  });
+  menu.addEventListener('mousedown', (e)=>{           // mousedown beats input blur
+    const it = e.target.closest('.combo-item'); if(it){ e.preventDefault(); pick(it.dataset.v);} });
+  document.addEventListener('click', (e)=>{ if(!e.target.closest('#set-llm-combo')) close(); });
+}
+
+async function loadModelSuggestion(){
+  try{
+    const r = await fetch('/api/llm/suggest'); if(!r.ok) return;
+    const d = await r.json();
+    const hw = d.vram_gb ? `GPU · ${d.vram_gb} GB VRAM` : `CPU · ${d.ram_gb} GB RAM`;
+    $('#set-rec').innerHTML = `Recommended for this machine (${hw}): <b>${d.model}</b> — ${d.why}. `
+      + (d.installed ? '<span style="color:#1c8f4d">already installed ✓</span>'
+                     : '<span style="color:#dd8a26">not installed</span>');
+    const mf = $('#set-llm-model'); if(mf && !mf.dataset.touched) mf.value = d.model;
+    if(d.installed){ const b=$('#set-pull'); if(b){b.disabled=true; b.textContent='Installed';} }
+  }catch(e){ /* backend not reachable (e.g. opened as a file) — leave defaults */ }
+}
+
+// Download the model named in the Model field via Ollama, streaming progress.
+async function pullSuggested(btn){
+  const model = ($('#set-llm-model').value || '').trim(); if(!model) return;
+  const res = $('#set-pull-res'), prog = $('#set-pull-prog');
+  btn.disabled = true; res.textContent = 'Starting…'; res.className='test-result';
+  prog.style.display='block'; prog.textContent = `pulling ${model} …`;
+  try{
+    const r = await fetch('/api/llm/pull', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify({model})});
+    if(r.status===403){ res.textContent='Needs the steward role.'; res.className='test-result err'; btn.disabled=false; return; }
+    // read the NDJSON stream line by line and show the latest status/percent
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let buf='';
+    while(true){
+      const {value, done} = await reader.read(); if(done) break;
+      buf += dec.decode(value, {stream:true}); const lines = buf.split('\n'); buf = lines.pop();
+      for(const ln of lines){ if(!ln.trim()) continue; let o; try{o=JSON.parse(ln);}catch{continue;}
+        if(o.error){ prog.textContent = 'Error: '+o.error+(o.hint?'  ('+o.hint+')':''); res.textContent='Failed'; res.className='test-result err'; btn.disabled=false; return; }
+        let pct=''; if(o.total && o.completed) pct = ' '+Math.round(100*o.completed/o.total)+'%';
+        prog.textContent = (o.status||'working')+pct;
+      }
+    }
+    res.textContent = 'Done ✓'; res.className='test-result ok'; prog.textContent = `${model} downloaded.`;
+    btn.textContent='Installed'; loadModelSuggestion();
+  }catch(e){ res.textContent='Failed'; res.className='test-result err'; prog.textContent=String(e); btn.disabled=false; }
+}
+
+function renderAll(){
+  $$('.dash-host').forEach(renderSection);
+  buildDesigner();
+}
+
+/* ════ designer ════ */
+const LIB=[
+  {g:'Governance',items:[['trust_by_source','source, bucket, count'],['term_coverage','source, pct'],['top_terms','term, count'],['lineage_status','status, count']]},
+  {g:'Quality',items:[['quality_by_source','source, score'],['dq_dimensions','dimension, value'],['worst_tables','table, score']]},
+  {g:'Sensitivity',items:[['sensitivity_mix','level, count'],['pii_discoveries','pii_type, count, source']]},
+  {g:'System',items:[['profile_status','status, count'],['assets_by_source','source, count']]},
+];
+const CHART_ICONS={bar:'▭',donut:'◑',line:'╱',stacked:'▣',table:'☰',gauge:'◔',radar:'✦',heatmap:'▦'};
+function buildDesigner(){
+  const lib=$('#dz-lib');lib.innerHTML='';
+  LIB.forEach(grp=>{const h=document.createElement('div');h.className='da-grp';h.textContent=grp.g;lib.appendChild(h);
+    grp.items.forEach(([n,c])=>{const d=document.createElement('div');d.className='da';
+      d.innerHTML=`<div class="da-name"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="var(--brand)" stroke-width="2"/><path d="M4 9h16M9 9v11" stroke="var(--brand)" stroke-width="1.5"/></svg>${n}</div><div class="da-cols">${c}</div>`;
+      lib.appendChild(d);});});
+  const cv=$('#dz-canvas');cv.innerHTML='';
+  const panels=[['Trust by source','stacked'],['Sensitivity mix','donut'],['Quality vs target','bar'],['PII discoveries','bar']];
+  panels.forEach((p,i)=>{const c=document.createElement('div');c.className='card'+(i===0?' sel s2':' s2');
+    c.innerHTML=`<div class="card-h"><h3>${p[0]}</h3></div><div id="dzc-${i}"></div>`;
+    c.onclick=()=>{$$('.canvas .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');};
+    cv.appendChild(c);});
+  stacked($('#dzc-0'),[{k:'Snow',Untrusted:300,Trusted:600,Highly:900},{k:'S3',Untrusted:700,Trusted:400,Highly:200},{k:'PG',Untrusted:200,Trusted:700,Highly:500}],['Untrusted','Trusted','Highly'],SCORE);
+  donut($('#dzc-1'),[{k:'Low',v:9180,c:'var(--high)'},{k:'Med',v:2458,c:'var(--mid)'},{k:'High',v:842,c:'var(--low)'}]);
+  bars($('#dzc-2'),[{k:'Snowflake',v:86},{k:'Postgres',v:78},{k:'S3-raw',v:64},{k:'Oracle',v:81}],{h:160,max:100});
+  bars($('#dzc-3'),[{k:'EMAIL',v:1203},{k:'PHONE',v:980},{k:'SSN',v:412},{k:'DOB',v:540}],{h:160,color:'var(--c5)'});
+  const cp=$('#dz-charts');cp.innerHTML='';
+  ['stacked','bar','donut','line','table','gauge','radar','heatmap'].forEach((t,i)=>{const b=document.createElement('div');
+    b.className='cp'+(i===0?' on':'');b.title=t;b.textContent=CHART_ICONS[t]||'▭';
+    b.onclick=()=>{$$('.cp').forEach(x=>x.classList.remove('on'));b.classList.add('on');};cp.appendChild(b);});
+}
+
+/* ════ nav ════ */
+$$('#nav .nav-item').forEach(b=>b.onclick=()=>{
+  $$('#nav .nav-item').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  const v=b.dataset.view;$$('.view').forEach(x=>x.classList.remove('active'));$('#v-'+v).classList.add('active');
+  // keep the active dashboard (for Print/Download) in sync with the section shown
+  if(['overview','system','user','governance','quality','sensitivity'].indexOf(v)>=0){
+    const host=$('#v-'+v+' .dash-host');
+    if(host){const on=host.querySelector('.dash-tab.on');
+      const i=on?[...host.querySelectorAll('.dash-tab')].indexOf(on):0;
+      renderDash(host,v,i);}
+  }
+  const lbl=b.textContent.trim().replace(/\d+$/,'').trim();
+  $('#crumb').textContent=lbl;
+  $('.crumb').firstChild.textContent=(v==='designer'||v==='settings')?'':(v==='designer'?'Build / ':'Analytics / ');
+  $('.crumb').innerHTML=`${v==='designer'?'Build':v==='settings'?'Configure':'Analytics'}&nbsp;/&nbsp;<b id="crumb">${lbl}</b>`;
+  $('.scroll').scrollTop=0;
+});
+
+/* ════ AI drawer ════ */
+function openDrawer(){$('#scrim').classList.add('show');$('#drawer').classList.add('show');}
+function closeDrawer(){$('#scrim').classList.remove('show');$('#drawer').classList.remove('show');$('#gen-out').innerHTML='';$('#gen-btn').textContent='Generate';$('#gen-btn').disabled=false;}
+function setPrompt(b){$('#prompt').value=b.textContent.replace(/^.*?—\s*/,'');}
+function runGen(){
+  const out=$('#gen-out');out.innerHTML='';$('#gen-btn').disabled=true;$('#gen-btn').textContent='Generating…';
+  const steps=['Reading prompt','Grounding on 11 catalog queries','Drafting spec','Validating against schema'];
+  const wrap=document.createElement('div');out.appendChild(wrap);
+  steps.forEach((s,i)=>{const d=document.createElement('div');d.className='gen-step';d.innerHTML=`<span class="gs-dot"></span>${s}`;wrap.appendChild(d);
+    setTimeout(()=>d.classList.add('done'),(i+1)*520);});
+  setTimeout(()=>{
+    const pv=document.createElement('div');pv.className='gen-preview';
+    pv.innerHTML=`<div class="gp-h">Trust &amp; PII by source · governance</div>
+      <div class="gp-b">
+       <div class="gp-panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="10" width="4" height="11" fill="currentColor"/><rect x="10" y="5" width="4" height="16" fill="currentColor"/><rect x="17" y="13" width="4" height="8" fill="currentColor"/></svg> KPI — mean trust, % PII covered, unowned sensitive</div>
+       <div class="gp-panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/></svg> Stacked bar — trust buckets by source · <span class="mono">trust_by_source</span></div>
+       <div class="gp-panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/></svg> Bar — PII discoveries · <span class="mono">pii_discoveries</span></div>
+       <div class="gp-panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2"/></svg> Table — worst tables · <span class="mono">worst_tables</span></div>
+       <div style="margin-top:10px;color:var(--high);font-weight:600;font-size:12px">✓ Valid · 4 panels · 3 queries bound</div>
+      </div>`;
+    out.appendChild(pv);requestAnimationFrame(()=>pv.classList.add('show'));
+    $('#gen-btn').textContent='Open in Designer';$('#gen-btn').disabled=false;
+    $('#gen-btn').onclick=()=>{closeDrawer();$('[data-view="designer"]').click();$('#gen-btn').onclick=runGen;};
+  },steps.length*520+400);
+}
+
+/* ════ settings test buttons ════ */
+// Test connection — real probes against the live endpoints (not simulated).
+async function testLLM(b){const r=$('#llm-res');r.innerHTML='<span class="dot warn"></span> testing…';
+  try{const d=await (await fetch('/health/llm')).json();
+    r.innerHTML = d.ok ? `<span class="dot ok"></span> ${d.detail||'Reachable'}`
+                       : `<span class="dot warn"></span> ${d.detail||'offline'}`;
+  }catch(e){r.innerHTML='<span class="dot warn"></span> unreachable';}}
+async function testPDC(b){const r=$('#pdc-res');r.innerHTML='<span class="dot warn"></span> testing…';
+  // test the values currently in the form (so you can verify before saving);
+  // a blank password means "use the saved one".
+  const payload={base_url:$('#set-pdc-url').value.trim(), version:$('#set-pdc-ver').value, username:$('#set-pdc-user').value.trim()};
+  const pass=$('#set-pdc-pass').value; if(pass) payload.password=pass;
+  try{const d=await (await fetch('/api/settings/test-pdc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})).json();
+    r.innerHTML = d.ok ? `<span class="dot ok"></span> ${d.detail||'Connected'}`
+                       : `<span class="dot warn"></span> ${d.error||'failed'}`;
+  }catch(e){r.innerHTML='<span class="dot warn"></span> '+e.message;}}
+
+// Segmented toggles (provider, data source): clicking sets the active button.
+document.addEventListener('click',e=>{const btn=e.target.closest('.seg button');
+  if(btn&&btn.parentElement&&/set-(llm-provider|demo-seg)/.test(btn.parentElement.id)){
+    [...btn.parentElement.children].forEach(x=>x.classList.remove('on'));btn.classList.add('on');}});
+
+async function loadSettings(){
+  try{const s=await (await fetch('/api/settings')).json();
+    $('#set-pdc-url').value=s.pdc.base_url||''; $('#set-pdc-user').value=s.pdc.username||'';
+    $('#set-pdc-ver').value=s.pdc.version||'v3';
+    const cache=$('#set-pdc-cache'); if(cache) cache.value=String(s.pdc.cache_ttl);
+    $('#set-pdc-pass').placeholder = s.pdc.has_password ? '•••••••••• (unchanged)' : 'set a password';
+    $('#set-llm-url').value=s.llm.base_url||''; const mf=$('#set-llm-model'); if(mf){mf.value=s.llm.model||'';}
+    $('#set-llm-json').value=String(s.llm.json_mode);
+    setSeg('set-llm-provider','prov',s.llm.provider); setSeg('set-demo-seg','demo',String(s.demo));
+  }catch(e){}
+}
+function setSeg(id,attr,val){const seg=document.getElementById(id);if(!seg)return;
+  [...seg.children].forEach(b=>b.classList.toggle('on', b.getAttribute('data-'+attr)===val));}
+function getSeg(id,attr){const on=document.querySelector('#'+id+' button.on');return on?on.getAttribute('data-'+attr):null;}
+
+async function saveSettings(btn){
+  const res=$('#set-save-res'); btn.disabled=true; res.textContent='Saving…'; res.className='test-result';
+  const payload={demo: getSeg('set-demo-seg','demo')==='true',
+    pdc:{base_url:$('#set-pdc-url').value.trim(), version:$('#set-pdc-ver').value,
+         username:$('#set-pdc-user').value.trim(), cache_ttl:parseInt($('#set-pdc-cache').value,10)},
+    llm:{provider:getSeg('set-llm-provider','prov')||'local', base_url:$('#set-llm-url').value.trim(),
+         model:$('#set-llm-model').value.trim(), json_mode:$('#set-llm-json').value==='true'}};
+  const pass=$('#set-pdc-pass').value; if(pass) payload.pdc.password=pass;   // blank ⇒ keep existing
+  try{
+    const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(r.status===403){res.textContent='Saving needs the admin role.';res.className='test-result err';btn.disabled=false;return;}
+    const d=await r.json();
+    if(r.ok&&d.saved){res.textContent='Saved & applied ✓'; res.className='test-result ok'; $('#set-pdc-pass').value='';
+      refreshFooterStatus(); loadSettings();}
+    else{res.textContent='Could not save: '+(d.error||'unknown');res.className='test-result err';}
+  }catch(e){res.textContent='Error: '+e.message;res.className='test-result err';}
+  finally{btn.disabled=false;}
+}
+
+renderAll();
+// Settings: detect hardware and suggest a model; don't override manual edits.
+(function(){const m=document.getElementById('set-llm-model');
+  if(m) m.addEventListener('input',()=>{m.dataset.touched='1';});
+  loadSettings(); loadModelSuggestion(); loadModelList();})();
+
+// Footer status dots — reflect REAL reachability (green=connected, amber=not),
+// instead of static placeholders. Re-checks every 30s.
+async function refreshFooterStatus(){
+  // LLM: ping the provider via /health/llm
+  try{
+    const l = await (await fetch('/health/llm')).json();
+    const dot=document.getElementById('foot-llm-dot'), txt=document.getElementById('foot-llm-txt');
+    if(l.ok){ dot.className='dot ok'; txt.textContent = (l.provider==='local'?'local · ':'')+(l.model||'ready'); }
+    else { dot.className='dot warn'; txt.textContent = (l.provider||'llm')+' · offline'; }
+  }catch{ const d=document.getElementById('foot-llm-dot'),t=document.getElementById('foot-llm-txt'); if(d)d.className='dot warn'; if(t)t.textContent='offline'; }
+  // PDC: live vs demo/unreachable via /health/pdc
+  try{
+    const p = await (await fetch('/health/pdc')).json();
+    const dot=document.getElementById('foot-pdc-dot'), txt=document.getElementById('foot-pdc-txt');
+    const host=(p.base_url||'').replace(/^https?:\/\//,'').replace(/\/.*$/,'') || 'PDC';
+    if(p.ok){ dot.className='dot ok'; txt.textContent = host; }
+    else { dot.className='dot warn'; txt.textContent = host+' · demo'; }
+    // surface a banner when on demo data, so switching to real data is discoverable
+    const banner=document.getElementById('demo-banner');
+    if(banner) banner.style.display = p.ok ? 'none' : 'flex';
+  }catch{ const d=document.getElementById('foot-pdc-dot'),t=document.getElementById('foot-pdc-txt'); if(d)d.className='dot warn'; if(t)t.textContent='demo'; }
+}
+refreshFooterStatus();
+setInterval(refreshFooterStatus, 30000);
+</script>
+<div class="drill-scrim" id="drill-scrim" onclick="closeDrill()"></div>
+<aside class="drill" id="drill" aria-hidden="true">
+  <div class="drill-head"><h3 id="drill-title">Assets</h3>
+    <button class="drill-x" onclick="closeDrill()" title="Close" aria-label="Close">×</button></div>
+  <div class="drill-sub" id="drill-sub"></div>
+  <div class="drill-body" id="drill-body"></div>
+</aside>
+</body>
+</html>

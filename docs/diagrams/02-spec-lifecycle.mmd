@@ -1,0 +1,13 @@
+%% The dashboard spec is the single contract every path speaks
+flowchart LR
+  A["Natural-language<br/>prompt"] --> G
+  B["Hand-built<br/>in Designer"] --> S
+  C["Standard templates<br/>app/dashboards/*.studio.json"] --> S
+  G["generator.py<br/>ground → generate"] --> V{"validate<br/>schema +<br/>catalog refs"}
+  V -- errors --> R["repair once"] --> V
+  V -- ok --> S["dashboard spec<br/>(.studio.json)"]
+  S --> ED["Designer<br/>(human refines)"]
+  S --> EX["Export<br/>CDF / CDE / CDA"]
+  S --> UI["Renders in<br/>web app"]
+  classDef spec fill:#e3f1ef,stroke:#0f766e,color:#0a443f;
+  class S spec;
