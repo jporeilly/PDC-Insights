@@ -9,7 +9,7 @@ const THEMES = [
 
 export default function ThemeSelect() {
   const [theme, setTheme] = useState(
-    () => localStorage.getItem('mc-theme') ?? 'midnight',
+    () => localStorage.getItem('mc-theme') ?? 'light',
   )
 
   useEffect(() => {

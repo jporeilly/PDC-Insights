@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.1 (2026-07-17) — light is the suite default theme
+
+- Default theme `midnight` → `light` (user standard for the PDC-Demo suite).
+  A saved choice in the shared `mc-theme` storage key still wins, and
+  switching theme in any suite app switches all of them.
+
 ## 1.13.0 (2026-07-17) — FastAPI port: the suite is now FastAPI everywhere
 
 - **Backend ported Flask 3 → FastAPI + uvicorn**, route-for-route, matching
