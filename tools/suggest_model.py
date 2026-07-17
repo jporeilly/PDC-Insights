@@ -18,9 +18,9 @@ def main() -> None:
     r = recommend()
     hw = f"{r['system']} · {r['cores']} cores · {r['ram_gb']} GB RAM"
     hw += f" · GPU {r['vram_gb']} GB VRAM" if r["vram_gb"] else " · no NVIDIA GPU"
-    run = ("waitress-serve --port=8660 wsgi:app   # pip install waitress"
+    run = ("waitress-serve --port=5002 wsgi:app   # pip install waitress"
            if r["system"] == "Windows"
-           else "gunicorn --bind 0.0.0.0:8660 --threads 4 wsgi:app")
+           else "gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app")
     print(f"\nDetected: {hw}\nMode:     {r['mode'].upper()}")
     print(f"\nRecommended model:\n  ollama pull {r['model']}\n  ({r['why']})")
     print(f"\nSet in .env:\n  LLM_PROVIDER=local\n  LLM_MODEL={r['model']}")

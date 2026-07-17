@@ -6,7 +6,7 @@
 #   ./run.sh --mcp           also start the MCP server (for Claude Desktop / agents)
 #   ./run.sh --gpu | --cpu   force model sizing (default: auto-detect via nvidia-smi)
 #   ./run.sh --pull          download the recommended Ollama model
-#   ./run.sh --port 9000     web app port (default 8660)
+#   ./run.sh --port 9000     web app port (default 5002)
 #   ./run.sh --no-venv       use the current Python instead of a .venv
 #
 # The local LLM (Ollama) is called directly by the web app — you do NOT need the
@@ -22,7 +22,7 @@ warn(){ printf "  ${YEL} !${R} %s\n" "$1"; }
 bad(){  printf "  ${RED} x${R} %s\n" "$1"; }
 step(){ printf "\n${B}${CYN}%s${R}\n" "$1"; }
 
-PORT=8660; WITH_MCP=0; FORCE=""; PULL=0; USE_VENV=1
+PORT=5002; WITH_MCP=0; FORCE=""; PULL=0; USE_VENV=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --mcp) WITH_MCP=1;; --gpu) FORCE=gpu;; --cpu) FORCE=cpu;; --pull) PULL=1;;

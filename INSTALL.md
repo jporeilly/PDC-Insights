@@ -41,7 +41,7 @@ version changes.
   You install:                    Already exists (you connect to it):
   ┌────────────────────┐          ┌──────────────────────────────┐
   │ Catalog Insights   │  REST    │ PDC  (Linux, Docker)         │
-  │  web app  :8660    │─────────▶│  REST API ─▶ OpenSearch      │
+  │  web app  :5002    │─────────▶│  REST API ─▶ OpenSearch      │
   │  MCP svr  :8765    │          │            ─▶ MongoDB        │
   └─────────┬──────────┘          │            ─▶ BIDB           │
             │ HTTP                 └──────────────────────────────┘
@@ -57,7 +57,7 @@ No Pentaho Server, CTools, or Semantic Model Editor is installed or required.
 
 | Port | Used by | Notes |
 | ---- | ------- | ----- |
-| **8660** | Catalog Insights web app | default; override with `INSIGHTS_PORT` |
+| **5002** | Catalog Insights web app | default; override with `INSIGHTS_PORT` |
 | **8765** | Catalog Insights MCP (HTTP) | override with `MCP_PORT` |
 | 5000 | Glossary Generator (sibling app) | avoid |
 | 5001 | Policy Generator (sibling app) | avoid |
@@ -84,9 +84,10 @@ defaults internally regardless of the host mapping you choose.
 
 ## 3. Pick your path
 
-- **A — Windows 11 + GPU (your box).** Ollama native on Windows (uses both
-  GPUs), app + MCP in Docker Desktop, PDC reached over the network. Best mix of
-  speed and simplicity. Steps: 4 → 5 → 7 → 6 → 8.
+- **A — Windows 11 + GPU (your box, the standard demo topology).** Everything
+  native: Ollama on Windows (uses both GPUs), the app via `.\run.ps1`
+  (waitress), PDC reached over the network. Best mix of speed and simplicity.
+  Steps: 4 → 5 → 7 → 6 → 8.
 - **B — Linux, co-located with PDC.** Add the app/MCP as containers on the PDC
   host (lab) or a small adjacent VM (production). Steps: 4 → 5 → 6 → 8.
 - **C — Local dev / demo.** One machine, `INSIGHTS_DEMO=true`, `LLM_PROVIDER`
@@ -101,22 +102,27 @@ the venv, installs dependencies, writes `.env` on first run, auto-detects GPU vs
 CPU, prints (and optionally pulls) the right model, and starts the web app —
 plus the MCP server if you ask for it.
 
+```powershell
+.\run.ps1                # Windows 11 host — web app only (Ctrl-C to stop)
+.\run.ps1 -Mcp -Pull     # also start the MCP server and download the model
+```
 ```bash
-./run.sh                 # macOS/Linux — web app only
+./run.sh                 # Linux/macOS (e.g. the Ubuntu lab VM) — web app only
 ./run.sh --mcp --pull    # also start the MCP server and download the model
 ```
-```bat
-run.bat                  :: Windows — web app only
-run.bat --mcp --pull     :: also start the MCP server and download the model
-```
+
+(`run.bat` remains for cmd users, same flags as `run.sh`.)
 
 | Flag | Effect |
 | ---- | ------ |
 | `--mcp` | also start the MCP server (HTTP :8765) — only needed for external chat/agents |
 | `--gpu` / `--cpu` | force model sizing; default auto-detects via `nvidia-smi` |
 | `--pull` | download the recommended Ollama model (needs `ollama` on PATH) |
-| `--port N` | web app port (default 8660) |
+| `--port N` | web app port (default 5002) |
 | `--no-venv` | use the current Python instead of creating `.venv` |
+
+`run.ps1` takes the same options as PowerShell switches: `-Mcp -Gpu -Cpu
+-Pull -Port N -NoVenv`.
 
 The web app runs on **waitress** (Windows) or **gunicorn** (Linux/macOS),
 falling back to the Flask dev server if neither is present. `run.sh --help` / `run.bat --help` print the same summary. Both run **preflight checks** (Python, deps, `.env`, free port, GPU/CPU, Ollama reachability) and a **post-start health check** that reports whether the app is up and whether PDC/LLM are live before handing you the URLs.
@@ -170,12 +176,12 @@ Every variable is documented inline in `.env.example`.
 ```bash
 python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-gunicorn --bind 0.0.0.0:8660 --threads 4 wsgi:app   # or: flask --app wsgi run -p 8660
+gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app   # or: flask --app wsgi run -p 5002
 ```
 
 `LLM_BASE_URL=http://localhost:11434` works directly — no container hop. This is
 the recommended setup when Ollama runs on the same host. On **Windows**, use
-`waitress-serve --port=8660 wsgi:app` instead of gunicorn (see §7 for the
+`waitress-serve --port=5002 wsgi:app` instead of gunicorn (see §7 for the
 per-platform table, and `python tools/suggest_model.py` to pick a model).
 
 **Or via Docker** (self-contained; the compose file auto-points the LLM at the
@@ -185,14 +191,14 @@ host so you don't change anything):
 docker compose up --build
 ```
 
-Either way: open <http://localhost:8660>; health check <http://localhost:8660/health>.
+Either way: open <http://localhost:5002>; health check <http://localhost:5002/health>.
 
 In demo mode the dashboards, snapshot, and recommendations work immediately. The
 mock UI (`ui/mock/index.html`) is also openable directly in a browser for design
 review without running anything.
 
 **Build dashboards by chat.** Once the app is running, open **`/chat`**
-(e.g. <http://localhost:8660/chat>) for the in-app AI builder: describe a
+(e.g. <http://localhost:5002/chat>) for the in-app AI builder: describe a
 dashboard, preview it, and click **Add to dashboards** to write it into the right
 section. It uses your local LLM when configured (§7) and a deterministic builder
 otherwise, so it works even before Ollama is wired up. It’s **section-aware**:
@@ -281,9 +287,9 @@ remain an opt-in alternative if local CPU generation is too slow.
 
 | Platform | Command (web app) |
 | -------- | ----------------- |
-| Linux / macOS | `gunicorn --bind 0.0.0.0:8660 --threads 4 wsgi:app` |
-| Windows | `waitress-serve --port=8660 wsgi:app`  (`pip install waitress`) |
-| Any (quick/dev) | `flask --app wsgi run -p 8660` |
+| Linux / macOS | `gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app` |
+| Windows | `waitress-serve --port=5002 wsgi:app`  (`pip install waitress`) |
+| Any (quick/dev) | `flask --app wsgi run -p 5002` |
 
 gunicorn is POSIX-only, so on Windows use **waitress** (a production-grade WSGI
 server that runs natively) or the Flask dev server for local use.
@@ -561,7 +567,7 @@ the recommended one.
 
 ```bash
 # app is up
-curl http://localhost:8660/health
+curl http://localhost:5002/health
 
 # security model (auth, roles, audit) — runs on demo data, no PDC needed
 python tools/test_security.py        # expect: ALL PASS
@@ -573,8 +579,8 @@ python tools/test_app.py             # expect: ALL PASS
 python tools/build_dashboards.py     # expect: 12 schema-valid dashboards
 
 # with a key set, reads need viewer, saves need steward
-curl -H "Authorization: Bearer viewkey" http://localhost:8660/api/snapshot     # 200
-curl -H "Authorization: Bearer viewkey" -X POST http://localhost:8660/api/dashboards -d '{}'   # 403
+curl -H "Authorization: Bearer viewkey" http://localhost:5002/api/snapshot     # 200
+curl -H "Authorization: Bearer viewkey" -X POST http://localhost:5002/api/dashboards -d '{}'   # 403
 ```
 
 In Claude Desktop, confirm the MCP tools appear and `recommend_dashboards`
@@ -593,7 +599,7 @@ returns suggestions (demo data is fine).
 | PDC calls intermittently 401 | expected — tokens are short-lived; the client re-auths automatically. If it persists, the service account password is wrong, or you pinned an expiring `PDC_BEARER_TOKEN` (use user/pass instead) |
 | JWT rejected | check `INSIGHTS_JWT_AUDIENCE`/`ISSUER` match the token, and that the role claim/map resolve to a known role |
 | MCP server won't start with auth on | confirm `INSIGHTS_AUTH_ISSUER`/`INSIGHTS_MCP_URL` are set; with `INSIGHTS_AUTH=none` it always starts |
-| Port already in use on startup | the web app defaults to **8660** to clear Pentaho/Tomcat (8080, and 8090 used by Pentaho's AWS/K8s config) and PDC ports. If 8660 is also taken, set `INSIGHTS_PORT` in `.env` to any free port — the container always listens on 8660 internally |
+| Port already in use on startup | the web app defaults to **5002** to clear Pentaho/Tomcat (8080, and 8090 used by Pentaho's AWS/K8s config) and PDC ports. If 5002 is also taken, set `INSIGHTS_PORT` in `.env` to any free port — the container always listens on 5002 internally |
 | Generated dashboard binds to a missing query | the model strayed from the catalog; `validate_dashboard`/the generator's repair pass catches it — re-run, or tune the prompt |
 
 ## 13. Version & upgrade notes

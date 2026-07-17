@@ -51,50 +51,52 @@ docs/                architecture, dashboards, generator, connector,
                      deployment, mcp, security
 tools/               build_dashboards.py · test_security.py · test_app.py ·
                      suggest_model.py · preflight.py
-run.sh · run.bat     one-command launch: preflight + GPU/CPU detect + health check
+run.ps1 · run.bat    one-command launch (Windows): preflight + GPU/CPU detect
+run.sh               the same for Linux/macOS (the Ubuntu lab VM)
 ```
 
 ## Quickstart
 
-```bash
-cp .env.example .env          # fill in PDC + LLM details (or set INSIGHTS_DEMO=true)
+The launch scripts create the venv, install deps, write `.env` on first run,
+auto-detect GPU/CPU and start the app.
+
+**Windows 11 host** (the standard demo topology — Ollama lives here):
+
+```powershell
+.\run.ps1                # web app at http://127.0.0.1:5002 (Ctrl-C to stop)
+.\run.ps1 -Mcp -Pull     # also start the MCP server and download the model
 ```
 
-Run it **natively** (recommended when Ollama is already on the host — `LLM_BASE_URL`
-defaults to `http://localhost:11434`, no Docker networking):
+`run.bat` remains for cmd users with the same flags (`--mcp --pull --port N`).
+
+**Linux/macOS (e.g. the Ubuntu lab VM):**
+
+```bash
+./run.sh                 # web app only (all you need for local LLM)
+./run.sh --mcp --pull    # also start the MCP server and download the model
+```
+
+Flags: `-Gpu`/`-Cpu` (`--gpu`/`--cpu`) force model sizing (default auto-detects
+via `nvidia-smi`), `-Port N`, `-Pull` downloads the recommended Ollama model,
+`-NoVenv` uses the current Python. The web app serves on
+`http://localhost:5002` (`waitress` on Windows, `gunicorn` on Linux/macOS).
+
+Manual native run (`cp .env.example .env`, then):
 
 ```bash
 pip install -r requirements.txt
-gunicorn --bind 0.0.0.0:8660 --threads 4 wsgi:app   # web app at http://localhost:8660
+gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app   # Windows: waitress-serve --port=5002 wsgi:app
 ```
 
 …or in **Docker** (self-contained; compose auto-points the LLM at the host):
 
 ```bash
-docker compose up --build                       # web app at http://localhost:8660
+docker compose up --build                       # web app at http://localhost:5002
 docker compose --profile mcp up insights-mcp    # + MCP over HTTP at :8765
 ```
 
 Pick a model for your hardware (GPU or CPU): `python tools/suggest_model.py`,
-then `ollama pull <model>`. On Windows, run the app with
-`waitress-serve --port=8660 wsgi:app` instead of gunicorn.
-
-**Fastest start — use the launch script** (creates the venv, installs deps,
-writes `.env`, auto-detects GPU/CPU, starts the app):
-
-```bash
-./run.sh                 # macOS/Linux — web app only (all you need for local LLM)
-./run.sh --mcp --pull    # also start the MCP server and download the model
-```
-```bat
-run.bat                  :: Windows — web app only
-run.bat --mcp --pull     :: also start the MCP server and download the model
-```
-
-Flags: `--gpu`/`--cpu` force model sizing (default auto-detects via `nvidia-smi`),
-`--port N`, `--pull` downloads the recommended Ollama model, `--no-venv` uses the
-current Python. The web app serves on `http://localhost:8660` (`waitress` on
-Windows, `gunicorn` on Linux/macOS).
+then `ollama pull <model>`.
 
 > **Do you need the MCP server for local LLM? No.** Ollama is called directly by
 > the web app for `/chat` and dashboard generation. Start `--mcp` only to drive

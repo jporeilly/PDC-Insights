@@ -119,7 +119,7 @@ class Settings:
     """Top-level settings aggregate. `field(default_factory=...)` builds each
     sub-config lazily so a frozen dataclass can still nest other dataclasses."""
     host: str = os.getenv("INSIGHTS_HOST", "0.0.0.0")
-    port: int = int(os.getenv("INSIGHTS_PORT", "8660"))
+    port: int = int(os.getenv("INSIGHTS_PORT", "5002"))
     log_level: str = os.getenv("INSIGHTS_LOG_LEVEL", "INFO")
     brand: Brand = field(default_factory=Brand)
     pdc: PDCConfig = field(default_factory=PDCConfig)

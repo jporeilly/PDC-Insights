@@ -23,7 +23,7 @@ flowchart TB
 
   subgraph insights["Catalog Insights (you deploy this)"]
     direction TB
-    WEB["Web app<br/>Flask · :8660<br/>dashboards · Designer · AI drawer"]
+    WEB["Web app<br/>Flask · :5002<br/>dashboards · Designer · AI drawer"]
     MCP["MCP server<br/>:8765 / stdio<br/>tools: recommend · generate · save"]
     subgraph engine["Shared engine (app/)"]
       direction LR

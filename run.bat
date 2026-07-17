@@ -6,12 +6,12 @@ REM   run.bat                 web app only (all you need for local LLM)
 REM   run.bat --mcp           also start the MCP server (Claude Desktop / agents)
 REM   run.bat --gpu | --cpu   force model sizing (default: auto-detect)
 REM   run.bat --pull          download the recommended Ollama model
-REM   run.bat --port 9000     web app port (default 8660)
+REM   run.bat --port 9000     web app port (default 5002)
 REM   run.bat --no-venv       use the current Python instead of a .venv
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
-set "PORT=8660"
+set "PORT=5002"
 set "WITH_MCP=0"
 set "FORCE="
 set "PULL=0"
@@ -167,7 +167,7 @@ echo   run.bat                 web app only ^(all you need for local LLM^)
 echo   run.bat --mcp           web app + MCP server ^(for Claude Desktop / agents^)
 echo   run.bat --gpu ^| --cpu   force model sizing ^(default: auto-detect^)
 echo   run.bat --pull          also download the recommended Ollama model
-echo   run.bat --port 9000     serve the web app on a different port ^(default 8660^)
+echo   run.bat --port 9000     serve the web app on a different port ^(default 5002^)
 echo   run.bat --no-venv       use the current Python instead of a .venv
 echo.
 echo   Configure the PDC connection in .env ^(PDC_BASE_URL, PDC_USERNAME,

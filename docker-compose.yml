@@ -2,7 +2,7 @@ services:
   insights:
     build: .
     ports:
-      - "${INSIGHTS_PORT:-8660}:8660"   # host:container — 8660 clears Pentaho/Tomcat (8080/8090) + PDC ports
+      - "${INSIGHTS_PORT:-5002}:5002"   # host:container — 5002 clears Pentaho/Tomcat (8080/8090) + PDC ports
     env_file: .env
     # Lets the container reach an Ollama instance on the host (local LLM).
     extra_hosts:
@@ -14,7 +14,7 @@ services:
       LLM_BASE_URL: "${LLM_BASE_URL_DOCKER:-http://host.docker.internal:11434}"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8660/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')"]
       interval: 30s
       timeout: 5s
       retries: 3

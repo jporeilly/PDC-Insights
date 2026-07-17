@@ -3,7 +3,7 @@
 Keeps the launch scripts simple and identical across platforms instead of
 embedding fiddly inline Python. Subcommands:
 
-  python tools/preflight.py port 8660    -> prints 'free' or 'busy'
+  python tools/preflight.py port 5002    -> prints 'free' or 'busy'
   python tools/preflight.py http <url>   -> prints 'ok' or 'no'   (HTTP reachable?)
   python tools/preflight.py json <url> <key>  -> prints the top-level JSON value
 """

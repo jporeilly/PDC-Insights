@@ -83,7 +83,7 @@ practical, which is the right default for governance metadata. Recommended split
    works, with no container hop or `host.docker.internal` indirection:
    ```bash
    pip install -r requirements.txt
-   gunicorn --bind 0.0.0.0:8660 --threads 4 wsgi:app
+   gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app
    ```
    Prefer a self-contained container instead? `docker compose up` works too — the
    compose file injects `host.docker.internal` so the containerised app still

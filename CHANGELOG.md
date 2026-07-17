@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.11.0 (2026-07-17) — run.ps1 launcher; default port 5002
+
+- **New `run.ps1`** — first-class Windows PowerShell launcher (twin of
+  `run.sh`, PowerShell 5.1-compatible): preflight (Python probe via the `py`
+  launcher, venv, deps, `.env`, free port), the connection report, GPU/CPU
+  model sizing, optional `-Mcp`/`-Pull`, then **waitress in the foreground**
+  (Ctrl-C to stop) — matching the Glossary/Policy launcher UX instead of
+  run.bat's detached `cmd /k` windows. `run.bat` remains for cmd users.
+- **Default web port 8660 → 5002** — next in the demo-host sequence after
+  the sibling apps (5000 Glossary Generator, 5001 Policy Generator) and
+  still clear of the Pentaho/Tomcat and PDC ranges. Overridable as before
+  via `INSIGHTS_PORT` / `--port` / `-Port`; the Docker container now
+  listens on 5002 internally too. MCP stays on 8765.
+- Docs reordered Windows-11-host-first (README quickstart, INSTALL launch
+  section) to match the standard demo topology: apps on the Windows host,
+  lab + PDC on the Ubuntu VM.
+
 ## 1.10.1 (2026-07-17) — doc fixes for the PDC-Demo suite
 
 - INSTALL §4: replaced the `git clone <your-repo-url>` placeholder with the
