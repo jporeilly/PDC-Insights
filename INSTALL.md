@@ -195,7 +195,10 @@ Either way: open <http://localhost:5002>; health check <http://localhost:5002/he
 
 In demo mode the dashboards, snapshot, and recommendations work immediately. The
 mock UI (`ui/mock/index.html`) is also openable directly in a browser for design
-review without running anything.
+review without running anything. (Once you're live, any single dashboard view
+can still be flipped to the sample via the "── Demo data (sample)" entry at the
+end of its source-scope dropdown — session-only, the app-wide setting is never
+touched.)
 
 **Build dashboards by chat.** Once the app is running, open **`/chat`**
 (e.g. <http://localhost:5002/chat>) for the in-app AI builder: describe a

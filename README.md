@@ -189,6 +189,15 @@ Set `INSIGHTS_DEMO=true` and the snapshot/recommend/dashboard paths serve a
 bundled sample catalog — both the web API and the MCP `recommend_dashboards`
 loop work offline, which is handy for enablement.
 
+Even when the app runs **live**, any dashboard view can flip to the sample on
+its own: the source-scope dropdown ends with a visually separated
+**"── Demo data (sample)"** entry that renders just the *current* dashboard
+from the bundled snapshot — the badge flips to **DEMO DATA**, drill-through
+follows the same override (`"demo": true` on `/api/dashboards/resolve` and
+`/drill`), the choice is remembered per section for the session only, and the
+app-wide live/demo setting in Settings is never touched. Picking any source
+(or *All sources*) returns the view to live.
+
 ## Where it runs
 
 The app is a stateless client to PDC + an LLM endpoint — no Pentaho Server,

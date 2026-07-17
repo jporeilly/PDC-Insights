@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.15.1 (2026-07-17) — docs sync
+
+- Docs-only release. README's "Try it without a live PDC" section now covers
+  the per-view "── Demo data (sample)" scope-dropdown option (badge flip,
+  session-only, drill-through follows, app setting untouched);
+  `docs/DASHBOARDS.md` lists all 18 built-ins by name (3 per section, was
+  "12") and notes the per-request `demo:true` override under Live data;
+  INSTALL's demo-mode section gained a line about the per-view option.
+  No code changes.
+
 ## 1.15.0 (2026-07-17) — per-view "Demo data" option in the dashboards views
 
 - **Dashboards: a per-view demo override.** The source-scope dropdown now ends
