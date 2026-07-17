@@ -125,6 +125,22 @@ required) — see `app/dashboards/`. They double as enablement examples: every
 one is a valid `.studio.json` spec you can open in the Designer to learn the
 format, then duplicate or tweak. Regenerate with `python tools/build_dashboards.py`.
 
+The typical user journey through the app:
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#EEF6FA','primaryBorderColor':'#1C7293','primaryTextColor':'#22333B','secondaryColor':'#DBEEF3','tertiaryColor':'#F7FBFD','lineColor':'#1C7293','fontFamily':'Segoe UI, sans-serif','fontSize':'13px','clusterBkg':'#F7FBFD','clusterBorder':'#CFE3EC'}}}%%
+flowchart LR
+    SEC["Pick an<br/>Analytics section"] --> STD["Standard dashboards<br/>live overlay from PDC"]
+    STD --> DR["Drill-through<br/>to the entities behind a count"]
+    STD --> DES["Designer<br/>duplicate · tweak"]
+    SEC --> CHAT["AI Builder chat<br/>suggest → build → refine"]
+    DES --> CAT["Save to catalog<br/>pinned to its section"]
+    CHAT --> CAT
+    CAT --> OUT["Download .studio.json<br/>print / save as PDF"]
+    classDef out fill:#DBEEF3,stroke:#065A82,color:#0A3D52
+    class OUT out
+```
+
 ## Two front doors
 
 The same engine is reachable two ways:

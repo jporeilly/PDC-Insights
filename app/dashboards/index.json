@@ -9,6 +9,11 @@
       "id": "risk-hotspots",
       "title": "Risk hotspots",
       "subtitle": "Where governance needs attention"
+    },
+    {
+      "id": "executive-scorecard",
+      "title": "Executive scorecard",
+      "subtitle": "Targets & posture on one page"
     }
   ],
   "system": [
@@ -21,6 +26,11 @@
       "id": "source-inventory",
       "title": "Source inventory",
       "subtitle": "What is connected & how much"
+    },
+    {
+      "id": "scan-operations",
+      "title": "Scan operations",
+      "subtitle": "Throughput, freshness & the fix queue"
     }
   ],
   "user": [
@@ -33,6 +43,11 @@
       "id": "activity-ratings",
       "title": "Activity & ratings",
       "subtitle": "Edits, ratings & freshness"
+    },
+    {
+      "id": "contribution-pulse",
+      "title": "Contribution pulse",
+      "subtitle": "Daily edits & ownership momentum"
     }
   ],
   "governance": [
@@ -45,6 +60,11 @@
       "id": "policy-lineage",
       "title": "Policy & lineage",
       "subtitle": "Policy posture & lineage health"
+    },
+    {
+      "id": "governance-sla",
+      "title": "Governance SLA",
+      "subtitle": "Coverage targets, tracked like SLAs"
     }
   ],
   "quality": [
@@ -57,6 +77,11 @@
       "id": "dq-dimensions",
       "title": "DQ dimensions",
       "subtitle": "The dimensions behind the score"
+    },
+    {
+      "id": "quality-posture",
+      "title": "Quality posture",
+      "subtitle": "The mean, the bands & the fix list"
     }
   ],
   "sensitivity": [
@@ -69,6 +94,11 @@
       "id": "pii-discoveries",
       "title": "PII discoveries",
       "subtitle": "Content-scan findings"
+    },
+    {
+      "id": "protection-controls",
+      "title": "Protection controls",
+      "subtitle": "Encryption & masking posture"
     }
   ]
 }

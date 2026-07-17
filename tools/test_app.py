@@ -66,6 +66,19 @@ check("connection-based suggestions present (compare/freshness/keys/formats/tags
 check("suggestion has why + generate_prompt + template + priority",
       all(k in first for k in ("why", "generate_prompt", "standard_template", "priority")))
 
+print("\n[1b] standard dashboards — schema + query-catalog validity")
+import glob as _glob  # noqa: E402
+_specs = sorted(_glob.glob("app/dashboards/**/*.studio.json", recursive=True))
+check(f"standard set is 3 per section ({len(_specs)})", len(_specs) == 3 * len(SECTIONS))
+for _f in _specs:
+    with open(_f, encoding="utf-8") as fh:
+        _spec = json.load(fh)
+    _errs = _validate(_spec, QUERY_CATALOG)
+    check(f"{_f.replace(os.sep, '/').split('/')[-1]} validates", not _errs)
+_idx = json.load(open("app/dashboards/index.json", encoding="utf-8"))
+check("index.json lists every section with 3 dashboards",
+      set(_idx) == set(SECTIONS) and all(len(v) == 3 for v in _idx.values()))
+
 print("\n[2] chat_build — deterministic builder")
 for sec in SECTIONS:
     r = demo_build("something useful", section=sec)
@@ -225,9 +238,12 @@ try:
     import glob
     import re
     from pathlib import Path
-    keep = {"catalog-health", "risk-hotspots", "profiling-health", "source-inventory",
-            "stewardship", "activity-ratings", "glossary-coverage", "policy-lineage",
-            "quality-scores", "dq-dimensions", "exposure-overview", "pii-discoveries"}
+    keep = {"catalog-health", "risk-hotspots", "executive-scorecard",
+            "profiling-health", "source-inventory", "scan-operations",
+            "stewardship", "activity-ratings", "contribution-pulse",
+            "glossary-coverage", "policy-lineage", "governance-sla",
+            "quality-scores", "dq-dimensions", "quality-posture",
+            "exposure-overview", "pii-discoveries", "protection-controls"}
     for f in glob.glob("app/dashboards/**/*.studio.json", recursive=True):
         # NB: strip the full ".studio.json" — Path().stem only drops ".json",
         # which would leave "name.studio" and match nothing (deleting everything).

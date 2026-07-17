@@ -61,6 +61,24 @@ export const DASHBOARDS = {
       { kind: 'chart', title: 'Coverage gap by source', sub: '% untermed', span: 2, chart: 'bars', q: 'lineage_by_source',
         data: [{ k: 'S3-raw', v: 58, c: 'var(--low)' }, { k: 'Oracle', v: 41, c: 'var(--mid)' }, { k: 'BigQuery', v: 34, c: 'var(--mid)' }, { k: 'Postgres', v: 22, c: 'var(--high)' }], opts: { h: 170, max: 100 } },
     ] },
+    { id: 'executive-scorecard', name: 'Executive scorecard', desc: 'Targets & posture on one page', panels: [
+      K('Catalog assets', '12,480', 'up', '3.1% vs last wk', 'var(--brand)', '◳', [9, 10, 10, 11, 11, 12, 12.4]),
+      K('Mean quality', '76', 'up', '+2', 'var(--c2)', '◈', [70, 72, 73, 74, 75, 75, 76], 'var(--c2-t)'),
+      K('Term coverage', '61%', 'up', '+4 pts', 'var(--high)', '❏', [48, 52, 53, 55, 57, 59, 61], 'var(--high-t)'),
+      K('Lineage verified', '73%', 'up', '+5 pts', 'var(--c4)', '⇄', [62, 65, 67, 69, 70, 72, 73], 'var(--c4-t)'),
+      { kind: 'chart', title: 'Quality vs target', sub: 'by source · target 80', span: 2, chart: 'bullet', q: 'quality_by_source',
+        data: [{ k: 'Snowflake', v: 86, t: 80 }, { k: 'Postgres', v: 78, t: 80 }, { k: 'Oracle', v: 81, t: 80 }, { k: 'S3-raw', v: 64, t: 80 }, { k: 'BigQuery', v: 73, t: 80 }] },
+      { kind: 'chart', title: 'DQ dimensions', sub: 'mean across sources', span: 2, chart: 'radar', q: 'dq_dimensions',
+        data: [{ k: 'Complete', v: 88 }, { k: 'Accurate', v: 79 }, { k: 'Valid', v: 82 }, { k: 'Unique', v: 71 }, { k: 'Consistent', v: 76 }] },
+      { kind: 'chart', title: 'Term coverage', sub: '% of assets', span: 2, chart: 'gauge', q: 'term_coverage', val: 61 },
+      { kind: 'chart', title: 'Watchlist', chip: 'review', span: 2, chart: 'table', q: 'risk_assets',
+        cols: ['Asset', 'Source', 'Issue'],
+        rows: [
+          ['customer_pii', 'Oracle', pill('Untermed + High', 'hi')],
+          ['billing_export', 'S3-raw', pill('Unowned + High', 'hi')],
+          ['invoices_2019', 'Oracle', pill('Quality 34', 'md')],
+          ['meter_raw', 'S3-raw', pill('Scan failed', 'md')]] },
+    ] },
   ],
   system: [
     { id: 'profiling-health', name: 'Profiling health', desc: 'Scan & profile status', panels: [
@@ -98,6 +116,22 @@ export const DASHBOARDS = {
           ['Postgres-billing', 'Database', '2,480', '40 min ago'],
           ['Oracle-legacy', 'Database', '1,690', '3h ago']] },
     ] },
+    { id: 'scan-operations', name: 'Scan operations', desc: 'Throughput, freshness & the fix queue', panels: [
+      K('Scans · 14d', '420', 'up', '+38 vs prior', 'var(--brand)', '⟲', [310, 330, 350, 365, 385, 400, 420]),
+      K('Profiled assets', '94.2%', 'up', '+1.4%', 'var(--high)', '◉', [88, 90, 91, 92, 93, 94, 94.2], 'var(--high-t)'),
+      K('Workers active', '6', 'up', '2 running', 'var(--c2)', '⚙', [4, 5, 4, 6, 5, 6, 6], 'var(--c2-t)'),
+      K('Failed scans', '12', 'down', '−5 today', 'var(--low)', '✕', [22, 20, 18, 17, 15, 14, 12], 'var(--low-t)'),
+      { kind: 'chart', title: 'Daily scan volume', sub: 'assets scanned / day', span: 2, chart: 'line', q: 'scan_activity',
+        data: [18, 22, 20, 26, 24, 30, 28, 34, 31, 36, 33, 38] },
+      { kind: 'chart', title: 'Profiled assets', sub: '% of catalog', span: 2, chart: 'gauge', q: 'profile_status', val: 94 },
+      { kind: 'chart', title: 'Fix queue', chip: '12 need attention', span: 4, chart: 'table', q: 'stale_failed',
+        cols: ['Asset', 'Source', 'Status', 'Last attempt'],
+        rows: [
+          ['billing.invoices_2019', 'Oracle', pill('Failed', 'hi'), '2h ago'],
+          ['meter_reads_raw', 'S3-raw', pill('Failed', 'hi'), '2h ago'],
+          ['cust_archive', 'Snowflake', pill('Skipped', 'md'), '1d ago'],
+          ['gis_parcels', 'Postgres', pill('Skipped', 'md'), '1d ago']] },
+    ] },
   ],
   user: [
     { id: 'stewardship', name: 'Stewardship', desc: 'Ownership coverage & workload', panels: [
@@ -132,6 +166,16 @@ export const DASHBOARDS = {
       { kind: 'chart', title: 'Most active stewards', span: 2, chart: 'bars', q: 'owner_workload',
         data: [{ k: 'a.ruiz', v: 88 }, { k: 'm.chen', v: 71 }, { k: 't.okafor', v: 60 }, { k: 's.patel', v: 44 }], opts: { h: 160 } },
     ] },
+    { id: 'contribution-pulse', name: 'Contribution pulse', desc: 'Daily edits & ownership momentum', panels: [
+      K('Edits total', '5,340', 'up', '+9% this mo', 'var(--c4)', '✎', [4.4, 4.6, 4.8, 4.9, 5.1, 5.2, 5.34], 'var(--c4-t)'),
+      K('Avg rating', '4.1', 'flat', 'of 5', 'var(--c3)', '★', [3.9, 4, 4, 4.1, 4, 4.1, 4.1], 'var(--mid-t)'),
+      K('Assets owned', '68%', 'up', '+6 pts', 'var(--high)', '☑', [55, 58, 60, 62, 64, 66, 68], 'var(--high-t)'),
+      K('Modified · 7d', '892', 'up', '+8%', 'var(--brand)', '⟳', [760, 800, 820, 840, 860, 880, 892]),
+      { kind: 'chart', title: 'Edit activity', sub: 'daily · last 24 wks', span: 4, chart: 'calendar', weeks: 24 },
+      { kind: 'chart', title: 'Edits by action', sub: 'what stewards change', span: 2, chart: 'donut', q: 'edit_activity',
+        data: [{ k: 'Tagged', v: 1840 }, { k: 'Termed', v: 1260 }, { k: 'Owned', v: 980 }, { k: 'Rated', v: 720 }, { k: 'Described', v: 540 }] },
+      { kind: 'chart', title: 'Assets owned', sub: '% with an owner', span: 2, chart: 'gauge', q: 'owners_coverage', val: 68 },
+    ] },
   ],
   governance: [
     { id: 'glossary-coverage', name: 'Glossary coverage', desc: 'Term coverage & gaps', panels: [
@@ -164,6 +208,17 @@ export const DASHBOARDS = {
       { kind: 'chart', title: 'Lineage coverage by source', span: 4, chart: 'stacked', q: 'lineage_by_source',
         data: [{ k: 'Snowflake', Verified: 3100, Unverified: 1110 }, { k: 'S3-raw', Verified: 1500, Unverified: 1620 }, { k: 'Postgres', Verified: 1900, Unverified: 580 }, { k: 'Oracle', Verified: 1200, Unverified: 490 }, { k: 'BigQuery', Verified: 610, Unverified: 370 }],
         keys: ['Verified', 'Unverified'], colors: ['var(--brand)', 'var(--border-strong)'] },
+    ] },
+    { id: 'governance-sla', name: 'Governance SLA', desc: 'Coverage targets, tracked like SLAs', panels: [
+      K('Term coverage', '61%', 'up', '+4 pts', 'var(--high)', '%', [52, 54, 56, 57, 59, 60, 61], 'var(--high-t)'),
+      K('Policy coverage', '68%', 'up', '+3 pts', 'var(--c2)', '▤', [60, 62, 63, 65, 66, 67, 68], 'var(--c2-t)'),
+      K('Lineage verified', '73%', 'up', '+5 pts', 'var(--brand)', '⇄', [62, 65, 67, 69, 70, 72, 73]),
+      K('Terms in review', '23', 'flat', 'pending', 'var(--mid)', '◷', [20, 22, 21, 23, 22, 23, 23], 'var(--mid-t)'),
+      { kind: 'chart', title: 'Term coverage', sub: 'target 75', span: 2, chart: 'gauge', q: 'term_coverage', val: 61 },
+      { kind: 'chart', title: 'Policy coverage', sub: 'assets under a policy', span: 2, chart: 'gauge', q: 'policy_coverage', val: 68 },
+      { kind: 'chart', title: 'Lineage verified', sub: 'of scored assets', span: 2, chart: 'gauge', q: 'lineage_status', val: 73 },
+      { kind: 'chart', title: 'Term coverage vs target', sub: 'by source · target 75', span: 2, chart: 'bullet', q: 'term_coverage',
+        data: [{ k: 'Snowflake', v: 74, t: 75 }, { k: 'Postgres', v: 68, t: 75 }, { k: 'Oracle', v: 41, t: 75 }, { k: 'S3-raw', v: 34, t: 75 }, { k: 'BigQuery', v: 34, t: 75 }] },
     ] },
   ],
   quality: [
@@ -198,6 +253,22 @@ export const DASHBOARDS = {
       { kind: 'chart', title: 'Dimensions by source', span: 4, chart: 'stacked', q: 'dq_by_source',
         data: [{ k: 'Snowflake', Complete: 90, Valid: 88, Unique: 82 }, { k: 'Postgres', Complete: 86, Valid: 80, Unique: 70 }, { k: 'S3-raw', Complete: 74, Valid: 68, Unique: 55 }, { k: 'Oracle', Complete: 85, Valid: 84, Unique: 76 }],
         keys: ['Complete', 'Valid', 'Unique'], colors: ['var(--c1)', 'var(--c2)', 'var(--c6)'] },
+    ] },
+    { id: 'quality-posture', name: 'Quality posture', desc: 'The mean, the bands & the fix list', panels: [
+      K('Mean quality', '76', 'up', '+2', 'var(--brand)', '◈', [70, 72, 73, 74, 75, 75, 76]),
+      K('Lowest score', '34', 'up', '+3', 'var(--low)', '▽', [28, 29, 30, 31, 32, 33, 34], 'var(--low-t)'),
+      K('Completeness', '88%', 'up', '+1%', 'var(--high)', '◔', [84, 85, 86, 86, 87, 87, 88], 'var(--high-t)'),
+      K('Profiled assets', '94.2%', 'up', '+1.4%', 'var(--c2)', '◉', [88, 90, 91, 92, 93, 94, 94.2], 'var(--c2-t)'),
+      { kind: 'chart', title: 'Mean quality score', sub: 'catalog-wide', span: 2, chart: 'gauge', q: 'quality_by_source', val: 76 },
+      { kind: 'chart', title: 'Score bands', sub: 'assets per band', span: 2, chart: 'donut', q: 'quality_distribution',
+        data: [{ k: '0–50', v: 980, c: 'var(--low)' }, { k: '51–70', v: 2740, c: 'var(--mid)' }, { k: '71–85', v: 5230, c: 'var(--high)' }, { k: '86–100', v: 3530, c: 'var(--brand)' }] },
+      { kind: 'chart', title: 'Fix list', chip: 'remediate', span: 4, chart: 'table', q: 'worst_tables',
+        cols: ['Table', 'Source', 'Score', 'Worst dim'],
+        rows: [
+          ['invoices_2019', 'Oracle', pill('34', 'hi'), 'Completeness'],
+          ['meter_raw', 'S3-raw', pill('41', 'hi'), 'Validity'],
+          ['cust_arch', 'Snowflake', pill('48', 'hi'), 'Uniqueness'],
+          ['gis_old', 'Postgres', pill('52', 'md'), 'Accuracy']] },
     ] },
   ],
   sensitivity: [
@@ -235,6 +306,21 @@ export const DASHBOARDS = {
           ['support_tickets', 'Snowflake', pill('Email · Phone', 'md'), 'Yes'],
           ['field_notes', 'Postgres', pill('Phone', 'md'), 'Yes']] },
     ] },
+    { id: 'protection-controls', name: 'Protection controls', desc: 'Encryption & masking posture', panels: [
+      K('Encrypted', '74%', 'up', '+7 pts', 'var(--high)', '✔', [58, 61, 64, 67, 70, 72, 74], 'var(--high-t)'),
+      K('Masked', '61%', 'up', '+9 pts', 'var(--c2)', '◑', [47, 50, 53, 55, 58, 60, 61], 'var(--c2-t)'),
+      K('High sensitivity', '842', 'down', '−18', 'var(--low)', '🔒', [60, 58, 55, 52, 50, 46, 42], 'var(--low-t)'),
+      K('PII columns', '1,604', 'flat', 'tracked', 'var(--mid)', '⚑', [15, 16, 16, 16, 16, 16, 16], 'var(--mid-t)'),
+      { kind: 'chart', title: 'Encryption coverage', sub: 'sensitive assets encrypted', span: 2, chart: 'gauge', q: 'encryption_status', val: 74 },
+      { kind: 'chart', title: 'Masking coverage', sub: 'PII columns masked', span: 2, chart: 'gauge', q: 'masking_status', val: 61 },
+      { kind: 'chart', title: 'PII protection status', chip: 'protect', span: 4, chart: 'table', q: 'pii_assets',
+        cols: ['Asset', 'Source', 'PII types', 'Masked'],
+        rows: [
+          ['customer_pii', 'Oracle', pill('SSN · Email', 'hi'), 'No'],
+          ['billing_export', 'S3-raw', pill('Account · DOB', 'hi'), 'Partial'],
+          ['support_tickets', 'Snowflake', pill('Email · Phone', 'md'), 'Yes'],
+          ['field_notes', 'Postgres', pill('Phone', 'md'), 'Yes']] },
+    ] },
   ],
 }
 
@@ -247,6 +333,13 @@ export const KPI_QUERY = {
   'Glossary coverage': 'term_coverage',
   'High sensitivity': 'sensitivity_mix',
   'Profiled assets': 'profile_status',
+  'Mean quality': 'quality_by_source',
+  'Term coverage': 'term_coverage',
+  'Lineage verified': 'lineage_status',
+  'Policy coverage': 'policy_coverage',
+  'Assets owned': 'owners_coverage',
+  'Encrypted': 'encryption_status',
+  'Masked': 'masking_status',
 }
 
 export const TRUST_BANDS = { Untrusted: '0–50', Trusted: '51–75', 'Highly Trusted': '76–100' }
