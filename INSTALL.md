@@ -59,6 +59,8 @@ No Pentaho Server, CTools, or Semantic Model Editor is installed or required.
 | ---- | ------- | ----- |
 | **8660** | Catalog Insights web app | default; override with `INSIGHTS_PORT` |
 | **8765** | Catalog Insights MCP (HTTP) | override with `MCP_PORT` |
+| 5000 | Glossary Generator (sibling app) | avoid |
+| 5001 | Policy Generator (sibling app) | avoid |
 | 8080 | Pentaho Server / PUC (Tomcat) | avoid |
 | 8090 | Pentaho config (AWS/K8s port-forward) | avoid |
 | 8443 / 9443 | Pentaho SSL / redirect | avoid |
@@ -77,7 +79,7 @@ defaults internally regardless of the host mapping you choose.
 | Docker + Docker Compose | running the app/MCP | Docker Desktop on Windows/macOS; Docker Engine on Linux |
 | A PDC instance + a read-only account (11.0 is the target; 10.2.x also works) | live data | optional — use `INSIGHTS_DEMO=true` to skip at first |
 | Ollama (optional) | local LLM generation | recommended for governance data; needs a GPU for speed |
-| Python 3.12 (optional) | running tests / stdio MCP without Docker | only if you run outside containers |
+| Python 3.9+ (3.12+ recommended; optional) | running tests / stdio MCP without Docker | only if you run outside containers |
 | An NVIDIA GPU (optional) | fast local inference | e.g. your 2× RTX 3060 |
 
 ## 3. Pick your path
@@ -128,7 +130,7 @@ falling back to the Flask dev server if neither is present. `run.sh --help` / `r
 ## 4. Get the code
 
 ```bash
-git clone <your-repo-url> PDC-Insights      # or unzip the delivered archive
+git clone https://github.com/jporeilly/PDC-Insights.git PDC-Insights   # or unzip the delivered archive
 cd PDC-Insights
 cp .env.example .env
 ```

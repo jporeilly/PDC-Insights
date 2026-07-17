@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.10.1 (2026-07-17) — doc fixes for the PDC-Demo suite
+
+- INSTALL §4: replaced the `git clone <your-repo-url>` placeholder with the
+  real repo URL (github.com/jporeilly/PDC-Insights).
+- Python version harmonised across the docs: **3.9+ required** (what
+  run.sh/run.bat enforce), **3.12+ recommended** (what the Docker image uses).
+  The Dockerfile stays on python:3.12-slim.
+- Port guidance now names the sibling PDC-Demo apps so co-hosted installs
+  don't collide: 5000 Glossary Generator · 5001 Policy Generator · 8660
+  Insights · 8765 MCP · 11434 Ollama (INSTALL Ports table + .env.example).
+- No code changes.
+
 ## 1.10.0 — re-target to PDC 11.0; adopted as its own GitHub project
 
 - The project now lives at github.com/jporeilly/PDC-Insights (public), a
