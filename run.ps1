@@ -145,4 +145,4 @@ Write-Host "  Health        http://127.0.0.1:$Port/health/pdc"
 Write-Host ""
 Write-Host "  Ready - Ctrl-C to stop" -ForegroundColor Cyan
 Write-Host ""
-PyRun -m waitress --listen "${BindHost}:$Port" wsgi:app
+PyRun -m uvicorn asgi:app --host $BindHost --port $Port

@@ -1,9 +1,10 @@
-from .health import bp as health_bp
-from .analytics import bp as analytics_bp
-from .generate import bp as generate_bp
-from .dashboards import bp as dashboards_bp
-from .chat import bp as chat_bp
-from .llm import bp as llm_bp
-from .settings import bp as settings_bp
+from .health import router as health_router
+from .analytics import router as analytics_router
+from .generate import router as generate_router
+from .dashboards import router as dashboards_router
+from .chat import router as chat_router
+from .llm import router as llm_router
+from .settings import router as settings_router
 
-blueprints = (health_bp, analytics_bp, generate_bp, dashboards_bp, chat_bp, llm_bp, settings_bp)
+routers = (health_router, analytics_router, generate_router, dashboards_router,
+           chat_router, llm_router, settings_router)

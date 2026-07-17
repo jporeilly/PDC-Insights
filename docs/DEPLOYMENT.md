@@ -10,7 +10,7 @@ PDC API and the LLM.
 ```
         ┌──────────────────────────┐        ┌─────────────────────┐
         │  Catalog Insights        │  REST  │  PDC (Linux,        │
-        │  Flask + gunicorn        │───────▶│  Docker containers) │
+        │  FastAPI + uvicorn       │───────▶│  Docker containers) │
         │  (1 small container)     │        │  OpenSearch + svcs  │
         └─────────────┬────────────┘        └─────────────────────┘
                       │ HTTP
@@ -83,7 +83,7 @@ practical, which is the right default for governance metadata. Recommended split
    works, with no container hop or `host.docker.internal` indirection:
    ```bash
    pip install -r requirements.txt
-   gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app
+   uvicorn asgi:app --host 0.0.0.0 --port 5002
    ```
    Prefer a self-contained container instead? `docker compose up` works too — the
    compose file injects `host.docker.internal` so the containerised app still
@@ -108,7 +108,7 @@ don't need a large model:
 
 ### No GPU? CPU works too
 
-A GPU isn't required — generation also runs on CPU, just slower. Pick a smaller model (e.g. `qwen2.5:3b-instruct`, or `1.5b` on tight RAM), keep `LLM_JSON_MODE=true`, and optionally set `OLLAMA_NUM_PARALLEL=1`. Run `python tools/suggest_model.py` and it inspects the OS, RAM, cores, and any NVIDIA GPU to recommend a model and the right native run command for the platform (gunicorn on Linux/macOS, waitress on Windows). Everything except generation latency is identical to the GPU path.
+A GPU isn't required — generation also runs on CPU, just slower. Pick a smaller model (e.g. `qwen2.5:3b-instruct`, or `1.5b` on tight RAM), keep `LLM_JSON_MODE=true`, and optionally set `OLLAMA_NUM_PARALLEL=1`. Run `python tools/suggest_model.py` and it inspects the OS, RAM, cores, and any NVIDIA GPU to recommend a model and the native run command (uvicorn, same on every platform). Everything except generation latency is identical to the GPU path.
 
 Keep `LLM_JSON_MODE=true` so Ollama constrains output to valid JSON — that
 matters more than raw model size for this task. Start with 7B; step up to 14B

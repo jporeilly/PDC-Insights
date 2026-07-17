@@ -120,8 +120,8 @@ if "%WITH_MCP%"=="1" (
   echo   [ok] MCP server -^> new window ^(:8765^)
   start "Catalog Insights MCP" cmd /k "call .venv\Scripts\activate.bat 2>nul & set MCP_HTTP=1 & python -m mcp_server.server"
 )
-echo   [ok] web app -^> new window ^(waitress :%PORT%^)
-start "Catalog Insights Web" cmd /k "call .venv\Scripts\activate.bat 2>nul & set INSIGHTS_FORCE_MODE=%MODE% & (where waitress-serve >nul 2>nul && waitress-serve --port=%PORT% wsgi:app || python -m flask --app wsgi run --port %PORT%)"
+echo   [ok] web app -^> new window ^(uvicorn :%PORT%^)
+start "Catalog Insights Web" cmd /k "call .venv\Scripts\activate.bat 2>nul & set INSIGHTS_FORCE_MODE=%MODE% & python -m uvicorn asgi:app --host 0.0.0.0 --port %PORT%"
 
 echo   waiting for the app to come up...
 set "UP=0"

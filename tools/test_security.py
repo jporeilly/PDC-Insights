@@ -1,6 +1,6 @@
 """Security model tests — run: python tools/test_security.py
 
-Covers the shared core (auth, roles, audit), the Flask API (401/403/200 by
+Covers the shared core (auth, roles, audit), the web API (401/403/200 by
 role), and the MCP tools (gated allow/deny). Uses apikey mode + demo data so
 it runs with no live PDC.
 """
@@ -56,9 +56,10 @@ check("viewer < steward", not Principal("x", "x", "viewer").at_least("steward"))
 check("authorize denies under-privileged",
       _raises(lambda: authorize(Principal("x", "x", "viewer"), "steward"), ForbiddenError))
 
-print("\n[2] flask API by role")
+print("\n[2] web API by role")
+from fastapi.testclient import TestClient  # noqa: E402
 app = create_app()
-c = app.test_client()
+c = TestClient(app)
 check("health is public (200, no auth)", c.get("/health").status_code == 200)
 check("snapshot without auth → 401", c.get("/api/snapshot").status_code == 401)
 check("snapshot as viewer → 200", c.get("/api/snapshot", headers=H("viewkey")).status_code == 200)
@@ -71,7 +72,7 @@ check("generate as viewer → 403",
 # steward can save a valid spec
 valid = json.load(open("app/dashboards/governance/glossary-coverage.studio.json"))
 r = c.post("/api/dashboards", headers=H("stewkey"), json=valid)
-check("save valid spec as steward → 200", r.status_code == 200 and r.get_json().get("saved"))
+check("save valid spec as steward → 200", r.status_code == 200 and r.json().get("saved"))
 check("save invalid spec as steward → 400",
       c.post("/api/dashboards", headers=H("stewkey"), json={"title": "bad", "category": "overview", "version": 1, "panels": [{"id": "p", "kind": "chart", "title": "t", "query": "nope", "chartType": "bar", "bindings": {}}]}).status_code == 400)
 

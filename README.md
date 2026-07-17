@@ -9,7 +9,7 @@ dashboards by hand or generate them from a plain-language prompt** using a
 local or commercial LLM.
 
 It is a thin, containerised app — the same shape as the Glossary Generator
-(Flask + Docker + bearer auth + env config). It does **not** require a
+(FastAPI + Docker + bearer auth + env config). It does **not** require a
 Pentaho Server or the CTools stack to run; PDC metadata is reached over its
 API, not a JDBC source.
 
@@ -31,7 +31,7 @@ Dashboard Studio editor exports CDF/CDE/CDA from the same spec; see
 ## Layout
 
 ```
-app/                 Flask backend
+app/                 FastAPI backend
   config.py          env-driven settings (PDC, LLM, brand)
   security.py        auth + roles + audit (shared by web app and MCP)
   pdc_client.py      auth + search + facets + entities (read-only, re-auths on 401)
@@ -79,13 +79,13 @@ auto-detect GPU/CPU and start the app.
 Flags: `-Gpu`/`-Cpu` (`--gpu`/`--cpu`) force model sizing (default auto-detects
 via `nvidia-smi`), `-Port N`, `-Pull` downloads the recommended Ollama model,
 `-NoVenv` uses the current Python. The web app serves on
-`http://localhost:5002` (`waitress` on Windows, `gunicorn` on Linux/macOS).
+`http://localhost:5002` (`uvicorn` on every platform).
 
 Manual native run (`cp .env.example .env`, then):
 
 ```bash
 pip install -r requirements.txt
-gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app   # Windows: waitress-serve --port=5002 wsgi:app
+uvicorn asgi:app --host 0.0.0.0 --port 5002
 ```
 
 …or in **Docker** (self-contained; compose auto-points the LLM at the host):

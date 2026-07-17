@@ -1,46 +1,43 @@
 """Read endpoints that feed the dashboards. All require at least 'viewer'."""
-from flask import Blueprint, jsonify, request
+from fastapi import APIRouter, Depends, Request
 
 from ..catalog import catalog_snapshot
 from ..pdc_client import client
 from ..recommend import recommend
-from ._auth import require
+from ..security import Principal
+from ._auth import json_body, require
 
-bp = Blueprint("analytics", __name__, url_prefix="/api")
-
-
-@bp.post("/facets")
-@require("viewer")
-def facets():
-    body = request.get_json(force=True) or {}
-    return jsonify(client.facets(body.get("term", "*"), body.get("facets")))
+router = APIRouter(prefix="/api", tags=["analytics"])
 
 
-@bp.post("/search")
-@require("viewer")
-def search():
-    body = request.get_json(force=True) or {}
-    return jsonify(client.search(body.get("term", "*"), body.get("facets"),
-                                 body.get("page", 1), body.get("perPage", 30)))
+@router.post("/facets")
+async def facets(request: Request, principal: Principal = Depends(require("viewer"))):
+    body = await json_body(request)
+    return client.facets(body.get("term", "*"), body.get("facets"))
 
 
-@bp.get("/trust-distribution")
-@require("viewer")
-def trust():
-    return jsonify(client.trust_distribution(request.args.get("term", "*")))
+@router.post("/search")
+async def search(request: Request, principal: Principal = Depends(require("viewer"))):
+    body = await json_body(request)
+    return client.search(body.get("term", "*"), body.get("facets"),
+                         body.get("page", 1), body.get("perPage", 30))
 
 
-@bp.get("/snapshot")
-@require("viewer")
-def snapshot():
+@router.get("/trust-distribution")
+def trust(term: str = "*", principal: Principal = Depends(require("viewer"))):
+    return client.trust_distribution(term)
+
+
+@router.get("/snapshot")
+def snapshot(principal: Principal = Depends(require("viewer"))):
     """Catalog state — works offline in demo mode."""
-    return jsonify(catalog_snapshot())
+    return catalog_snapshot()
 
 
-@bp.get("/recommend")
-@require("viewer")
-def recommend_route():
-    scope = request.args.get("scope") or None
+@router.get("/recommend")
+def recommend_route(request: Request, principal: Principal = Depends(require("viewer"))):
+    args = request.query_params
+    scope = args.get("scope") or None
     # section (a.k.a. category) makes the suggestions Analytics-section-aware
-    section = request.args.get("section") or request.args.get("category") or None
-    return jsonify(recommend(catalog_snapshot(), scope, section))
+    section = args.get("section") or args.get("category") or None
+    return recommend(catalog_snapshot(), scope, section)

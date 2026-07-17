@@ -93,5 +93,5 @@ boundary is the OS user, and the configured default role applies.
 python tools/test_security.py
 ```
 
-Exercises core auth/roles, the Flask API (401 / 403 / 200 by role), the gated
+Exercises core auth/roles, the web API (401 / 403 / 200 by role), the gated
 MCP tools, and audit emission — all on demo data, no live PDC needed.

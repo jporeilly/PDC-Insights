@@ -11,45 +11,44 @@ providers there's nothing to pull.
 import json
 
 import requests
-from flask import Blueprint, Response, jsonify, request
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from ..config import settings
 from ..model_advice import recommend
-from ._auth import require
+from ..security import Principal
+from ._auth import json_body, require
 
-bp = Blueprint("llm", __name__, url_prefix="/api/llm")
+router = APIRouter(prefix="/api/llm", tags=["llm"])
 
 
-@bp.get("/suggest")
-@require("viewer")
-def suggest():
+@router.get("/suggest")
+def suggest(request: Request, principal: Principal = Depends(require("viewer"))):
     """Recommend a model for this machine, and whether it's already installed.
     Optional ?mode=cpu|gpu forces the CPU/GPU toggle."""
-    rec = recommend(request.args.get("mode") or None)
+    rec = recommend(request.query_params.get("mode") or None)
     rec["installed"] = rec["model"] in _installed()
     rec["provider"] = settings.llm.provider
-    return jsonify(rec)
+    return rec
 
 
-@bp.get("/models")
-@require("viewer")
-def models():
+@router.get("/models")
+def models(principal: Principal = Depends(require("viewer"))):
     """List locally installed Ollama models (empty if unreachable)."""
-    return jsonify({"models": _installed(), "base_url": settings.llm.base_url})
+    return {"models": _installed(), "base_url": settings.llm.base_url}
 
 
-@bp.post("/pull")
-@require("steward")
-def pull():
+@router.post("/pull")
+async def pull(request: Request, principal: Principal = Depends(require("steward"))):
     """Pull a model into the local Ollama, streaming progress to the browser.
 
     Proxies Ollama's POST /api/pull (newline-delimited JSON). We forward each
     progress line as it arrives so the Settings page can show a live status,
     rather than blocking on a multi-GB download with no feedback.
     """
-    model = (request.get_json(force=True) or {}).get("model", "").strip()
+    model = (await json_body(request)).get("model", "").strip()
     if not model:
-        return jsonify({"error": "model is required"}), 400
+        return JSONResponse({"error": "model is required"}, status_code=400)
     base = settings.llm.base_url.rstrip("/")
 
     def stream():
@@ -65,7 +64,7 @@ def pull():
                                "hint": "Is Ollama running and reachable at LLM_BASE_URL?"}) + "\n").encode()
 
     # application/x-ndjson: one JSON object per line, read incrementally by the UI.
-    return Response(stream(), mimetype="application/x-ndjson")
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
 
 
 def _installed() -> list[str]:

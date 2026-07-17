@@ -92,11 +92,7 @@ if [ "$WITH_MCP" = 1 ]; then
   ok "MCP server starting on :8765 (pid $MCP_PID)"
 fi
 
-if command -v gunicorn >/dev/null 2>&1; then
-  gunicorn --bind "0.0.0.0:$PORT" --threads 4 --timeout 180 wsgi:app >"$LOG" 2>&1 & SRV_PID=$!; SERVER="gunicorn"
-else
-  "$PY" -m flask --app wsgi run --port "$PORT" >"$LOG" 2>&1 & SRV_PID=$!; SERVER="flask (dev)"
-fi
+"$PY" -m uvicorn asgi:app --host 0.0.0.0 --port "$PORT" >"$LOG" 2>&1 & SRV_PID=$!; SERVER="uvicorn"
 
 printf "  ${DIM}waiting for the app to come up…${R}\n"
 UP=0

@@ -1,63 +1,56 @@
 """Liveness + dependency reachability (PDC, LLM)."""
-from flask import Blueprint, jsonify
+from fastapi import APIRouter, Depends, Request
 
 from ..config import settings
 from ..llm import get_provider
+from ..security import Principal
 from ._auth import require
 
-bp = Blueprint("health", __name__)
+router = APIRouter(tags=["health"])
 
 
-@bp.get("/health")
+@router.get("/health")
 def health():
     # Public: no auth — used by orchestration health checks.
-    return jsonify({"status": "ok", "brand": settings.brand.name})
+    return {"status": "ok", "brand": settings.brand.name}
 
 
-@bp.get("/config")
-@require("viewer")
-def config():
-    return jsonify({
+@router.get("/config")
+def config(principal: Principal = Depends(require("viewer"))):
+    return {
         "brand": {"name": settings.brand.name, "product": settings.brand.product,
                   "accent": settings.brand.accent},
         "pdc": {"base_url": settings.pdc.base_url, "version": settings.pdc.version},
         "llm": {"provider": settings.llm.provider, "model": settings.llm.model},
         "auth": {"mode": __import__("os").getenv("INSIGHTS_AUTH", "none")},
-    })
+    }
 
 
-@bp.get("/health/llm")
-@require("viewer")
-def health_llm():
-    return jsonify(get_provider().health())
+@router.get("/health/llm")
+def health_llm(principal: Principal = Depends(require("viewer"))):
+    return get_provider().health()
 
 
-@bp.get("/health/pdc")
-@require("viewer")
-def health_pdc():
+@router.get("/health/pdc")
+def health_pdc(principal: Principal = Depends(require("viewer"))):
     """PDC reachability for the UI status dot. Resolves the catalog snapshot:
     live + reachable -> ok/live; demo or live-but-unreachable -> not ok/demo
     (with the fallback note so the footer can explain why)."""
     from ..catalog import catalog_snapshot
     snap = catalog_snapshot()
     demo = snap.get("demo", True)
-    return jsonify({"ok": not demo, "demo": demo,
-                    "base_url": settings.pdc.base_url,
-                    "note": snap.get("note")})
+    return {"ok": not demo, "demo": demo,
+            "base_url": settings.pdc.base_url,
+            "note": snap.get("note")}
 
 
-@bp.get("/health/pdc/token")
-@require("admin")
-def health_pdc_token():
+@router.get("/health/pdc/token")
+def health_pdc_token(request: Request, principal: Principal = Depends(require("admin"))):
     """Debug: fetch a PDC bearer token through the app's OWN client and show it
     plus its decoded claims and the exact endpoint/headers used. Admin-only —
     it reveals a live token. ?reveal=1 returns the full token; otherwise it's
     truncated. Use this to confirm the app is authenticating as expected.
     """
-    import os
-
-    from flask import request
-
     from ..config import PDCConfig
     from ..pdc_client import PDCClient, PDCError, decode_jwt
 
@@ -75,24 +68,23 @@ def health_pdc_token():
     try:
         tok = client.token()
     except PDCError as exc:
-        return jsonify({"ok": False, "error": str(exc), **info}), 200
+        return {"ok": False, "error": str(exc), **info}
     except Exception as exc:  # noqa: BLE001
-        return jsonify({"ok": False, "error": f"{type(exc).__name__}: {exc}", **info}), 200
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}", **info}
 
-    reveal = request.args.get("reveal") in ("1", "true", "yes")
+    reveal = request.query_params.get("reveal") in ("1", "true", "yes")
     ident = decode_jwt(tok)
-    return jsonify({
+    return {
         "ok": True,
         "token": tok if reveal else (tok[:24] + "…" + tok[-12:]),
         "token_length": len(tok),
         "identity": ident,        # username, roles, is_admin, exp, expires_in_s
         **info,
-    })
+    }
 
 
-@bp.get("/health/pdc/probe")
-@require("admin")
-def health_pdc_probe():
+@router.get("/health/pdc/probe")
+def health_pdc_probe(principal: Principal = Depends(require("admin"))):
     """Debug: run each live read the snapshot depends on and report what came
     back (counts, facet keys, a small sample) or the per-call error. Admin-only.
     Use this to see exactly why Live falls back to demo, without curl.
@@ -126,4 +118,4 @@ def health_pdc_probe():
     except Exception as exc:  # noqa: BLE001
         result["data_sources"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
-    return jsonify(result)
+    return result

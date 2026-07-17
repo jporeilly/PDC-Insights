@@ -1,5 +1,58 @@
 # Changelog
 
+## 1.13.0 (2026-07-17) — FastAPI port: the suite is now FastAPI everywhere
+
+- **Backend ported Flask 3 → FastAPI + uvicorn**, route-for-route, matching
+  the Glossary (1.9.0) and Policy generators — the whole PDC-Demo suite now
+  runs the same stack. The API contract is preserved verbatim: same paths,
+  methods, status codes, JSON shapes, headers and auth semantics, so the
+  React UI (`frontend/dist`), the legacy mock, and external callers work
+  unchanged. Legacy error payloads kept exactly (`{"error": …}`,
+  `{"error": "unauthorized"/"forbidden", "detail": …}`) via app-level
+  exception handlers — FastAPI's default `{"detail": …}` shape never leaks.
+  New: interactive API docs at `/docs`.
+- **Web layer only** — `app/main.py` (factory) + `app/routes/*` are the port
+  (`require(role)` is now a dependency, model pull still streams NDJSON);
+  every engine module (`config`, `pdc_client`, `catalog`, `generator`,
+  `panel_data`, `chat_build`, `llm/`, `model_advice`, `security`) and the
+  MCP server are untouched. `wsgi.py` → `asgi.py` (`uvicorn asgi:app`).
+- **uvicorn everywhere**: `run.ps1` / `run.sh` / `run.bat` and the Docker
+  image now launch uvicorn (port 5002 unchanged, same flags, healthcheck
+  unchanged) — no more gunicorn/waitress split. `requirements.txt`: Flask,
+  gunicorn and waitress out; `fastapi`, `uvicorn`, `httpx` (test client) in.
+- **Tests ported** to `fastapi.testclient` with identical assertions —
+  `tools/test_app.py` and `tools/test_security.py` both fully pass; docs
+  (README, INSTALL, DEPLOYMENT, ARCHITECTURE, SECURITY, DIAGRAMS,
+  PDC-CONNECTOR) updated to the FastAPI/uvicorn run commands.
+
+## 1.12.0 (2026-07-17) — React UI sharing the Policy Generator kit
+
+- **New React front end** (`frontend/` — React 18 + Vite, no chart library:
+  the mock's hand-rolled SVG renderers are ported as React components). Same
+  design kit as the Policy Generator / Migration Copilot: identical theme
+  tokens (`Midnight / Slate / Pentaho / Light`, shared `mc-theme` storage
+  key so the suite switches together), `ThemeSelect`/`DocModal`/`Markdown`
+  components, and the same card/button/badge chrome — the PDC-Demo apps now
+  look like one product family.
+- Every mock capability carried over: the six Analytics sections with both
+  standard dashboards each (all tile types — KPI sparklines, trust spectrum,
+  donut, bars, stacked, line, gauge, radar, histogram, bullet, calendar,
+  tables), live-value overlay via `POST /api/dashboards/resolve`, per-board
+  source scope, drill-through, Download `.studio.json`, Print/PDF; the
+  Designer (query library, canvas, inspector, generate drawer — now a real
+  single-turn `POST /api/chat` build that hands off to the AI Builder); the
+  AI Builder chat (suggest → build → refine loop, section pinning,
+  localStorage threads, live preview fill, Summary, save-to-catalog); and
+  the full Settings surface (LLM provider/endpoint/model combobox/JSON
+  mode/model download stream, PDC connection + test, demo/live toggle,
+  branding read-out, Save & apply). Hardcoded demo-y defaults (e.g. the
+  `pdc.awc.local` base URL) now come from `GET /api/settings` instead.
+- **Flask serves `frontend/dist` at `/` when it exists** (SPA fallback incl.
+  `/chat`), mirroring how the FastAPI siblings auto-mount their dist; without
+  a build it falls back to the static mock exactly as before, and the mock
+  stays reachable at `/mock/…` for reference. Serving code only — zero API
+  changes; `.gitignore` covers `frontend/node_modules` + `frontend/dist`.
+
 ## 1.11.0 (2026-07-17) — run.ps1 launcher; default port 5002
 
 - **New `run.ps1`** — first-class Windows PowerShell launcher (twin of

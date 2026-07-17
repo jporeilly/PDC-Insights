@@ -83,17 +83,18 @@ check("conversation_prompt pins section + includes current spec",
       "governance" in p and "current dashboard spec" in p)
 
 print("\n[3] web routes")
+from fastapi.testclient import TestClient  # noqa: E402
 app = create_app()
-c = app.test_client()
+c = TestClient(app)
 check("GET /chat serves the builder", c.get("/chat").status_code == 200)
 check("GET /api/recommend?section=quality is quality-only",
       all(r["category"] == "quality"
-          for r in c.get("/api/recommend?section=quality").get_json()))
+          for r in c.get("/api/recommend?section=quality").json()))
 
 # build via the chat endpoint, pinned to a section
 r = c.post("/api/chat", json={"messages": [{"role": "user", "content": "anything"}],
                               "section": "user"})
-body = r.get_json()
+body = r.json()
 check("POST /api/chat builds (200, valid)", r.status_code == 200 and body["valid"])
 check("chat respects the pinned section", body["spec"]["category"] == "user")
 check("chat reports the offline engine", body.get("engine") == "demo")
@@ -105,15 +106,15 @@ check("POST /api/chat with no messages → 400",
 r2 = c.post("/api/chat", json={"messages": [
     {"role": "user", "content": "build a user dashboard"},
     {"role": "user", "content": "add owner workload"}], "spec": body["spec"]})
-check("refine turn returns a valid spec", r2.get_json()["valid"])
+check("refine turn returns a valid spec", r2.json()["valid"])
 
 # the built spec saves through the normal (validated) dashboards route
 save = c.post("/api/dashboards", json=body["spec"])
-check("built spec saves via /api/dashboards", save.status_code == 200 and save.get_json().get("saved"))
+check("built spec saves via /api/dashboards", save.status_code == 200 and save.json().get("saved"))
 
 # download a standard spec as an attachment (the app's Download button)
 dl = c.get("/api/dashboards/sensitivity/pii-discoveries/download")
-check("GET …/download returns the spec", dl.status_code == 200 and dl.get_json().get("title"))
+check("GET …/download returns the spec", dl.status_code == 200 and dl.json().get("title"))
 check("download sets attachment filename",
       "attachment" in dl.headers.get("Content-Disposition", "") and
       "pii-discoveries.studio.json" in dl.headers.get("Content-Disposition", ""))
@@ -121,28 +122,30 @@ check("download of a missing spec → 404",
       c.get("/api/dashboards/sensitivity/nope/download").status_code == 404)
 
 print("\n[3b] LLM management routes")
-sug = c.get("/api/llm/suggest").get_json()
+sug = c.get("/api/llm/suggest").json()
 check("GET /api/llm/suggest recommends a model",
       sug.get("model", "").startswith("qwen") and sug.get("mode") in ("gpu", "cpu"))
 check("GET /api/llm/models returns a list",
-      isinstance(c.get("/api/llm/models").get_json().get("models"), list))
+      isinstance(c.get("/api/llm/models").json().get("models"), list))
 check("POST /api/llm/pull with no model → 400",
       c.post("/api/llm/pull", json={}).status_code == 400)
-pull = c.post("/api/llm/pull", json={"model": "qwen2.5:0.5b-instruct"})
-check("POST /api/llm/pull streams ndjson",
-      pull.status_code == 200 and pull.mimetype == "application/x-ndjson")
+# stream (don't buffer) so the test never waits on a real model download
+with c.stream("POST", "/api/llm/pull", json={"model": "qwen2.5:0.5b-instruct"}) as pull:
+    check("POST /api/llm/pull streams ndjson",
+          pull.status_code == 200 and
+          pull.headers.get("content-type", "").startswith("application/x-ndjson"))
 
 print("\n[3c] footer status endpoints")
-hp = c.get("/health/pdc").get_json()
+hp = c.get("/health/pdc").json()
 check("GET /health/pdc reports demo/live + base_url",
       "ok" in hp and "demo" in hp and "base_url" in hp)
 check("demo snapshot → PDC not 'ok' (amber dot)", hp["demo"] is True and hp["ok"] is False)
-hl = c.get("/health/llm").get_json()
+hl = c.get("/health/llm").json()
 check("GET /health/llm reports provider + ok", "ok" in hl and "provider" in hl)
 
 print("\n[3d] settings save + run against real data")
 from app.config import apply_settings, public_settings, settings as _settings  # noqa: E402
-ps = c.get("/api/settings").get_json()
+ps = c.get("/api/settings").json()
 check("GET /api/settings exposes pdc/llm/demo", all(k in ps for k in ("pdc", "llm", "demo")))
 check("GET /api/settings never returns the password",
       "password" not in ps["pdc"] and "has_password" in ps["pdc"])
@@ -158,9 +161,9 @@ apply_settings({"demo": True}, persist=False)  # restore demo for the rest of th
 # real PDC connection test surfaces a specific reason (no live PDC needed here)
 tp = c.post("/api/settings/test-pdc",
             json={"base_url": "http://127.0.0.1:1", "version": "v2",
-                  "username": "u", "password": "p"}).get_json()
+                  "username": "u", "password": "p"}).json()
 check("test-pdc reports unreachable host clearly", tp["ok"] is False and "reach" in tp["error"].lower())
-tp2 = c.post("/api/settings/test-pdc", json={"base_url": "", "username": "u", "password": "p"}).get_json()
+tp2 = c.post("/api/settings/test-pdc", json={"base_url": "", "username": "u", "password": "p"}).json()
 check("test-pdc requires a base URL", tp2["ok"] is False)
 
 print("\n[3e] live panel data (wiring dashboards to real values)")
@@ -172,12 +175,12 @@ _kpi = resolve_panel({"kind": "kpi", "query": "sensitivity_mix"}, _snap)
 check("resolver returns a kpi value", isinstance(_kpi.get("value"), (int, float)) and _kpi["value"] > 0)
 _stk = resolve_panel({"kind": "chart", "chartType": "stackedBar", "query": "sensitive_by_source"}, _snap)
 check("resolver returns stacked groups", "groups" in _stk and len(_stk["groups"]) >= 2)
-_dd = c.get("/api/dashboards/sensitivity/pii-discoveries/data").get_json()
+_dd = c.get("/api/dashboards/sensitivity/pii-discoveries/data").json()
 check("/data resolves every panel", "panels" in _dd and len(_dd["panels"]) >= 1
       and all("error" not in v for v in _dd["panels"].values()))
 _ri = c.post("/api/dashboards/resolve",
              json={"version": 1, "title": "t", "category": "overview",
-                   "panels": [{"id": "k0", "kind": "kpi", "query": "asset_counts"}]}).get_json()
+                   "panels": [{"id": "k0", "kind": "kpi", "query": "asset_counts"}]}).json()
 check("/resolve resolves an inline spec", _ri["panels"]["k0"]["value"] > 0)
 check("/data of a missing dashboard -> 404",
       c.get("/api/dashboards/overview/nope/data").status_code == 404)
@@ -199,15 +202,15 @@ _all = resolve_dashboard({"version":1,"title":"t","category":"overview","panels"
 _one = resolve_dashboard({"version":1,"title":"t","category":"overview","panels":[{"id":"k","kind":"kpi","query":"asset_counts"}]}, _snap, source=names[0])["panels"]["k"]["value"]
 check("scoping to one source reduces the total", _one < _all and _one > 0)
 check("scope echoed in response", resolve_dashboard({"version":1,"title":"t","category":"o","panels":[]}, _snap, source=names[0])["scope"] == names[0])
-_se = c.get("/api/dashboards/sources").get_json()
+_se = c.get("/api/dashboards/sources").json()
 check("/sources endpoint returns names", len(_se.get("sources", [])) >= 2)
 
 print("\n[3h] drill-through assets")
-_dr = c.post("/api/dashboards/drill", json={"query": "sensitivity_mix", "label": "High"}).get_json()
+_dr = c.post("/api/dashboards/drill", json={"query": "sensitivity_mix", "label": "High"}).json()
 check("drill returns asset rows + columns", len(_dr.get("rows", [])) >= 1 and _dr["columns"][0] == "asset")
 check("drill honours label in detail", _dr["rows"][0][2] == "High")
 check("drill missing query -> 400", c.post("/api/dashboards/drill", json={}).status_code == 400)
-_drs = c.post("/api/dashboards/drill", json={"query": "quality_by_source", "source": names[0]}).get_json()
+_drs = c.post("/api/dashboards/drill", json={"query": "quality_by_source", "source": names[0]}).json()
 check("drill scoped to one source returns fewer rows", 0 < len(_drs["rows"]) <= len(_dr["rows"]))
 
 print("\n[4] generator validation still guards")

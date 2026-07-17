@@ -7,7 +7,7 @@
 _See [`DIAGRAMS.md`](DIAGRAMS.md) for all diagrams (with editable Mermaid source)._
 
 ```
-  Browser (UI)                Flask app                    External
+  Browser (UI)                FastAPI app                  External
  ┌────────────┐         ┌────────────────────┐        ┌──────────────┐
  │ Analytics  │  HTTP   │ /api/facets         │  REST  │ PDC public   │
  │ pages      │────────▶│ /api/search         │───────▶│ API (v3)     │
@@ -56,7 +56,7 @@ pipeline does the rest.
 
 CTools dashboards (CDF/CDE) run on the Pentaho Server and bind to CDA data
 accesses. PDC metadata is not a JDBC source, so a plain SQL DA can't reach
-it. Catalog Insights calls the PDC API directly from Flask and renders in
+it. Catalog Insights calls the PDC API directly from FastAPI and renders in
 the browser. When a customer's deliverable standard *is* CTools, the bridge
 is a CDA Scripting (or Kettle) DA that wraps the same API calls — documented
 in `PDC-CONNECTOR.md` — so both paths share one data layer.
@@ -89,7 +89,7 @@ so `pdc_client.py` keeps working without modification.
 
 ## Deployment
 
-Single container, gunicorn with threaded workers (calls are I/O-bound on
+Single container, uvicorn with two workers (calls are I/O-bound on
 PDC and the LLM). `host.docker.internal` is mapped so a containerised app
 can reach an Ollama instance on the host. `/health`, `/config`, and
 `/health/llm` support orchestration and the Settings test buttons.

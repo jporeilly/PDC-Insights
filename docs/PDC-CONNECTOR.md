@@ -5,7 +5,7 @@ the second exists for teams whose deliverable standard is CTools artifacts.
 
 ## Path A — direct API (this app)
 
-Flask calls the PDC public API and the browser renders. No Pentaho Server,
+FastAPI calls the PDC public API and the browser renders. No Pentaho Server,
 no CDA. This is the default and the simplest to deploy.
 
 Workhorse call — pre-aggregated counts in one request:

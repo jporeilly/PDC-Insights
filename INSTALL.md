@@ -86,7 +86,7 @@ defaults internally regardless of the host mapping you choose.
 
 - **A — Windows 11 + GPU (your box, the standard demo topology).** Everything
   native: Ollama on Windows (uses both GPUs), the app via `.\run.ps1`
-  (waitress), PDC reached over the network. Best mix of speed and simplicity.
+  (uvicorn), PDC reached over the network. Best mix of speed and simplicity.
   Steps: 4 → 5 → 7 → 6 → 8.
 - **B — Linux, co-located with PDC.** Add the app/MCP as containers on the PDC
   host (lab) or a small adjacent VM (production). Steps: 4 → 5 → 6 → 8.
@@ -124,8 +124,8 @@ plus the MCP server if you ask for it.
 `run.ps1` takes the same options as PowerShell switches: `-Mcp -Gpu -Cpu
 -Pull -Port N -NoVenv`.
 
-The web app runs on **waitress** (Windows) or **gunicorn** (Linux/macOS),
-falling back to the Flask dev server if neither is present. `run.sh --help` / `run.bat --help` print the same summary. Both run **preflight checks** (Python, deps, `.env`, free port, GPU/CPU, Ollama reachability) and a **post-start health check** that reports whether the app is up and whether PDC/LLM are live before handing you the URLs.
+The web app runs on **uvicorn** (FastAPI's ASGI server, every platform).
+`run.sh --help` / `run.bat --help` print the same summary. Both run **preflight checks** (Python, deps, `.env`, free port, GPU/CPU, Ollama reachability) and a **post-start health check** that reports whether the app is up and whether PDC/LLM are live before handing you the URLs.
 
 > **Local LLM does not need the MCP server.** Ollama is called directly by the
 > web app for the `/chat` builder and dashboard generation. The MCP server is a
@@ -176,13 +176,13 @@ Every variable is documented inline in `.env.example`.
 ```bash
 python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app   # or: flask --app wsgi run -p 5002
+uvicorn asgi:app --host 0.0.0.0 --port 5002
 ```
 
 `LLM_BASE_URL=http://localhost:11434` works directly — no container hop. This is
-the recommended setup when Ollama runs on the same host. On **Windows**, use
-`waitress-serve --port=5002 wsgi:app` instead of gunicorn (see §7 for the
-per-platform table, and `python tools/suggest_model.py` to pick a model).
+the recommended setup when Ollama runs on the same host. The same `uvicorn`
+command works on **Windows** too (see §7 for the run-command table, and
+`python tools/suggest_model.py` to pick a model).
 
 **Or via Docker** (self-contained; the compose file auto-points the LLM at the
 host so you don't change anything):
@@ -287,12 +287,12 @@ remain an opt-in alternative if local CPU generation is too slow.
 
 | Platform | Command (web app) |
 | -------- | ----------------- |
-| Linux / macOS | `gunicorn --bind 0.0.0.0:5002 --threads 4 wsgi:app` |
-| Windows | `waitress-serve --port=5002 wsgi:app`  (`pip install waitress`) |
-| Any (quick/dev) | `flask --app wsgi run -p 5002` |
+| Linux / macOS | `uvicorn asgi:app --host 0.0.0.0 --port 5002` |
+| Windows | `uvicorn asgi:app --host 0.0.0.0 --port 5002` |
+| Any (quick/dev) | `uvicorn asgi:app --port 5002 --reload` |
 
-gunicorn is POSIX-only, so on Windows use **waitress** (a production-grade WSGI
-server that runs natively) or the Flask dev server for local use.
+uvicorn (FastAPI's ASGI server) runs natively on every platform, so the same
+command works everywhere — no more gunicorn/waitress split.
 
 ### Configure in the app (Settings)
 
@@ -341,7 +341,7 @@ docker compose --profile mcp up insights-mcp    # serves on :8765
 > **The MCP server is a separate process from the web app** — two front doors on
 > the same engine. You do **not** need it to use the dashboards or the built-in
 > `/chat` builder; start it only to drive Catalog Insights from an *external*
-> chat/agent (Claude Desktop, an IDE). Run the web app with `waitress-serve`
+> chat/agent (Claude Desktop, an IDE). Run the web app with `uvicorn`
 > (§6) and, if you want it, the MCP server with the command above in a second
 > terminal.
 
@@ -378,7 +378,7 @@ docker compose --profile mcp up insights-mcp    # serves on :8765
 3. **Paste the block above** and edit two things:
    - `cwd` → the absolute path to your `PDC-Insights` folder.
    - `command` → point at the **exact Python that has the deps**, so Claude
-     Desktop can import `mcp`/`flask`. If you used a venv, give its interpreter:
+     Desktop can import `mcp`/`fastapi`. If you used a venv, give its interpreter:
      `"/abs/path/PDC-Insights/.venv/bin/python"` (Windows:
      `"C:\\path\\PDC-Insights\\.venv\\Scripts\\python.exe"`) and you can then
      drop the `-m` ambiguity by keeping `"args": ["-m", "mcp_server.server"]`.
