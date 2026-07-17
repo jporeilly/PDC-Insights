@@ -29,11 +29,17 @@ async def resolve_inline(request: Request,
                          principal: Principal = Depends(require("viewer"))):
     """Resolve an in-memory spec (e.g. the chat preview) to live values.
 
-    Honour an optional top-level "source" to scope to one data source.
+    Honour an optional top-level "source" to scope to one data source, and an
+    optional top-level "demo": true to resolve this one request against the
+    bundled sample snapshot regardless of the app-wide live/demo setting
+    (read-only; the setting itself is never touched). Payloads without the
+    field behave exactly as before.
     """
     spec = await json_body(request)
+    from ..catalog import catalog_snapshot
     from ..panel_data import resolve_dashboard
-    return resolve_dashboard(spec, source=spec.get("source"))
+    snap = catalog_snapshot(force_demo=True) if spec.get("demo") else None
+    return resolve_dashboard(spec, snap=snap, source=spec.get("source"))
 
 
 @router.get("/sources")
@@ -47,14 +53,18 @@ def list_sources(principal: Principal = Depends(require("viewer"))):
 async def drill(request: Request, principal: Principal = Depends(require("viewer"))):
     """Return the underlying assets behind a panel (or a clicked segment/row).
 
-    Body: {query, label?, source?}. Read-only; demo synthesises from the snapshot,
-    live would issue a facet-filtered /search.
+    Body: {query, label?, source?, demo?}. Read-only; demo synthesises from the
+    snapshot, live would issue a facet-filtered /search. "demo": true forces
+    the bundled sample snapshot for this request only (per-view override; the
+    app-wide setting is never touched).
     """
     body = await json_body(request)
     if not body.get("query"):
         return JSONResponse({"error": "query required"}, status_code=400)
+    from ..catalog import catalog_snapshot
     from ..panel_data import drill_assets
-    return drill_assets(None, body["query"], body.get("label"), body.get("source"))
+    snap = catalog_snapshot(force_demo=True) if body.get("demo") else None
+    return drill_assets(snap, body["query"], body.get("label"), body.get("source"))
 
 
 @router.get("/{section}/{dash_id}")

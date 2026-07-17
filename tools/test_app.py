@@ -226,6 +226,61 @@ check("drill missing query -> 400", c.post("/api/dashboards/drill", json={}).sta
 _drs = c.post("/api/dashboards/drill", json={"query": "quality_by_source", "source": names[0]}).json()
 check("drill scoped to one source returns fewer rows", 0 < len(_drs["rows"]) <= len(_dr["rows"]))
 
+print("\n[3i] per-view demo override (resolve/drill with demo:true)")
+# Flip the app-wide config to live mode and stub the PDC client so the live
+# path returns distinguishable values — then demo:true must still return the
+# bundled sample, without touching the setting.
+import app.catalog as _cat  # noqa: E402
+
+
+class _StubPDC:
+    """Reachable fake PDC: live snapshots resolve from this, never the sample."""
+
+    def facets(self, q, f):
+        return [{"key": "sensitivity",
+                 "options": [{"name": "Low", "count": 30}, {"name": "High", "count": 12}]}]
+
+    def trust_distribution(self):
+        return [{"name": "Trusted", "count": 25}, {"name": "Untrusted", "count": 17}]
+
+    def data_sources(self):
+        return [{"name": "LiveSrc", "type": "database", "assetCount": 42,
+                 "lastScanAt": "5m ago"}]
+
+
+_spec_k = {"version": 1, "title": "t", "category": "overview",
+           "panels": [{"id": "k", "kind": "kpi", "query": "asset_counts"}]}
+_prev_env, _prev_client = os.environ.get("INSIGHTS_DEMO"), _cat.client
+os.environ["INSIGHTS_DEMO"] = "false"
+_cat.client = _StubPDC()
+try:
+    _lv = c.post("/api/dashboards/resolve", json=_spec_k).json()
+    check("live-mode resolve without the flag uses the (stub) PDC",
+          _lv["demo"] is False and _lv["panels"]["k"]["value"] == 42)
+    _ov = c.post("/api/dashboards/resolve", json={**_spec_k, "demo": True}).json()
+    check("resolve with demo:true returns the bundled sample",
+          _ov["demo"] is True and _ov["panels"]["k"]["value"] == 12480)
+    check("override leaves the app-wide setting in live mode",
+          os.environ.get("INSIGHTS_DEMO") == "false")
+    _lv2 = c.post("/api/dashboards/resolve", json=_spec_k).json()
+    check("next legacy resolve is still live (no sticky state)",
+          _lv2["demo"] is False and _lv2["panels"]["k"]["value"] == 42)
+    check("resolve with demo:false behaves like the legacy payload",
+          c.post("/api/dashboards/resolve", json={**_spec_k, "demo": False})
+          .json()["panels"]["k"]["value"] == 42)
+    _do = c.post("/api/dashboards/drill",
+                 json={"query": "sensitivity_mix", "label": "High", "demo": True}).json()
+    check("drill with demo:true synthesises from the sample sources",
+          len(_do.get("rows", [])) >= 1
+          and all(r[1] != "LiveSrc" for r in _do["rows"])
+          and _do["rows"][0][1] == "Snowflake-PROD")
+    _dl = c.post("/api/dashboards/drill", json={"query": "sensitivity_mix"}).json()
+    check("drill without the flag stays live",
+          len(_dl.get("rows", [])) >= 1 and all(r[1] == "LiveSrc" for r in _dl["rows"]))
+finally:
+    _cat.client = _prev_client
+    os.environ["INSIGHTS_DEMO"] = _prev_env if _prev_env is not None else "true"
+
 print("\n[4] generator validation still guards")
 bad = {"version": 1, "title": "bad", "category": "overview",
        "panels": [{"id": "p", "kind": "chart", "title": "t",

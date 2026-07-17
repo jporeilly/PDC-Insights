@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.15.0 (2026-07-17) — per-view "Demo data" option in the dashboards views
+
+- **Dashboards: a per-view demo override.** The source-scope dropdown now ends
+  with a visually separated "── Demo data (sample)" entry. Selecting it
+  renders the *current* dashboard from the bundled sample snapshot — the
+  app-wide live/demo setting is never touched — and the badge flips to
+  DEMO DATA with a tooltip explaining it's the sample snapshot and that
+  picking any source (or All sources) returns the view to live. Drill-through
+  follows the same override, so the assets panel matches what's on screen.
+  The choice is remembered per section for the session only (sessionStorage),
+  never written to Settings.
+- **API: an optional per-request `demo` flag.** `POST /api/dashboards/resolve`
+  and `POST /api/dashboards/drill` accept an optional top-level
+  `"demo": true` that forces the bundled sample snapshot for that request
+  regardless of INSIGHTS_DEMO — read-only, viewer-gated as before, no state
+  change. Payloads without the field (including the chat preview's resolve)
+  behave exactly as before. Under the hood `catalog_snapshot()` gained a
+  `force_demo` parameter; nothing else in the engine moved.
+- `tools/test_app.py`: new section **[3i]** flips the config to live mode with
+  a stubbed (reachable) PDC client and proves resolve/drill with `demo:true`
+  return the sample values, the very next legacy request is still live (no
+  sticky state), `demo:false` matches the legacy payload, and the app-wide
+  setting is left untouched.
+
 ## 1.14.0 (2026-07-17) — six more standard dashboards (3 per section)
 
 - **Six new built-in dashboards** — every Analytics section now ships three,

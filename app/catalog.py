@@ -118,7 +118,7 @@ def _facet_map(rows: list[dict], key: str) -> dict:
     return {}
 
 
-def catalog_snapshot() -> dict:
+def catalog_snapshot(force_demo: bool = False) -> dict:
     """Assemble the catalog state the recommender and host LLM reason over.
 
     Three modes, in priority order:
@@ -128,8 +128,12 @@ def catalog_snapshot() -> dict:
          and the data-source inventory, and shape them into the snapshot dict.
       3. Live but PDC unreachable -> fall back to the sample with a note, so the
          feature degrades gracefully rather than erroring out.
+
+    ``force_demo=True`` returns the bundled sample for this call only, without
+    reading or touching the app-wide INSIGHTS_DEMO setting — the per-view
+    "Demo data" override in the dashboards UI rides on this.
     """
-    if _demo():
+    if force_demo or _demo():
         return dict(SAMPLE_SNAPSHOT)
     try:
         # One facet call covers the headline distributions; trust needs its own

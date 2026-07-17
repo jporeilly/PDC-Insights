@@ -8,10 +8,10 @@ lineage), renders them as navigable dashboards, and lets you **design new
 dashboards by hand or generate them from a plain-language prompt** using a
 local or commercial LLM.
 
-It is a thin, containerised app — the same shape as the Glossary Generator
-(FastAPI + Docker + bearer auth + env config). It does **not** require a
-Pentaho Server or the CTools stack to run; PDC metadata is reached over its
-API, not a JDBC source.
+It is a thin FastAPI app served by uvicorn — the same shape as the Glossary
+Generator (FastAPI + bearer auth + env config), with an optional Docker path.
+It does **not** require a Pentaho Server or the CTools stack to run; PDC
+metadata is reached over its API, not a JDBC source.
 
 ---
 
@@ -120,10 +120,11 @@ Everything is environment-driven (`.env.example`). Key switches:
 
 ## Standard dashboards
 
-Each Analytics section ships with named, ready-made dashboards (no setup
-required) — see `app/dashboards/`. They double as enablement examples: every
-one is a valid `.studio.json` spec you can open in the Designer to learn the
-format, then duplicate or tweak. Regenerate with `python tools/build_dashboards.py`.
+Each of the six Analytics sections ships with **three** named, ready-made
+dashboards — **18 in all**, no setup required — see `app/dashboards/`. They
+double as enablement examples: every one is a valid `.studio.json` spec you
+can open in the Designer to learn the format, then duplicate or tweak.
+Regenerate with `python tools/build_dashboards.py`.
 
 The typical user journey through the app:
 
@@ -146,7 +147,7 @@ flowchart LR
 The same engine is reachable two ways:
 
 - **Web app** (`app/`, `ui/`) — visual dashboards, the Designer, and the AI
-  generate drawer. Run with `docker compose up`.
+  generate drawer. Run with `.\run.ps1` / `./run.sh` (or `docker compose up`).
 - **MCP server** (`mcp_server/`) — the catalog and generator as tools an LLM or
   agent can call. Ask *"what dashboards should I build from my scans?"*, then
   *"build the PII one for S3"*, and the spec drops into the app. Run with
@@ -165,8 +166,6 @@ AI** button inside any Analytics section) and the starter suggestions are the
 recommended dashboards for that section — ranked by real catalog signals — and
 new dashboards are pinned to it. It uses the local LLM when configured and a
 deterministic builder otherwise, so it works even before Ollama is wired up.
-
-![AI dashboard builder](docs/chat-builder.png)
 
 This is the same engine the MCP server exposes — `/chat` is the built-in chat;
 the MCP server is for *external* chats (Claude Desktop, agents).
@@ -214,7 +213,7 @@ setup are in `docs/DEPLOYMENT.md`.
 
 ## Status
 
-Design mock + 12 built-in dashboards + in-app AI builder (section-aware chat) +
+Design mock + 18 built-in dashboards (3 per Analytics section) + in-app AI builder (section-aware chat) +
 MCP server + enforced security model (auth/roles/audit). Two test suites cover
 it: `tools/test_security.py` (auth/roles/audit) and `tools/test_app.py`
 (recommend, the chat builder, the routes) — both run on demo data with no PDC or

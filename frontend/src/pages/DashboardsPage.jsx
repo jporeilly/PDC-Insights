@@ -10,6 +10,15 @@ import {
 
 const fmtNum = (n) => (typeof n === 'number' ? n.toLocaleString() : (n ?? '—'))
 
+/* Per-view demo override: a sentinel scope value that resolves this view from
+   the bundled sample snapshot without touching the app-wide live/demo setting.
+   Remembered per-session only (sessionStorage), never persisted to Settings. */
+const DEMO_SCOPE = '__demo__'
+const scopeKey = (section) => `insights.dash.scope.${section}`
+const loadScope = (section) => {
+  try { return sessionStorage.getItem(scopeKey(section)) || 'all' } catch { return 'all' }
+}
+
 /* Convert resolver output -> the props each chart renderer expects, so the
    live overlay and the baked render share the same components. */
 function LiveChart({ chart, data, onRow }) {
@@ -112,13 +121,20 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
   const list = DASHBOARDS[section]
   const [idx, setIdx] = useState(0)
   const [sources, setSources] = useState([])
-  const [scope, setScope] = useState('all')
+  const [scope, setScope] = useState(() => loadScope(section))
   const [live, setLive] = useState(null)      // {demo, panels:{id:data}}
   const [dashIndex, setDashIndex] = useState(null)
   const [drill, setDrill] = useState(null)
   const [pdcOk, setPdcOk] = useState(null)
 
-  useEffect(() => { setIdx(0); setScope('all'); setLive(null) }, [section])
+  const demoView = scope === DEMO_SCOPE      // per-view override, not the app setting
+
+  useEffect(() => { setIdx(0); setScope(loadScope(section)); setLive(null) }, [section])
+
+  const pickScope = (v) => {
+    setScope(v)
+    try { sessionStorage.setItem(scopeKey(section), v) } catch { /* private mode */ }
+  }
 
   useEffect(() => {
     getJSON('/api/dashboards/sources')
@@ -150,9 +166,11 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
     setLive(null)
     if (!wired.length) return undefined
     const spec = {
-      version: 1, title: 'live', category: dash.id || section, source: scope,
+      version: 1, title: 'live', category: dash.id || section,
+      source: scope === DEMO_SCOPE ? 'all' : scope,
       panels: wired.map(({ _i, ...p }) => p),
     }
+    if (scope === DEMO_SCOPE) spec.demo = true   // per-request override only
     postJSON('/api/dashboards/resolve', spec)
       .then((d) => { if (!gone) setLive(d) })
       .catch(() => {})   // offline — leave the baked render
@@ -162,10 +180,13 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
   const liveFor = (i) => live && live.panels && live.panels[`p${i}`]
 
   const openDrill = useCallback((query, label) => {
-    setDrill({ loading: true, query, source: scope })
-    postJSON('/api/dashboards/drill', { query, label, source: scope })
-      .then((d) => setDrill({ ...d, query, source: scope }))
-      .catch(() => setDrill({ error: true, query, source: scope }))
+    const demo = scope === DEMO_SCOPE
+    const source = demo ? 'all' : scope
+    setDrill({ loading: true, query, source })
+    postJSON('/api/dashboards/drill', demo ? { query, label, source, demo: true }
+                                            : { query, label, source })
+      .then((d) => setDrill({ ...d, query, source }))
+      .catch(() => setDrill({ error: true, query, source }))
   }, [scope])
 
   const downloadSpec = () => {
@@ -206,14 +227,19 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
         <div className="dash-tools">
           <span className="std-flag">{list.length} standard dashboard{list.length > 1 ? 's' : ''}</span>
           {live && (
-            <span className={`data-badge ${live.demo ? 'demo' : 'live'}`}>
+            <span className={`data-badge ${live.demo ? 'demo' : 'live'}`}
+                  title={demoView
+                    ? 'sample snapshot — app-wide setting unchanged, pick a source to return to live'
+                    : undefined}>
               {live.demo ? 'demo data' : 'live data'}
             </span>
           )}
-          <select className="scope-sel" value={scope} onChange={(e) => setScope(e.target.value)}
+          <select className="scope-sel" value={scope} onChange={(e) => pickScope(e.target.value)}
                   title="Narrow this dashboard to one connected data source">
             <option value="all">All sources</option>
             {sources.map((n) => <option key={n} value={n}>{n}</option>)}
+            <option disabled>──────────</option>
+            <option value={DEMO_SCOPE}>── Demo data (sample)</option>
           </select>
           <button className="ghost sm" onClick={downloadSpec}
                   title="Download this dashboard as a .studio.json spec">⤓ Download</button>
