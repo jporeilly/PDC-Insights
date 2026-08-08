@@ -9,10 +9,14 @@ from fastapi.responses import JSONResponse, Response
 from ..generator import _validate
 from ..catalog import QUERY_CATALOG
 from ..security import Principal, audit
+from .. import paths
 from ._auth import json_body, require
 
 router = APIRouter(prefix="/api/dashboards", tags=["dashboards"])
-DASH_DIR = Path(__file__).resolve().parent.parent / "dashboards"
+# The shipped built-ins. Saves and reads go through app.paths so a packaged
+# install (read-only Program Files) writes to the state directory instead —
+# see paths.saved_dash_dir() / paths.find_dashboard().
+DASH_DIR = Path(paths.BUILTIN_DASH_DIR)
 
 
 @router.get("")
@@ -71,10 +75,10 @@ async def drill(request: Request, principal: Principal = Depends(require("viewer
 def get_one(section: str, dash_id: str,
             principal: Principal = Depends(require("viewer"))):
     safe = re.sub(r"[^a-z0-9-]", "", dash_id.lower())
-    path = DASH_DIR / section / f"{safe}.studio.json"
-    if not path.exists():
+    found = paths.find_dashboard(section, f"{safe}.studio.json")
+    if not found:
         return JSONResponse({"error": "not found"}, status_code=404)
-    return json.loads(path.read_text())
+    return json.loads(Path(found).read_text())
 
 
 @router.get("/{section}/{dash_id}/download")
@@ -84,10 +88,10 @@ def download_one(section: str, dash_id: str,
     Disposition: attachment), so the app's Download button saves the exact,
     portable spec — the same artifact the Designer and MCP server consume."""
     safe = re.sub(r"[^a-z0-9-]", "", dash_id.lower())
-    path = DASH_DIR / section / f"{safe}.studio.json"
-    if not path.exists():
+    found = paths.find_dashboard(section, f"{safe}.studio.json")
+    if not found:
         return JSONResponse({"error": "not found"}, status_code=404)
-    return Response(path.read_text(), media_type="application/json",
+    return Response(Path(found).read_text(), media_type="application/json",
                     headers={"Content-Disposition":
                              f'attachment; filename="{safe}.studio.json"'})
 
@@ -101,11 +105,11 @@ def get_data(section: str, dash_id: str, request: Request,
     the board to a single connected data source. Read-only.
     """
     safe = re.sub(r"[^a-z0-9-]", "", dash_id.lower())
-    path = DASH_DIR / section / f"{safe}.studio.json"
-    if not path.exists():
+    found = paths.find_dashboard(section, f"{safe}.studio.json")
+    if not found:
         return JSONResponse({"error": "not found"}, status_code=404)
     from ..panel_data import resolve_dashboard
-    spec = json.loads(path.read_text())
+    spec = json.loads(Path(found).read_text())
     return resolve_dashboard(spec, source=request.query_params.get("source"))
 
 
@@ -118,7 +122,9 @@ async def save(request: Request, principal: Principal = Depends(require("steward
         return JSONResponse({"saved": False, "errors": errors}, status_code=400)
     category = spec.get("category", "overview")
     slug = re.sub(r"[^a-z0-9]+", "-", spec.get("title", "untitled").lower()).strip("-")
-    dest = DASH_DIR / category
+    # Never the install directory: a packaged app lives under Program Files,
+    # where this write would fail after reporting success everywhere else.
+    dest = Path(paths.saved_dash_dir()) / category
     dest.mkdir(parents=True, exist_ok=True)
     (dest / f"{slug}.studio.json").write_text(json.dumps(spec, indent=2))
     audit(principal, "save_dashboard", target=f"{category}/{slug}")

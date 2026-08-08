@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.16.0 (2026-08-08) — Windows desktop installer (Tauri + vendored Python)
+
+- **New `desktop/` shell**: packages the app into a Windows `.exe` installer
+  the same way the Glossary and Policy Generators ship — a Tauri window that
+  starts the existing FastAPI server on a free port and points a webview at
+  it, with a live-log splash, a failure panel (retry / copy / save report /
+  email support / local-model suggestions), a kill-on-close job object so a
+  crashed shell never leaks uvicorn, and a vendored Python embeddable runtime
+  (both requirement sets, so the installed app can be wired into Claude
+  Desktop via `boot.py --mcp` with no pip on the machine). NSIS components
+  page: Full (app + Ollama model sized by `model_advice` + environment
+  check) / Minimal (app only); silent flags `/S /NoOllama /NoCheck`.
+  `provisioning\check-environment.ps1` reports rather than blocks (WebView2 +
+  Python are the only FAILs; the bare-IP vhost trap and "Ollama up but no
+  model" are named). Code signing wired and off (`INSIGHTS_SIGN_THUMBPRINT`
+  or the suite-wide `PDCG_SIGN_THUMBPRINT`).
+- **State directory (`app/paths.py`)** — the packaged app runs from a
+  read-only Program Files, so the app's two writes moved behind one rule,
+  resolution `INSIGHTS_STATE_DIR` > writable repo root (checkouts:
+  unchanged) > per-user dir: dashboard saves land in the state dir and reads
+  overlay it over the shipped built-ins (a save with a built-in's id wins);
+  the Settings `.env` persist targets the state dir (`asgi.py` and the
+  desktop `boot.py` load it from there); the shell also sets
+  `INSIGHTS_AUDIT_LOG` so the audit trail survives beside the rest of the
+  state. Web save route and MCP `save_dashboard` share the rule via
+  `paths.find_dashboard()` / `paths.saved_dash_dir()`.
+- `tools/test_app.py`: new section **[3j]** proves the redirect — save lands
+  in the state dir (never the install), reads back through the overlay, a
+  state-dir copy shadows the shipped built-in, `.env` persists to the state
+  dir, and unsetting the variable restores checkout behaviour.
+- `requirements-mcp.txt`: pin `mcp<2` — mcp 2.0 removed `mcp.server.fastmcp`
+  (the 1.x API this server targets). Caught by the desktop build's
+  staged-import check.
+- MCP `save_dashboard` now returns the same `category/slug.studio.json`
+  relative path the web route reports (it previously returned a
+  repo-relative path that could not exist in a packaged install).
+
 ## 1.15.1 (2026-07-17) — docs sync
 
 - Docs-only release. README's "Try it without a live PDC" section now covers

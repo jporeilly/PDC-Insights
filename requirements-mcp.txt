@@ -1,2 +1,4 @@
 # MCP server entry point (in addition to requirements.txt)
-mcp[cli]>=1.2.0
+# <2: mcp 2.0 removed mcp.server.fastmcp (FastMCP moved); the server targets
+# the 1.x API. Caught by the desktop build's staged-import check.
+mcp[cli]>=1.2.0,<2

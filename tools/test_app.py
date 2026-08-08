@@ -281,6 +281,50 @@ finally:
     _cat.client = _prev_client
     os.environ["INSIGHTS_DEMO"] = _prev_env if _prev_env is not None else "true"
 
+print("\n[3j] state directory (packaged install: writes never target the install)")
+# With INSIGHTS_STATE_DIR set, saves land there, reads overlay the shipped
+# built-ins, and the Settings .env persist targets the state dir — the rules a
+# read-only Program Files install depends on (see app/paths.py).
+import tempfile  # noqa: E402
+from app import paths as _paths  # noqa: E402
+
+with tempfile.TemporaryDirectory() as _tmp:
+    os.environ["INSIGHTS_STATE_DIR"] = _tmp
+    _paths.reset_cache()
+    try:
+        check("state_dir honours INSIGHTS_STATE_DIR",
+              _paths.state_dir() == os.path.abspath(_tmp))
+        _sspec = {"version": 1, "title": "State Dir Probe", "category": "overview",
+                  "panels": [{"id": "k", "kind": "kpi", "title": "assets",
+                              "query": "asset_counts", "bindings": {}}]}
+        _sv = c.post("/api/dashboards", json=_sspec)
+        _expected = os.path.join(_tmp, "dashboards", "overview", "state-dir-probe.studio.json")
+        check("save lands in the state dir, not the install",
+              _sv.status_code == 200 and _sv.json().get("saved")
+              and os.path.isfile(_expected)
+              and not os.path.isfile("app/dashboards/overview/state-dir-probe.studio.json"))
+        check("saved dashboard reads back through the overlay",
+              c.get("/api/dashboards/overview/state-dir-probe").json().get("title")
+              == "State Dir Probe")
+        check("shipped built-ins still resolve",
+              c.get("/api/dashboards/sensitivity/pii-discoveries").status_code == 200)
+        # A state-dir copy of a built-in id must WIN over the shipped file, or
+        # duplicate-and-tweak would appear to do nothing.
+        _dup = dict(_sspec, title="Catalog Health")           # slug: catalog-health
+        c.post("/api/dashboards", json=_dup)
+        check("state-dir copy shadows the shipped built-in",
+              len(c.get("/api/dashboards/overview/catalog-health").json()["panels"]) == 1)
+        from app.config import _write_env as _we  # noqa: E402
+        _we({"LLM_MODEL": "probe:1b"})
+        _envp = os.path.join(_tmp, ".env")
+        check(".env persist targets the state dir",
+              os.path.isfile(_envp) and "LLM_MODEL=probe:1b" in open(_envp).read())
+    finally:
+        del os.environ["INSIGHTS_STATE_DIR"]
+        _paths.reset_cache()
+check("state dir back to the checkout root once unset",
+      _paths.state_dir() == _paths.ROOT_DIR)
+
 print("\n[4] generator validation still guards")
 bad = {"version": 1, "title": "bad", "category": "overview",
        "panels": [{"id": "p", "kind": "chart", "title": "t",

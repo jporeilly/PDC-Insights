@@ -9,3 +9,12 @@ instance/
 .cache/
 frontend/node_modules/
 frontend/dist/
+
+# desktop shell (Tauri): vendored runtime, staged app tree and Rust build output
+desktop/node_modules/
+desktop/src-tauri/vendor/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+
+# per-user state when INSIGHTS_STATE_DIR points into the checkout
+audit.log

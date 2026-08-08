@@ -24,6 +24,7 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
+from app import paths
 from app.generator import generate as _generate, _SCHEMA, _validate
 from app.pdc_client import client
 from app.recommend import recommend
@@ -31,7 +32,10 @@ from app.catalog import QUERY_CATALOG, catalog_snapshot as _snapshot
 from app.security import ForbiddenError
 from .security_mcp import build_auth, gated
 
-DASH_DIR = Path(__file__).resolve().parent.parent / "app" / "dashboards"
+# The shipped built-ins; saves go through app.paths (state directory) so a
+# packaged install under a read-only Program Files still works — the same rule
+# the web app's save route follows.
+DASH_DIR = Path(paths.BUILTIN_DASH_DIR)
 
 _verifier, _auth = build_auth()
 _kwargs = {"host": os.getenv("MCP_HOST", "0.0.0.0"), "port": int(os.getenv("MCP_PORT", "8765"))}
@@ -172,11 +176,11 @@ def save_dashboard(spec_json: str) -> str:
         return json.dumps({"saved": False, "errors": errors})
     category = spec.get("category", "overview")
     slug = re.sub(r"[^a-z0-9]+", "-", spec.get("title", "untitled").lower()).strip("-")
-    dest = DASH_DIR / category
+    dest = Path(paths.saved_dash_dir()) / category
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / f"{slug}.studio.json"
     path.write_text(json.dumps(spec, indent=2))
-    return json.dumps({"saved": True, "path": str(path.relative_to(DASH_DIR.parent.parent)),
+    return json.dumps({"saved": True, "path": f"{category}/{slug}.studio.json",
                        "category": category, "title": spec.get("title")})
 
 

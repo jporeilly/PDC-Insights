@@ -47,6 +47,7 @@ app/                 FastAPI backend
   dashboards/        built-in standard dashboards (.studio.json) per section
 mcp_server/          MCP server entry point (tools over the same engine, gated)
 ui/mock/             design mock + chat.html (the in-app AI builder, served at /chat)
+desktop/             Windows installer: Tauri shell + vendored Python (.exe)
 docs/                architecture, dashboards, generator, connector,
                      deployment, mcp, security
 tools/               build_dashboards.py · test_security.py · test_app.py ·
@@ -106,6 +107,13 @@ No PDC yet? Set `INSIGHTS_DEMO=true` and everything runs on a bundled sample.
 
 **Full step-by-step setup — Windows 11 + GPU, Linux, co-located, security, and
 Claude Desktop — is in [`INSTALL.md`](INSTALL.md).**
+
+Prefer an install to a checkout? **`desktop/` builds a Windows `.exe`
+installer** — the app plus a vendored Python, packaged like the Glossary and
+Policy Generators (Tauri + NSIS). See [`desktop/README.md`](desktop/README.md).
+Settings and saved dashboards then live per-user in
+`%APPDATA%\com.pentaho.pdc-insights` (the app's `app/paths.py` rule), never
+under Program Files.
 
 ## Configuration
 

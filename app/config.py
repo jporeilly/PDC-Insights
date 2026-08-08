@@ -202,11 +202,19 @@ def _reset_runtime() -> None:
         pass
 
 
-def _write_env(kv: dict, path: str = ".env") -> None:
-    """Upsert key=value lines into .env, preserving the rest of the file."""
+def _write_env(kv: dict, path: str | None = None) -> None:
+    """Upsert key=value lines into .env, preserving the rest of the file.
+
+    The default target comes from app.paths (the state directory): in a
+    checkout that is the repo-root .env as always; in a packaged install it is
+    the per-user state dir, because the install directory is read-only and a
+    cwd-relative ".env" would land there and fail."""
     if not kv:
         return
     from pathlib import Path
+    if path is None:
+        from . import paths as _paths
+        path = _paths.env_file()
     p = Path(path)
     lines = p.read_text().splitlines() if p.exists() else []
     seen, out = set(), []

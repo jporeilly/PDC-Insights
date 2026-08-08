@@ -8,6 +8,18 @@ so installation is mostly: get the code, fill in `.env`, run a container.
 > — the app serves a bundled sample catalog. Good for a first run and for
 > enablement. Switch it off when you point at a real instance.
 
+> **Windows laptop? There is an installer.** `desktop/` packages the whole app
+> (vendored Python included — nothing to install first) into a `.exe`, the same
+> way the Glossary and Policy Generators ship. Build it with
+> `cd frontend; npm run build`, then `cd ..\desktop; npm install; npm run
+> tauri:build` — the installer lands in
+> `desktop\src-tauri\target\release\bundle\nsis\`. Everything it installs is
+> re-checkable afterwards with `provisioning\check-environment.ps1`, settings
+> and saved dashboards live in `%APPDATA%\com.pentaho.pdc-insights`, and the
+> installed app can join Claude Desktop via `boot.py --mcp`. Detail in
+> [`desktop/README.md`](desktop/README.md). The steps below are the
+> checkout/Docker path.
+
 ---
 
 ## Contents
