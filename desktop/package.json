@@ -1,6 +1,6 @@
 {
   "name": "pdc-insights-desktop",
-  "version": "1.17.1",
+  "version": "1.18.0",
   "private": true,
   "description": "Windows desktop shell for Catalog Insights (Pentaho Data Catalog)",
   "scripts": {

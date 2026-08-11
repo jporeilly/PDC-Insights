@@ -71,6 +71,11 @@ def main():
     sys.path.insert(0, app_root)
     os.chdir(app_root)
 
+    # Belt and braces with the shell's PYTHONDONTWRITEBYTECODE: an MCP launch
+    # (Claude Desktop runs boot.py --mcp directly, without the shell's env)
+    # must not compile bytecode into a read-only install tree either.
+    sys.dont_write_bytecode = True
+
     # The state-dir .env, before anything imports app.config. asgi.py does the
     # same for the web app; the MCP path has no other loader, and doing it here
     # unconditionally (override=False, so real env always wins) keeps both

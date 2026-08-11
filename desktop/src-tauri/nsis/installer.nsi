@@ -921,6 +921,17 @@ Section Uninstall
   {{#each resources_ancestors}}
   RMDir /REBOOTOK "$INSTDIR\\{{this}}"
   {{/each}}
+
+  ; Belt and braces on the two vendored trees. The per-file deletes above
+  ; remove exactly what the installer SHIPPED - but Python compiles bytecode
+  ; caches at runtime and pip tooling leaves other debris, and any such file
+  ; keeps its directory (and therefore $INSTDIR) behind after uninstall.
+  ; Both trees are entirely ours: user data lives in the per-user data
+  ; directory, never under $INSTDIR, so removing them wholesale is safe -
+  ; the same rule the install section applies when it replaces \python.
+  RMDir /r "$INSTDIR\python"
+  RMDir /r "$INSTDIR\app"
+  RMDir /r "$INSTDIR\provisioning"
   RMDir "$INSTDIR"
 
   ; Remove shortcuts if not updating

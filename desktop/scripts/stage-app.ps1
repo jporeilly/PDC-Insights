@@ -77,8 +77,15 @@ $excludeDirs  = @(".venv", "__pycache__", ".pytest_cache",
 # robocopy: mirror of a clean tree, /XD and /XF do the excluding.
 # Exit codes 0-7 are success (8+ is a real failure) - a quirk worth pinning,
 # because treating any non-zero as failure makes every build look broken.
+#
+# /XD names are RELATIVE on purpose: an absolute path excludes only that exact
+# directory, so "app\__pycache__" left every SUBPACKAGE's __pycache__ in the
+# stage - and the 1.17.0 installer shipped bytecode caches from the dev
+# checkout into Program Files, where the uninstaller (which only deletes what
+# it shipped by name) still removed them, but only because they were
+# enumerated at build time. A relative name matches the directory at any depth.
 $roboArgs = @($srcApp, $stageApp, "/E", "/NFL", "/NDL", "/NJH", "/NJS", "/NP")
-foreach ($d in $excludeDirs)  { $roboArgs += @("/XD", (Join-Path $srcApp $d)) }
+foreach ($d in $excludeDirs)  { $roboArgs += @("/XD", $d) }
 foreach ($f in $excludeFiles) { $roboArgs += @("/XF", $f) }
 & robocopy @roboArgs | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed staging the app package (exit $LASTEXITCODE)" }

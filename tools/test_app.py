@@ -182,6 +182,13 @@ check("apply_settings flips to live + updates config in place",
       and public_settings()["demo"] is False)
 apply_settings({"demo": True}, persist=False)  # restore demo for the rest of the run
 
+# branding is editable settings too — applied live, echoed by the API
+apply_settings({"brand": {"product": "Acme Data Catalog"}}, persist=False)
+check("apply_settings relabels the brand in place",
+      public_settings()["brand"]["product"] == "Acme Data Catalog"
+      and _settings.brand.product == "Acme Data Catalog")
+apply_settings({"brand": {"product": "Pentaho Data Catalog"}}, persist=False)  # restore
+
 # real PDC connection test surfaces a specific reason (no live PDC needed here)
 tp = c.post("/api/settings/test-pdc",
             json={"base_url": "http://127.0.0.1:1", "version": "v2",

@@ -175,6 +175,11 @@ impl Server {
             // A persistent audit trail beside the rest of the state. The app
             // logs privileged actions to stderr regardless; this keeps them.
             .env("INSIGHTS_AUDIT_LOG", state_dir.join("audit.log"))
+            // Never compile bytecode into the install directory: under
+            // Program Files the writes fail silently at best, and any .pyc
+            // that does land is a file the uninstaller never shipped and
+            // would leave behind.
+            .env("PYTHONDONTWRITEBYTECODE", "1")
             // uvicorn's default logging goes to stderr; capture both so a crash
             // is diagnosable instead of vanishing into a detached process.
             .stdout(Stdio::piped())

@@ -21,7 +21,8 @@ router = APIRouter(prefix="/api", tags=["settings"])
 
 _ALLOWED = {"pdc": {"base_url", "version", "username", "password", "cache_ttl",
                     "verify_tls", "auth_method", "kc_realm", "kc_client"},
-            "llm": {"provider", "model", "base_url", "json_mode"}}
+            "llm": {"provider", "model", "base_url", "json_mode"},
+            "brand": {"name", "product", "accent"}}
 
 
 @router.get("/settings")
@@ -48,7 +49,7 @@ async def save_settings(request: Request,
 
     apply_settings(clean)
     # Audit without leaking secrets: log which fields changed, not their values.
-    fields = sorted([f"{s}.{k}" for s in ("pdc", "llm") for k in clean.get(s, {})]
+    fields = sorted([f"{s}.{k}" for s in ("pdc", "llm", "brand") for k in clean.get(s, {})]
                     + (["demo"] if "demo" in clean else []))
     audit(principal, "settings_update", target=",".join(fields))
     return {"saved": True, "settings": public_settings()}

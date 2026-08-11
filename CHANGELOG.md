@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.18.0 (2026-08-11) — editable Branding, installer parity with the Glossary, clean uninstall
+
+- **Branding is editable on the Settings page.** Product name, Catalog label
+  and Accent colour are now ordinary settings: edit, Save & apply, and the
+  app relabels immediately (the sidebar included) — persisted to the same
+  `INSIGHTS_BRAND_*` keys the environment pattern uses, so a delivery can be
+  re-labelled in the app instead of by editing .env by hand.
+- **Installer flow now matches the Glossary Generator's.** A
+  `LICENSE.txt` (the suite's licence/privacy/installation notice, adapted to
+  a read-only reporting tool: catalog reads not estate scans, AI lays out
+  dashboards and narrates results but never supplies the numbers) gives the
+  installer the same licence page; the components page was already the same
+  Full/Minimal shape minus the Glossary's company-seed step, which has no
+  Insights equivalent.
+- **Uninstall leaves nothing behind.** Three fixes from auditing the 1.17.0
+  install tree, which carried 257 `__pycache__` directories:
+  - `stage-app.ps1` excluded `__pycache__` by ABSOLUTE path, which robocopy
+    matches only at the top level — every subpackage's cache from the dev
+    checkout shipped into Program Files. `/XD` names are now relative
+    (match at any depth).
+  - The shell sets `PYTHONDONTWRITEBYTECODE=1` (and `boot.py` sets
+    `sys.dont_write_bytecode`, covering Claude Desktop's direct `--mcp`
+    launches), so runtime never compiles bytecode into the install tree.
+  - The uninstaller now removes the vendored `python\`, `app\` and
+    `provisioning\` trees wholesale after its per-file deletes — any file
+    the installer didn't ship (bytecode caches, pip debris) used to keep
+    its directory, and therefore the install directory, behind. Both trees
+    are entirely ours; user data lives in the per-user directory.
+
 ## 1.17.1 (2026-08-11) — orphan a mid-flight explanation on board switch
 
 - Switching dashboard, scope or section while an explanation was still

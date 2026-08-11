@@ -162,7 +162,8 @@ export default function App() {
             <DesignerPage llm={llm} onOpenChat={(sec) => go('chat', sec)} />
           )}
           {view === 'chat' && <ChatPage key={section} section={section} />}
-          {view === 'settings' && <SettingsPage version={version} brand={brand} />}
+          {view === 'settings' && <SettingsPage version={version} brand={brand}
+            onBrandSaved={(b) => setBrand((x) => ({ ...x, ...b }))} />}
         </div>
       </div>
     </div>

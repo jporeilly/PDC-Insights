@@ -140,6 +140,12 @@ _ENV_KEYS = {
     ("pdc", "kc_client"): "PDC_KC_CLIENT_ID",
     ("llm", "provider"): "LLM_PROVIDER", ("llm", "model"): "LLM_MODEL",
     ("llm", "base_url"): "LLM_BASE_URL", ("llm", "json_mode"): "LLM_JSON_MODE",
+    # Branding is just settings too: editable on the page, persisted to the
+    # same INSIGHTS_BRAND_* keys the environment pattern uses, so a delivery
+    # can be re-labelled in the app instead of by editing .env by hand.
+    ("brand", "name"): "INSIGHTS_BRAND_NAME",
+    ("brand", "product"): "INSIGHTS_BRAND_PRODUCT",
+    ("brand", "accent"): "INSIGHTS_BRAND_ACCENT",
 }
 
 
@@ -168,7 +174,7 @@ def apply_settings(payload: dict, persist: bool = True) -> dict:
         os.environ["INSIGHTS_DEMO"] = "true" if payload["demo"] else "false"
         changed["INSIGHTS_DEMO"] = os.environ["INSIGHTS_DEMO"]
 
-    for section in ("pdc", "llm"):
+    for section in ("pdc", "llm", "brand"):
         sub = getattr(settings, section)
         for key, val in (payload.get(section) or {}).items():
             if not hasattr(sub, key):
@@ -239,4 +245,6 @@ def public_settings() -> dict:
                 "kc_client": settings.pdc.kc_client},
         "llm": {"provider": settings.llm.provider, "model": settings.llm.model,
                 "base_url": settings.llm.base_url, "json_mode": settings.llm.json_mode},
+        "brand": {"name": settings.brand.name, "product": settings.brand.product,
+                  "accent": settings.brand.accent},
     }

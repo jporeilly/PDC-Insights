@@ -80,7 +80,7 @@ function ModelCombo({ value, onChange, models }) {
   )
 }
 
-export default function SettingsPage({ version, brand: brandProp }) {
+export default function SettingsPage({ version, brand: brandProp, onBrandSaved }) {
   // LLM
   const [provider, setProvider] = useState('local')
   const [llmUrl, setLlmUrl] = useState('')
@@ -102,8 +102,12 @@ export default function SettingsPage({ version, brand: brandProp }) {
   const [verifyTls, setVerifyTls] = useState('true')
   const [demo, setDemo] = useState('true')
   const [pdcTest, setPdcTest] = useState(null)
-  // branding / save
+  // branding — editable like everything else on this page; persists to the
+  // same INSIGHTS_BRAND_* keys the environment pattern uses.
   const [brand, setBrand] = useState(brandProp || null)
+  const [brandName, setBrandName] = useState('')
+  const [brandProduct, setBrandProduct] = useState('')
+  const [brandAccent, setBrandAccent] = useState('')
   const [saveRes, setSaveRes] = useState(null)
   const [saving, setSaving] = useState(false)
 
@@ -118,6 +122,10 @@ export default function SettingsPage({ version, brand: brandProp }) {
       if (!touched.current) setModel(s.llm.model || '')
       setJsonMode(String(s.llm.json_mode)); setProvider(s.llm.provider || 'local')
       setDemo(String(s.demo))
+      if (s.brand) {
+        setBrandName(s.brand.name || ''); setBrandProduct(s.brand.product || '')
+        setBrandAccent(s.brand.accent || ''); setBrand((b) => ({ ...b, ...s.brand }))
+      }
     } catch { /* backend unreachable — leave defaults */ }
   }
 
@@ -205,11 +213,16 @@ export default function SettingsPage({ version, brand: brandProp }) {
       pdc: { base_url: pdcUrl.trim(), version: pdcVer, username: pdcUser.trim(),
              cache_ttl: parseInt(cacheTtl, 10), verify_tls: verifyTls === 'true' },
       llm: { provider, base_url: llmUrl.trim(), model: model.trim(), json_mode: jsonMode === 'true' },
+      brand: { name: brandName.trim(), product: brandProduct.trim(), accent: brandAccent.trim() },
     }
     if (pdcPass) payload.pdc.password = pdcPass   // blank ⇒ keep existing
     try {
       const d = await postJSON('/api/settings', payload)
-      if (d.saved) { setSaveRes({ cls: 'ok', text: 'Saved & applied ✓' }); setPdcPass(''); loadSettings() }
+      if (d.saved) {
+        setSaveRes({ cls: 'ok', text: 'Saved & applied ✓' }); setPdcPass(''); loadSettings()
+        // The sidebar shows the brand too — let the app shell refresh it.
+        if (onBrandSaved && d.settings?.brand) onBrandSaved(d.settings.brand)
+      }
       else setSaveRes({ cls: 'err', text: 'Could not save: ' + (d.error || 'unknown') })
     } catch (e) {
       if (e.status === 403) setSaveRes({ cls: 'err', text: 'Saving needs the admin role.' })
@@ -335,11 +348,20 @@ export default function SettingsPage({ version, brand: brandProp }) {
 
         <section className="card span2">
           <h2>Branding</h2>
-          <p className="desc">Genericise the product for delivery — set via the <code>INSIGHTS_BRAND_*</code> environment variables (same pattern as the sibling apps). Shown here as currently applied.</p>
+          <p className="desc">Genericise the product for delivery. Save &amp; apply persists these as the <code>INSIGHTS_BRAND_*</code> settings (same pattern as the sibling apps) and the app relabels immediately — no restart.</p>
           <div className="form-grid">
-            <label>Product name<input className="text" value={brand?.name || ''} readOnly /></label>
-            <label>Catalog label<input className="text" value={brand?.product || ''} readOnly /></label>
-            <label>Accent colour<input className="text" value={brand?.accent || ''} readOnly /></label>
+            <label>Product name
+              <input className="text" value={brandName} placeholder="Catalog Insights"
+                     onChange={(e) => setBrandName(e.target.value)} />
+            </label>
+            <label>Catalog label
+              <input className="text" value={brandProduct} placeholder="Pentaho Data Catalog"
+                     onChange={(e) => setBrandProduct(e.target.value)} />
+            </label>
+            <label>Accent colour
+              <input className="text" value={brandAccent} placeholder="#0F766E"
+                     onChange={(e) => setBrandAccent(e.target.value)} />
+            </label>
           </div>
         </section>
 
