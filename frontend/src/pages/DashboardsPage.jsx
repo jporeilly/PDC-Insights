@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getJSON, postJSON } from '../api.js'
 import {
   DASHBOARDS, SECTION_META, KPI_QUERY, TRUST_BANDS, resolverKind,
@@ -128,12 +128,17 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
   const [drill, setDrill] = useState(null)
   const [pdcOk, setPdcOk] = useState(null)
   const [explain, setExplain] = useState(null) // {busy} | {markdown, engine} | {error}
+  // Monotonic token per explain request. Switching board/scope mid-generation
+  // must ORPHAN the in-flight response, or a slow model pops the PREVIOUS
+  // board's narrative onto whatever is on screen now.
+  const explainReq = useRef(0)
 
   const demoView = scope === DEMO_SCOPE      // per-view override, not the app setting
 
   useEffect(() => { setIdx(0); setScope(loadScope(section)); setLive(null) }, [section])
-  // A different board or scope invalidates the narrative — the numbers changed.
-  useEffect(() => { setExplain(null) }, [idx, scope, section])
+  // A different board or scope invalidates the narrative — the numbers changed
+  // — and orphans any explain still generating for the previous view.
+  useEffect(() => { setExplain(null); explainReq.current += 1 }, [idx, scope, section])
 
   const pickScope = (v) => {
     setScope(v)
@@ -199,6 +204,11 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
      so the narrative describes exactly what the user is looking at. */
   const explainResults = async () => {
     if (explain?.busy) return
+    const token = explainReq.current + 1
+    explainReq.current = token
+    // Apply only if this request still describes the view on screen — a board
+    // or scope change bumps the token and this response is dropped.
+    const apply = (state) => { if (explainReq.current === token) setExplain(state) }
     setExplain({ busy: true })
     let spec = null
     const entry = dashIndex && dashIndex[section] && dashIndex[section][idx]
@@ -214,9 +224,9 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
     else if (scope !== 'all') body.source = scope
     try {
       const d = await postJSON('/api/dashboards/explain', body)
-      setExplain({ markdown: d.markdown, engine: d.engine })
+      apply({ markdown: d.markdown, engine: d.engine })
     } catch {
-      setExplain({ error: true })
+      apply({ error: true })
     }
   }
 

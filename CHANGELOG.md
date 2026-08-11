@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.17.1 (2026-08-11) — orphan a mid-flight explanation on board switch
+
+- Switching dashboard, scope or section while an explanation was still
+  generating let the slow response pop the PREVIOUS board's narrative onto
+  whatever was on screen (and re-enabled the button mid-flight). Each explain
+  request now carries a token that a view change invalidates, so a stale
+  response is dropped silently. Found driving the installed app: a scripted
+  tab-switch-and-explain landed the old board's narrative on the new board.
+  No API change.
+
 ## 1.17.0 (2026-08-11) — DQ best-practice dashboards, Explain results, installed-app fixes
 
 - **33 built-in dashboards** (was 18). The Quality section now carries one
