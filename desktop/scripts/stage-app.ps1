@@ -70,7 +70,7 @@ New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
 # State files and secrets: never shipped. The installed app starts on the
 # bundled sample and writes to the per-user state directory (see app\paths.py).
 $excludeFiles = @(".env", ".env.example", "audit.log", "*.log")
-$excludeDirs  = @(".venv", "__pycache__", ".pytest_cache",
+$excludeDirs  = @(".venv", "venv", "__pycache__", ".pytest_cache",
                   # Staged separately from index.json below - see .DESCRIPTION.
                   "dashboards")
 
@@ -121,9 +121,10 @@ foreach ($section in $idx.PSObject.Properties.Name) {
 }
 Ok "staged $staged built-in dashboard(s) from index.json"
 
-# The MCP server package (Claude Desktop / external agents).
+# The MCP server package (Claude Desktop / external agents). /XD names are
+# relative here for the same reason as above.
 & robocopy $srcMcp (Join-Path $stageDir "mcp_server") "/E" "/NFL" "/NDL" "/NJH" "/NJS" "/NP" `
-    "/XD" (Join-Path $srcMcp "__pycache__") | Out-Null
+    "/XD" "__pycache__" ".venv" "venv" | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed staging mcp_server (exit $LASTEXITCODE)" }
 
 # The built SPA and the static design mock (served at /mock for reference).
@@ -149,6 +150,17 @@ $leaked = Get-ChildItem -LiteralPath $stageDir -Recurse -File |
 if ($leaked) {
     $leaked | ForEach-Object { Warn ("leaked: " + $_.FullName) }
     throw "state or secret files reached the staging tree - fix the exclude list"
+}
+
+# Same guard for dev virtualenvs. The staged tree runs on the VENDORED
+# runtime, so a bundled venv is a second, wrong Python - PDC-Policy shipped
+# one in every installer until someone listed the exe (934f61c there). The
+# excludes above prevent it; this proves it, for every tree staged above.
+$venvs = Get-ChildItem -LiteralPath $stageDir -Recurse -Directory |
+    Where-Object { $_.Name -eq ".venv" -or $_.Name -eq "venv" }
+if ($venvs) {
+    $venvs | ForEach-Object { Warn ("venv: " + $_.FullName) }
+    throw "a dev virtualenv reached the staging tree - fix the exclude list"
 }
 
 # The paths the shell and the server actually depend on. Assert them here,
