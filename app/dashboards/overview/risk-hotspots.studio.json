@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "title": "Risk hotspots",
+  "category": "overview",
+  "subtitle": "Where governance needs attention",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Untrusted assets",
+      "query": "trust_distribution",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Unowned high sensitivity",
+      "query": "sensitive_by_source",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Untermed critical",
+      "query": "untermed_critical",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Failed scans",
+      "query": "profile_status",
+      "span": 1
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Highest-risk assets",
+      "query": "risk_assets",
+      "span": 4
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Trust by source",
+      "query": "trust_by_source",
+      "chartType": "stackedBar",
+      "bindings": {
+        "category": "source",
+        "value": "count",
+        "series": "bucket"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Sensitivity mix",
+      "query": "sensitivity_mix",
+      "chartType": "donut",
+      "bindings": {
+        "category": "level",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c4",
+      "kind": "chart",
+      "title": "Coverage gap by source",
+      "query": "term_coverage",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "pct"
+      },
+      "span": 2
+    }
+  ]
+}

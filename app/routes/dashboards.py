@@ -53,6 +53,27 @@ def list_sources(principal: Principal = Depends(require("viewer"))):
     return {"sources": source_names()}
 
 
+@router.post("/explain")
+async def explain(request: Request, principal: Principal = Depends(require("viewer"))):
+    """Explain a dashboard's resolved results in plain language.
+
+    Body: {spec, source?, demo?} — the same scope/demo semantics as /resolve,
+    so the explanation describes exactly what is on screen. Uses the configured
+    LLM when one answers; the deterministic narrative otherwise, so the button
+    works offline. Read-only.
+    """
+    body = await json_body(request)
+    spec = body.get("spec") or {}
+    if not spec.get("panels"):
+        return JSONResponse({"error": "spec with panels required"}, status_code=400)
+    from ..catalog import catalog_snapshot
+    from ..explain import explain_dashboard
+    from ..panel_data import resolve_dashboard
+    snap = catalog_snapshot(force_demo=True) if body.get("demo") else None
+    resolved = resolve_dashboard(spec, snap=snap, source=body.get("source"))
+    return explain_dashboard(spec, resolved)
+
+
 @router.post("/drill")
 async def drill(request: Request, principal: Principal = Depends(require("viewer"))):
     """Return the underlying assets behind a panel (or a clicked segment/row).

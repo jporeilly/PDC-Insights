@@ -82,6 +82,13 @@ def create_app() -> FastAPI:
     def mock(path: str = "index.html"):
         return _file_from(MOCK_DIR, path or "index.html")
 
+    # index.html must never be heuristically cached: it names the hashed JS
+    # bundle, so a cached copy keeps serving the PREVIOUS release's UI after an
+    # upgrade — the Glossary app hit this twice in one session before
+    # root-causing it. The hashed assets themselves are immutable and stay
+    # cacheable.
+    _NO_CACHE = {"Cache-Control": "no-cache"}
+
     if (UI_DIST / "index.html").is_file():
         # Serve the built React UI. API routes are explicit and registered
         # first, so they always win over the catch-all; anything that isn't a
@@ -89,7 +96,7 @@ def create_app() -> FastAPI:
         @app.get("/", include_in_schema=False)
         @app.get("/chat", include_in_schema=False)
         def index():
-            return FileResponse(UI_DIST / "index.html")
+            return FileResponse(UI_DIST / "index.html", headers=_NO_CACHE)
 
         # Old bookmark compatibility: /ui/… used to serve the mock directly.
         @app.get("/ui/{path:path}", include_in_schema=False)
@@ -100,7 +107,7 @@ def create_app() -> FastAPI:
         def dist_asset(path: str):
             if (UI_DIST / path).is_file():
                 return _file_from(UI_DIST, path)
-            return FileResponse(UI_DIST / "index.html")
+            return FileResponse(UI_DIST / "index.html", headers=_NO_CACHE)
     else:
         # No build present — fall back to the static mock (previous behaviour).
         @app.get("/", include_in_schema=False)

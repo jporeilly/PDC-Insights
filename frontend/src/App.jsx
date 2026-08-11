@@ -37,6 +37,10 @@ function initialView() {
 export default function App() {
   const [{ view, section }, setNav] = useState(initialView)
   const [brand, setBrand] = useState({ name: 'Catalog Insights', product: 'Pentaho Data Catalog' })
+  // The RUNNING backend's release, from /health. pkg.version is only the UI
+  // bundle's label and drifts (an installed 1.16 showed "v1.12.0" from it);
+  // the backend reads the VERSION file, which is the single source of truth.
+  const [version, setVersion] = useState(pkg.version)
   const [pdc, setPdc] = useState(null)   // /health/pdc
   const [llm, setLlm] = useState(null)   // /health/llm
 
@@ -52,6 +56,7 @@ export default function App() {
   useEffect(() => {
     tryJSON('/health').then((h) => {
       if (h?.brand) setBrand((b) => ({ ...b, name: h.brand }))
+      if (h?.version) setVersion(h.version)
     })
     tryJSON('/config').then((c) => { if (c?.brand) setBrand((b) => ({ ...b, ...c.brand })) })
   }, [])
@@ -89,7 +94,7 @@ export default function App() {
               ? <>Catalog <em>Insights</em></> : brand.name}</div>
             <div className="brand-sub">{brand.product}</div>
           </div>
-          <span className="version-pill" title="PDC-Insights release">v{pkg.version}</span>
+          <span className="version-pill" title="PDC-Insights release">v{version}</span>
         </div>
 
         <nav className="nav">
@@ -157,7 +162,7 @@ export default function App() {
             <DesignerPage llm={llm} onOpenChat={(sec) => go('chat', sec)} />
           )}
           {view === 'chat' && <ChatPage key={section} section={section} />}
-          {view === 'settings' && <SettingsPage version={pkg.version} brand={brand} />}
+          {view === 'settings' && <SettingsPage version={version} brand={brand} />}
         </div>
       </div>
     </div>

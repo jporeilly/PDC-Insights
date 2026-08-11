@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "title": "DQ program",
+  "category": "overview",
+  "subtitle": "The nine dimensions, one page",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Availability",
+      "query": "dq_availability",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Timeliness",
+      "query": "dq_timeliness",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Traceability",
+      "query": "dq_traceability",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "DQ dimensions",
+      "query": "dq_dimensions",
+      "chartType": "radar",
+      "bindings": {
+        "category": "dimension",
+        "value": "value"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Dimension scores",
+      "query": "dq_dimensions",
+      "chartType": "bar",
+      "bindings": {
+        "category": "dimension",
+        "value": "value"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "Reading this page",
+      "query": "dq_dimensions",
+      "markdown": "Each Analytics \u00b7 Quality dashboard drills one of these dimensions with its fix queue and the operational lever that moves it. Start with the lowest bar.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Weakest dimension \u2014 Traceability fix queue",
+      "query": "dq_traceability",
+      "span": 2
+    }
+  ]
+}

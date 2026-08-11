@@ -7,6 +7,7 @@ import {
   Donut, Bars, Stacked, Line, Spark, Gauge, Radar, Histo, Bullet, Calendar,
   Spectrum, MiniTable,
 } from '../components/charts.jsx'
+import Markdown from '../components/Markdown.jsx'
 
 const fmtNum = (n) => (typeof n === 'number' ? n.toLocaleString() : (n ?? '—'))
 
@@ -126,10 +127,13 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
   const [dashIndex, setDashIndex] = useState(null)
   const [drill, setDrill] = useState(null)
   const [pdcOk, setPdcOk] = useState(null)
+  const [explain, setExplain] = useState(null) // {busy} | {markdown, engine} | {error}
 
   const demoView = scope === DEMO_SCOPE      // per-view override, not the app setting
 
   useEffect(() => { setIdx(0); setScope(loadScope(section)); setLive(null) }, [section])
+  // A different board or scope invalidates the narrative — the numbers changed.
+  useEffect(() => { setExplain(null) }, [idx, scope, section])
 
   const pickScope = (v) => {
     setScope(v)
@@ -189,6 +193,33 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
       .catch(() => setDrill({ error: true, query, source }))
   }, [scope])
 
+  /* Explain the numbers on screen. Prefers the shipped spec (richer titles,
+     the text panels, options like targets); falls back to the wired panels so
+     the button still answers offline. Same scope/demo semantics as /resolve,
+     so the narrative describes exactly what the user is looking at. */
+  const explainResults = async () => {
+    if (explain?.busy) return
+    setExplain({ busy: true })
+    let spec = null
+    const entry = dashIndex && dashIndex[section] && dashIndex[section][idx]
+    if (entry) {
+      try { spec = await getJSON(`/api/dashboards/${section}/${entry.id}`) } catch { /* fall back */ }
+    }
+    if (!spec) {
+      spec = { version: 1, title: dash.name, category: section,
+               panels: wired.map(({ _i, ...p }) => p) }
+    }
+    const body = { spec }
+    if (scope === DEMO_SCOPE) body.demo = true
+    else if (scope !== 'all') body.source = scope
+    try {
+      const d = await postJSON('/api/dashboards/explain', body)
+      setExplain({ markdown: d.markdown, engine: d.engine })
+    } catch {
+      setExplain({ error: true })
+    }
+  }
+
   const downloadSpec = () => {
     // Preferred: stream the real saved spec from the server (exact + validated).
     if (dashIndex && dashIndex[section] && dashIndex[section][idx]) {
@@ -241,6 +272,10 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
             <option disabled>──────────</option>
             <option value={DEMO_SCOPE}>── Demo data (sample)</option>
           </select>
+          <button className="ghost sm" onClick={explainResults} disabled={explain?.busy}
+                  title="Explain this dashboard's numbers in plain language (local LLM when configured; works offline)">
+            {explain?.busy ? '✦ Explaining…' : '✦ Explain results'}
+          </button>
           <button className="ghost sm" onClick={downloadSpec}
                   title="Download this dashboard as a .studio.json spec">⤓ Download</button>
           <button className="ghost sm" onClick={() => window.print()}
@@ -261,6 +296,23 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
           </button>
         ))}
       </div>
+
+      {explain && !explain.busy && (
+        <div className="explain-card">
+          <div className="card-h">
+            <span className="explain-title">✦ {explain.error ? 'Explanation unavailable' : 'What the numbers say'}</span>
+            <span className="explain-meta">
+              {!explain.error && (explain.engine === 'llm'
+                ? 'written by the configured model from the resolved values'
+                : 'deterministic walk-through of the resolved values')}
+            </span>
+            <button className="ghost sm" onClick={() => setExplain(null)}>✕ Close</button>
+          </div>
+          {explain.error
+            ? <p className="drill-sub">The backend could not be reached — try again once the server answers.</p>
+            : <Markdown text={explain.markdown} />}
+        </div>
+      )}
 
       <div className="dash-grid">
         {dash.panels.map((p, i) => {

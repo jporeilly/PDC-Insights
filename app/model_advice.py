@@ -13,8 +13,11 @@ import shutil
 import subprocess
 
 # (min GPU VRAM GB, model, why) — richest first. Tuned for reliable spec JSON.
+# The top tier recommends 14B on purpose: it used to name 32B while its own
+# reason said "14B is plenty" — a 20 GB download the advice itself argued
+# against, shown on the Settings page of every big-GPU machine.
 GPU_TIERS = [
-    (20, "qwen2.5:32b-instruct", "lots of VRAM — but 32B is overkill for spec JSON; 14B is plenty"),
+    (20, "qwen2.5:14b-instruct", "lots of VRAM; 14B is the sweet spot — 32B adds latency, not better spec JSON"),
     (9,  "qwen2.5:14b-instruct", "comfortable headroom for stronger chart-type choices"),
     (5,  "qwen2.5:7b-instruct",  "fast and strong at JSON — the recommended default"),
     (0,  "qwen2.5:3b-instruct",  "small GPU — a 3B keeps things responsive"),

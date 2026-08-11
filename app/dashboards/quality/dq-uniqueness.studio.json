@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "title": "Uniqueness",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 duplicate key values",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Uniqueness score",
+      "query": "dq_uniqueness",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Uniqueness score",
+      "query": "dq_uniqueness",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Uniqueness by source",
+      "query": "dq_uniqueness",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Lowest-scoring tables",
+      "query": "worst_tables",
+      "chartType": "bar",
+      "bindings": {
+        "category": "table",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Uniqueness measures",
+      "query": "dq_uniqueness",
+      "markdown": "**Is each real-world thing recorded once?** Duplicate detection on primary and business keys. **How to move it:** key profiling \u2014 PK and unique expectations induced from the scan.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 duplicate key values",
+      "query": "dq_uniqueness",
+      "span": 4
+    }
+  ]
+}

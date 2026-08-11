@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "title": "Consistency",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 cross-source value mismatch",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Consistency score",
+      "query": "dq_consistency",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Consistency score",
+      "query": "dq_consistency",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Consistency by source",
+      "query": "dq_consistency",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Quality score distribution",
+      "query": "quality_distribution",
+      "chartType": "bar",
+      "bindings": {
+        "category": "bucket",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Consistency measures",
+      "query": "dq_consistency",
+      "markdown": "**Does the same fact agree everywhere?** Cross-source comparison of the same business fact. **How to move it:** shared business terms \u2014 one governed definition applied everywhere.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 cross-source value mismatch",
+      "query": "dq_consistency",
+      "span": 4
+    }
+  ]
+}

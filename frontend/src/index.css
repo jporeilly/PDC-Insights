@@ -375,6 +375,18 @@ code, .mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: .84e
 .test { display: flex; align-items: center; gap: .6rem; margin-top: .4rem; }
 .test-result { font-size: .78rem; font-weight: 500; display: inline-flex; align-items: center; gap: .4rem; color: var(--text-muted); }
 .test-result.ok { color: var(--status-good); } .test-result.err { color: var(--status-critical); }
+/* The Explain-results narrative, rendered above the dashboard grid. */
+.explain-card {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1rem 1.2rem; margin-bottom: 1rem;
+}
+.explain-card .card-h { margin-bottom: .4rem; }
+.explain-title { font-weight: 650; }
+.explain-meta { font-size: .76rem; color: var(--text-muted); margin-right: auto; margin-left: .6rem; }
+.explain-card .md h2 { font-size: 1rem; margin: .3rem 0 .4rem; }
+.explain-card .md h3 { font-size: .86rem; margin: .7rem 0 .2rem; }
+.explain-card .md p { font-size: .85rem; color: var(--text-secondary); margin: 0 0 .3rem; line-height: 1.5; }
+
 .combo { position: relative; }
 .combo input { width: 100%; }
 .combo-menu {

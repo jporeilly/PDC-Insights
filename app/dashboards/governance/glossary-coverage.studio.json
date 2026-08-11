@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "title": "Glossary coverage",
+  "category": "governance",
+  "subtitle": "Term coverage & gaps",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Terms defined",
+      "query": "top_terms",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Term coverage",
+      "query": "term_coverage",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Critical untermed",
+      "query": "untermed_critical",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Terms in review",
+      "query": "term_status",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Term coverage",
+      "query": "term_coverage",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "pct"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Top business terms",
+      "query": "top_terms",
+      "chartType": "bar",
+      "bindings": {
+        "category": "term",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Coverage trend",
+      "query": "coverage_trend",
+      "chartType": "line",
+      "bindings": {
+        "x": "week",
+        "y": "pct"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Untermed critical elements",
+      "query": "untermed_critical",
+      "span": 2
+    }
+  ]
+}

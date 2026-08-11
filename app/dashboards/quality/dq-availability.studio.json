@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "title": "Availability",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 asset unreachable at scan",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Availability score",
+      "query": "dq_availability",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Availability score",
+      "query": "dq_availability",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Availability by source",
+      "query": "dq_availability",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Assets by data source",
+      "query": "assets_by_source",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Availability measures",
+      "query": "dq_availability",
+      "markdown": "**Can consumers actually reach it?** Successful-scan and connection health as a proxy for consumability. **How to move it:** connection health \u2014 failed scans mean consumers cannot rely on the asset.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 asset unreachable at scan",
+      "query": "dq_availability",
+      "span": 4
+    }
+  ]
+}

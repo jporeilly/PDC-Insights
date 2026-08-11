@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "title": "Accuracy",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 value drift vs reference",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Accuracy score",
+      "query": "dq_accuracy",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Accuracy score",
+      "query": "dq_accuracy",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Accuracy by source",
+      "query": "dq_accuracy",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Quality vs target",
+      "query": "quality_by_source",
+      "chartType": "bullet",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2,
+      "options": {
+        "target": 80
+      }
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Accuracy measures",
+      "query": "dq_accuracy",
+      "markdown": "**Do values reflect the real world?** Drift against governed reference data and known-good distributions. **How to move it:** reference-data checks against the governed source of truth.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 value drift vs reference",
+      "query": "dq_accuracy",
+      "span": 4
+    }
+  ]
+}

@@ -14,6 +14,11 @@
       "id": "executive-scorecard",
       "title": "Executive scorecard",
       "subtitle": "Targets & posture on one page"
+    },
+    {
+      "id": "dq-program",
+      "title": "DQ program",
+      "subtitle": "The nine dimensions, one page"
     }
   ],
   "system": [
@@ -31,6 +36,11 @@
       "id": "scan-operations",
       "title": "Scan operations",
       "subtitle": "Throughput, freshness & the fix queue"
+    },
+    {
+      "id": "source-operations",
+      "title": "Source operations",
+      "subtitle": "Connections, throughput & the fix queue"
     }
   ],
   "user": [
@@ -48,6 +58,11 @@
       "id": "contribution-pulse",
       "title": "Contribution pulse",
       "subtitle": "Daily edits & ownership momentum"
+    },
+    {
+      "id": "ownership-program",
+      "title": "Ownership program",
+      "subtitle": "Who owns what \u2014 and what nobody owns"
     }
   ],
   "governance": [
@@ -65,6 +80,16 @@
       "id": "governance-sla",
       "title": "Governance SLA",
       "subtitle": "Coverage targets, tracked like SLAs"
+    },
+    {
+      "id": "trust-deep-dive",
+      "title": "Trust deep-dive",
+      "subtitle": "The trust spectrum, source by source"
+    },
+    {
+      "id": "glossary-adoption",
+      "title": "Glossary adoption",
+      "subtitle": "Terms in use & where they are missing"
     }
   ],
   "quality": [
@@ -82,6 +107,51 @@
       "id": "quality-posture",
       "title": "Quality posture",
       "subtitle": "The mean, the bands & the fix list"
+    },
+    {
+      "id": "dq-completeness",
+      "title": "Completeness",
+      "subtitle": "DQ dimension \u00b7 null rate above threshold"
+    },
+    {
+      "id": "dq-accuracy",
+      "title": "Accuracy",
+      "subtitle": "DQ dimension \u00b7 value drift vs reference"
+    },
+    {
+      "id": "dq-validity",
+      "title": "Validity",
+      "subtitle": "DQ dimension \u00b7 format/pattern violations"
+    },
+    {
+      "id": "dq-uniqueness",
+      "title": "Uniqueness",
+      "subtitle": "DQ dimension \u00b7 duplicate key values"
+    },
+    {
+      "id": "dq-consistency",
+      "title": "Consistency",
+      "subtitle": "DQ dimension \u00b7 cross-source value mismatch"
+    },
+    {
+      "id": "dq-timeliness",
+      "title": "Timeliness",
+      "subtitle": "DQ dimension \u00b7 stale since last load"
+    },
+    {
+      "id": "dq-traceability",
+      "title": "Traceability",
+      "subtitle": "DQ dimension \u00b7 lineage unverified"
+    },
+    {
+      "id": "dq-clarity",
+      "title": "Clarity",
+      "subtitle": "DQ dimension \u00b7 missing description or term"
+    },
+    {
+      "id": "dq-availability",
+      "title": "Availability",
+      "subtitle": "DQ dimension \u00b7 asset unreachable at scan"
     }
   ],
   "sensitivity": [
@@ -99,6 +169,11 @@
       "id": "protection-controls",
       "title": "Protection controls",
       "subtitle": "Encryption & masking posture"
+    },
+    {
+      "id": "pii-deep-dive",
+      "title": "PII deep-dive",
+      "subtitle": "Types, spread & the unprotected list"
     }
   ]
 }

@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "title": "Catalog health",
+  "category": "overview",
+  "subtitle": "Trust, quality & coverage at a glance",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Catalog assets",
+      "query": "asset_counts",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Data sources",
+      "query": "source_counts",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Glossary coverage",
+      "query": "term_coverage",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "High sensitivity",
+      "query": "sensitivity_mix",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Trust spectrum",
+      "query": "trust_distribution",
+      "chartType": "bar",
+      "bindings": {
+        "category": "bucket",
+        "value": "count"
+      },
+      "span": 2,
+      "options": {
+        "scoreBands": true
+      }
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Sensitivity mix",
+      "query": "sensitivity_mix",
+      "chartType": "donut",
+      "bindings": {
+        "category": "level",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Quality by source",
+      "query": "quality_by_source",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c4",
+      "kind": "chart",
+      "title": "Glossary coverage trend",
+      "query": "coverage_trend",
+      "chartType": "line",
+      "bindings": {
+        "x": "week",
+        "y": "pct"
+      },
+      "span": 2
+    }
+  ]
+}

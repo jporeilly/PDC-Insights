@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "title": "Validity",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 format/pattern violations",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Validity score",
+      "query": "dq_validity",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Validity score",
+      "query": "dq_validity",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Validity by source",
+      "query": "dq_validity",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "At/above vs below target",
+      "query": "dq_by_source",
+      "chartType": "stackedBar",
+      "bindings": {
+        "category": "source",
+        "value": "value",
+        "series": "dimension"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Validity measures",
+      "query": "dq_validity",
+      "markdown": "**Do values conform to their rules?** Format, pattern, range and vocabulary checks. **How to move it:** deploy the governed data-identification patterns \u2014 invalid rows fail the governed regex.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 format/pattern violations",
+      "query": "dq_validity",
+      "span": 4
+    }
+  ]
+}

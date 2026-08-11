@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "title": "Traceability",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 lineage unverified",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Traceability score",
+      "query": "dq_traceability",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Traceability score",
+      "query": "dq_traceability",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Traceability by source",
+      "query": "dq_traceability",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Lineage status",
+      "query": "lineage_status",
+      "chartType": "donut",
+      "bindings": {
+        "category": "status",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Traceability measures",
+      "query": "dq_traceability",
+      "markdown": "**Can you follow the data to its origin?** Verified lineage upstream and downstream of each asset. **How to move it:** lineage capture and verification per asset \u2014 the programme's current weakest dimension.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 lineage unverified",
+      "query": "dq_traceability",
+      "span": 4
+    }
+  ]
+}

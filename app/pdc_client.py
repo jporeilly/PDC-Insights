@@ -385,14 +385,23 @@ class PDCClient:
                 if not key or key in seen:
                     continue
                 seen.add(key)
+                # Verified against live PDC 11.0 (2026-08-11): a root entity
+                # carries no asset counts, its `type` is the generic
+                # RESOURCE/SCHEMA, and the connector kind (POSTGRES, S3, …)
+                # lives at metadata.resource.type. updatedAt is the closest
+                # thing to scan recency the root exposes. rootId/resourceId are
+                # kept so future per-source reads can filter by them.
+                meta = (e.get("metadata") or {}).get("resource") or {}
                 out.append({
                     "name": name,
-                    "type": e.get("type") or "",
+                    "type": meta.get("type") or e.get("type") or "",
+                    "rootId": e.get("rootId") or e.get("_id"),
+                    "resourceId": e.get("resourceId"),
                     # asset/scan fields vary by build; best-effort, may be None.
                     "assetCount": e.get("assetCount") or e.get("childCount")
                     or e.get("descendantCount"),
                     "lastScanAt": e.get("lastScanAt") or e.get("lastIngestAt")
-                    or e.get("lastScanTime"),
+                    or e.get("lastScanTime") or e.get("updatedAt"),
                 })
         except Exception:  # noqa: BLE001 — fall through to the facet path
             out = []

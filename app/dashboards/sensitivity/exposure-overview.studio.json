@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "title": "Exposure overview",
+  "category": "sensitivity",
+  "subtitle": "Sensitivity levels & exposure",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "High sensitivity",
+      "query": "sensitivity_mix",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Unowned sensitive",
+      "query": "sensitive_by_source",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Encrypted",
+      "query": "encryption_status",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "In residency policy",
+      "query": "policy_coverage",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Sensitivity breakdown",
+      "query": "sensitivity_mix",
+      "chartType": "donut",
+      "bindings": {
+        "category": "level",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Sensitive by source",
+      "query": "sensitive_by_source",
+      "chartType": "stackedBar",
+      "bindings": {
+        "category": "source",
+        "value": "count",
+        "series": "level"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "High sensitivity \u00b7 no owner",
+      "query": "sensitive_unowned",
+      "span": 4
+    }
+  ]
+}

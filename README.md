@@ -128,11 +128,17 @@ Everything is environment-driven (`.env.example`). Key switches:
 
 ## Standard dashboards
 
-Each of the six Analytics sections ships with **three** named, ready-made
-dashboards — **18 in all**, no setup required — see `app/dashboards/`. They
-double as enablement examples: every one is a valid `.studio.json` spec you
-can open in the Designer to learn the format, then duplicate or tweak.
-Regenerate with `python tools/build_dashboards.py`.
+**33 named, ready-made dashboards** ship across the six Analytics sections —
+no setup required — see `app/dashboards/`. The Quality section follows the
+**DQ best-practice dimensions**: one dashboard each for Completeness,
+Accuracy, Validity, Uniqueness, Consistency, Timeliness, Traceability,
+Clarity and Availability, every one pairing the dimension's score with the
+operational panel that moves it and a worst-first fix queue. Every dashboard
+also has an **✦ Explain results** button that narrates the numbers on screen
+(the configured LLM when one answers, a deterministic walk-through
+otherwise). They double as enablement examples: every one is a valid
+`.studio.json` spec you can open in the Designer to learn the format, then
+duplicate or tweak. Regenerate with `python tools/build_dashboards.py`.
 
 The typical user journey through the app:
 
@@ -230,11 +236,15 @@ setup are in `docs/DEPLOYMENT.md`.
 
 ## Status
 
-Design mock + 18 built-in dashboards (3 per Analytics section) + in-app AI builder (section-aware chat) +
-MCP server + enforced security model (auth/roles/audit). Two test suites cover
-it: `tools/test_security.py` (auth/roles/audit) and `tools/test_app.py`
-(recommend, the chat builder, the routes) — both run on demo data with no PDC or
-LLM. Runs end-to-end in demo mode today.
+Design mock + 33 built-in dashboards (incl. the nine DQ best-practice
+dimensions) + Explain-results narration + in-app AI builder (section-aware
+chat) + MCP server + Windows desktop installer (`desktop/`) + enforced
+security model (auth/roles/audit). Two test suites cover it:
+`tools/test_security.py` (auth/roles/audit) and `tools/test_app.py`
+(recommend, the chat builder, the routes, the DQ queries, explanations) —
+both run on demo data with no PDC or LLM. Runs end-to-end in demo mode today;
+in live mode against a thin PDC 11, missing per-source aggregates derive
+stable demo-shaped values rather than rendering zeros.
 
 The target build is now **PDC 11.0.0** (the shared demo lab). The sibling apps
 ([Glossary](https://github.com/jporeilly/PDC-Glossary-Generator) /

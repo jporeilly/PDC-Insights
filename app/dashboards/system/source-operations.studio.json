@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "title": "Source operations",
+  "category": "system",
+  "subtitle": "Connections, throughput & the fix queue",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Data sources",
+      "query": "source_counts",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Profiled assets",
+      "query": "profile_status",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Catalog assets",
+      "query": "asset_counts",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Availability",
+      "query": "dq_availability",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Profiling status",
+      "query": "profile_status",
+      "chartType": "donut",
+      "bindings": {
+        "category": "status",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Assets by data source",
+      "query": "assets_by_source",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Scan & profile activity",
+      "query": "scan_activity",
+      "chartType": "line",
+      "bindings": {
+        "x": "date",
+        "y": "count"
+      },
+      "span": 4
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Stale & failed assets",
+      "query": "stale_failed",
+      "span": 4
+    }
+  ]
+}

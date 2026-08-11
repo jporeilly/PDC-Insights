@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "title": "Quality scores",
+  "category": "quality",
+  "subtitle": "Score distribution & laggards",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Below target",
+      "query": "worst_tables",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Completeness",
+      "query": "dq_dimensions",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Uniqueness",
+      "query": "dq_dimensions",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Quality score distribution",
+      "query": "quality_distribution",
+      "chartType": "histogram",
+      "bindings": {
+        "category": "bucket",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Quality vs target",
+      "query": "quality_by_source",
+      "chartType": "bullet",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2,
+      "options": {
+        "target": 80
+      }
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Lowest-scoring tables",
+      "query": "worst_tables",
+      "chartType": "bar",
+      "bindings": {
+        "category": "table",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Below-target tables",
+      "query": "worst_tables",
+      "span": 2
+    }
+  ]
+}

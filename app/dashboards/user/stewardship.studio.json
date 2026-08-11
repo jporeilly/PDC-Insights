@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "title": "Stewardship",
+  "category": "user",
+  "subtitle": "Ownership coverage & workload",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Assets owned",
+      "query": "owners_coverage",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Active stewards",
+      "query": "owner_workload",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Unowned assets",
+      "query": "owners_coverage",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Avg time to own",
+      "query": "ownership_time",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Owned vs unowned",
+      "query": "owners_coverage",
+      "chartType": "stackedBar",
+      "bindings": {
+        "category": "source",
+        "value": "count",
+        "series": "status"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Owner workload",
+      "query": "owner_workload",
+      "chartType": "bar",
+      "bindings": {
+        "category": "owner",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Unowned high-value assets",
+      "query": "unowned_high_value",
+      "span": 4
+    }
+  ]
+}

@@ -1,4 +1,6 @@
 """Liveness + dependency reachability (PDC, LLM)."""
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Request
 
 from ..config import settings
@@ -8,11 +10,21 @@ from ._auth import require
 
 router = APIRouter(tags=["health"])
 
+# The release, from the VERSION file — the single source of truth. Served on
+# /health so the UI's version pill shows the RUNNING backend's release rather
+# than the bundle's package.json label, which drifts (an installed 1.16.0
+# showed "v1.12.0" from it).
+try:
+    _VERSION = (Path(__file__).resolve().parents[2] / "VERSION").read_text(
+        encoding="utf-8").strip() or "dev"
+except OSError:
+    _VERSION = "dev"
+
 
 @router.get("/health")
 def health():
     # Public: no auth — used by orchestration health checks.
-    return {"status": "ok", "brand": settings.brand.name}
+    return {"status": "ok", "brand": settings.brand.name, "version": _VERSION}
 
 
 @router.get("/config")

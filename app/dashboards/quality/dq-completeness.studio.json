@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "title": "Completeness",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 null rate above threshold",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Completeness score",
+      "query": "dq_completeness",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Completeness score",
+      "query": "dq_completeness",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Completeness by source",
+      "query": "dq_completeness",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Profiling status",
+      "query": "profile_status",
+      "chartType": "donut",
+      "bindings": {
+        "category": "status",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Completeness measures",
+      "query": "dq_completeness",
+      "markdown": "**Are required values present?** The share of expected values actually populated \u2014 null and empty rates measured against profiled expectations. **How to move it:** widen profile coverage; unprofiled columns hide missing values.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 null rate above threshold",
+      "query": "dq_completeness",
+      "span": 4
+    }
+  ]
+}

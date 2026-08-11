@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "title": "Clarity",
+  "category": "quality",
+  "subtitle": "DQ dimension \u00b7 missing description or term",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Clarity score",
+      "query": "dq_clarity",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Clarity score",
+      "query": "dq_clarity",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Clarity by source",
+      "query": "dq_clarity",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Term coverage by source",
+      "query": "term_coverage",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "pct"
+      },
+      "span": 2
+    },
+    {
+      "id": "x1",
+      "kind": "text",
+      "title": "What Clarity measures",
+      "query": "dq_clarity",
+      "markdown": "**Can a consumer understand it?** Descriptions, business terms and documentation coverage. **How to move it:** glossary coverage \u2014 undocumented assets read as unclear data.",
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix queue \u2014 missing description or term",
+      "query": "dq_clarity",
+      "span": 4
+    }
+  ]
+}

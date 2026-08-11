@@ -1,6 +1,7 @@
 /* Standard dashboards — ported 1:1 from the design mock (ui/mock/index.html).
    These are the baked/offline renders; live values are overlaid from
    POST /api/dashboards/resolve when the backend is reachable. */
+import DQ_DEMO from './dqDemo.json'
 
 export const SECTION_META = {
   overview: { name: 'Overview', desc: 'A point-in-time read of the catalog — trust, quality, sensitivity, and coverage across all connected sources.' },
@@ -324,6 +325,182 @@ export const DASHBOARDS = {
   ],
 }
 
+/* ── DQ best-practice dimension boards (Quality) ─────────────────────────────
+   One dashboard per dimension. The numbers come from dqDemo.json, which
+   tools/bake_dq_data.py generates FROM THE SAME RESOLVERS that answer
+   /api/dashboards/resolve in demo mode — so the baked artwork and the live
+   overlay always agree. Regenerate after changing app/panel_data.py. */
+
+const DQ_ORDER = ['Completeness', 'Accuracy', 'Validity', 'Uniqueness', 'Consistency',
+  'Timeliness', 'Traceability', 'Clarity', 'Availability']
+
+/* The operational companion panel for each dimension — the lever that moves
+   it, mirroring the shipped .studio.json spec's companion query. */
+const DQ_COMPANION = {
+  Completeness: { kind: 'chart', title: 'Profiling status', sub: 'unprofiled columns hide nulls', span: 2, chart: 'donut', q: 'profile_status',
+    data: [{ k: 'Completed', v: 11760, c: 'var(--high)' }, { k: 'Skipped', v: 708, c: 'var(--mid)' }, { k: 'Failed', v: 12, c: 'var(--low)' }] },
+  Accuracy: { kind: 'chart', title: 'Quality vs target', sub: 'by source · target 80', span: 2, chart: 'bullet', q: 'quality_by_source',
+    data: [{ k: 'Snowflake-PROD', v: 86, t: 80 }, { k: 'Oracle-legacy', v: 81, t: 80 }, { k: 'Postgres-billing', v: 78, t: 80 }, { k: 'S3-raw', v: 64, t: 80 }, { k: 'SharePoint-docs', v: 58, t: 80 }] },
+  Validity: { kind: 'chart', title: 'At/above vs below target', sub: 'per source', span: 2, chart: 'stacked', q: 'dq_by_source',
+    data: [{ k: 'Snow', 'At/Above': 3130, Below: 510 }, { k: 'S3', 'At/Above': 1670, Below: 940 }, { k: 'PG', 'At/Above': 1670, Below: 470 }, { k: 'Ora', 'At/Above': 1170, Below: 280 }, { k: 'Docs', 'At/Above': 420, Below: 300 }],
+    keys: ['At/Above', 'Below'], colors: ['var(--high)', 'var(--low)'] },
+  Uniqueness: { kind: 'chart', title: 'Lowest-scoring tables', sub: 'duplicate risk first', span: 2, chart: 'bars', q: 'worst_tables',
+    data: [{ k: 'SharePoint-docs.main', v: 58, c: 'var(--low)' }, { k: 'S3-raw.main', v: 64, c: 'var(--low)' }, { k: 'Kafka-streams.main', v: 69, c: 'var(--mid)' }, { k: 'BigQuery-mart.main', v: 73, c: 'var(--mid)' }], opts: { h: 170, max: 100 } },
+  Consistency: { kind: 'chart', title: 'Quality score distribution', sub: 'sources per band', span: 2, chart: 'bars', q: 'quality_distribution',
+    data: [{ k: '51-60', v: 1 }, { k: '61-70', v: 2 }, { k: '71-80', v: 3 }, { k: '81-90', v: 2 }], opts: { h: 170 } },
+  Timeliness: { kind: 'chart', title: 'Scan & profile activity', sub: 'daily scans · 14d', span: 2, chart: 'line', q: 'scan_activity',
+    data: [9, 11, 10, 12, 9, 13, 11, 12, 10, 13, 12, 11, 13, 12] },
+  Traceability: { kind: 'chart', title: 'Lineage status', sub: 'the current weakest link', span: 2, chart: 'donut', q: 'lineage_status',
+    data: [{ k: 'Verified', v: 7320, c: 'var(--high)' }, { k: 'Partial', v: 3960, c: 'var(--mid)' }, { k: 'Unverified', v: 1200, c: 'var(--low)' }] },
+  Clarity: { kind: 'chart', title: 'Term coverage by source', sub: '% with a business term', span: 2, chart: 'bars', q: 'term_coverage',
+    data: [{ k: 'Snowflake-PROD', v: 74, c: 'var(--high)' }, { k: 'Postgres-billing', v: 68, c: 'var(--high)' }, { k: 'MySQL-crm', v: 66, c: 'var(--mid)' }, { k: 'Oracle-legacy', v: 41, c: 'var(--mid)' }, { k: 'S3-raw', v: 34, c: 'var(--low)' }, { k: 'SharePoint-docs', v: 22, c: 'var(--low)' }], opts: { h: 170, max: 100 } },
+  Availability: { kind: 'chart', title: 'Assets by data source', sub: 'what consumers reach', span: 2, chart: 'bars', q: 'assets_by_source',
+    data: [{ k: 'Snowflake-PROD', v: 3640 }, { k: 'S3-raw', v: 2610 }, { k: 'Postgres-billing', v: 2140 }, { k: 'Oracle-legacy', v: 1450 }, { k: 'BigQuery-mart', v: 860 }, { k: 'SharePoint-docs', v: 720 }], opts: { h: 170 } },
+}
+
+const dimSpark = (end) => [end - 6, end - 5, end - 3, end - 3, end - 2, end - 1, end]
+
+function dimBoard(dim) {
+  const d = DQ_DEMO[dim]
+  const q = `dq_${dim.toLowerCase()}`
+  const worst = d.perSource.reduce((a, b) => (b.v < a.v ? b : a), d.perSource[0])
+  const good = d.score >= 80
+  return { id: `dq-${dim.toLowerCase()}`, name: dim, desc: `DQ dimension · ${d.issue}`, panels: [
+    K(`${dim} score`, String(d.score), good ? 'up' : 'down', good ? 'on track' : 'needs attention',
+      good ? 'var(--high)' : 'var(--low)', '◈', dimSpark(d.score), good ? 'var(--high-t)' : 'var(--low-t)'),
+    K('Mean quality', '76', 'up', '+2', 'var(--c2)', '◈', [70, 72, 73, 74, 75, 75, 76], 'var(--c2-t)'),
+    K('Weakest source', worst.k.length > 12 ? worst.k.slice(0, 12) + '…' : worst.k, 'flat', `score ${worst.v}`,
+      'var(--mid)', '▽', dimSpark(worst.v), 'var(--mid-t)'),
+    K('In fix queue', String(d.fixRows.length), d.fixRows.length > 3 ? 'down' : 'flat', 'below 85',
+      'var(--low)', '!', [6, 6, 5, 5, 4, 4, d.fixRows.length], 'var(--low-t)'),
+    { kind: 'chart', title: `${dim} score`, sub: d.lever, span: 2, chart: 'gauge', q, val: d.score },
+    { kind: 'chart', title: `${dim} by source`, sub: 'score per connection', span: 2, chart: 'bars', q,
+      data: d.perSource.map((s) => ({ ...s, c: s.v >= 85 ? 'var(--high)' : s.v >= 70 ? 'var(--mid)' : 'var(--low)' })), opts: { h: 170, max: 100 } },
+    DQ_COMPANION[dim],
+    { kind: 'chart', title: `Fix queue — ${d.issue}`, chip: `${d.fixRows.length} below 85`, span: 2, chart: 'table', q,
+      cols: ['Table', 'Source', 'Issue', 'Score'],
+      rows: d.fixRows.map((r) => [r[0], r[1], pill(r[2], r[3] < 70 ? 'hi' : 'md'), String(r[3])]) },
+  ] }
+}
+
+DASHBOARDS.quality.push(...DQ_ORDER.map(dimBoard))
+
+/* ── operational additions across the other sections ────────────────────── */
+DASHBOARDS.overview.push({ id: 'dq-program', name: 'DQ program', desc: 'The nine dimensions, one page', panels: [
+  K('Mean quality', '76', 'up', '+2', 'var(--c2)', '◈', [70, 72, 73, 74, 75, 75, 76], 'var(--c2-t)'),
+  K('Availability', '96', 'up', 'strongest', 'var(--high)', '⛁', dimSpark(96), 'var(--high-t)'),
+  K('Timeliness', '66', 'down', 'batch lag', 'var(--mid)', '◷', dimSpark(66), 'var(--mid-t)'),
+  K('Traceability', '58', 'down', 'weakest', 'var(--low)', '⇄', dimSpark(58), 'var(--low-t)'),
+  { kind: 'chart', title: 'DQ dimensions', sub: 'the best-practice nine', span: 2, chart: 'radar', q: 'dq_dimensions',
+    data: DQ_ORDER.map((k) => ({ k, v: DQ_DEMO[k].score })) },
+  { kind: 'chart', title: 'Dimension scores', sub: 'start with the lowest bar', span: 2, chart: 'bars', q: 'dq_dimensions',
+    data: DQ_ORDER.map((k) => ({ k, v: DQ_DEMO[k].score, c: DQ_DEMO[k].score >= 85 ? 'var(--high)' : DQ_DEMO[k].score >= 70 ? 'var(--mid)' : 'var(--low)' })).sort((a, b) => a.v - b.v), opts: { h: 200, max: 100 } },
+  { kind: 'chart', title: 'Weakest dimension — Traceability fix queue', chip: 'work top-down', span: 4, chart: 'table', q: 'dq_traceability',
+    cols: ['Table', 'Source', 'Issue', 'Score'],
+    rows: DQ_DEMO.Traceability.fixRows.map((r) => [r[0], r[1], pill(r[2], 'hi'), String(r[3])]) },
+] })
+
+DASHBOARDS.system.push({ id: 'source-operations', name: 'Source operations', desc: 'Connections, throughput & the fix queue', panels: [
+  K('Data sources', '18', 'flat', 'no change', 'var(--brand)', '⛁', [16, 16, 17, 17, 18, 18, 18]),
+  K('Profiled assets', '94.2%', 'up', '+1.4%', 'var(--high)', '◉', [88, 90, 91, 92, 93, 94, 94.2], 'var(--high-t)'),
+  K('Catalog assets', '12,480', 'up', '3.1% vs last wk', 'var(--c2)', '◳', [9, 10, 10, 11, 11, 12, 12.4], 'var(--c2-t)'),
+  K('Availability', '96', 'up', 'strongest dim', 'var(--high)', '⚙', dimSpark(96), 'var(--high-t)'),
+  { kind: 'chart', title: 'Profiling status', sub: 'last run', span: 2, chart: 'donut', q: 'profile_status',
+    data: [{ k: 'Completed', v: 11760, c: 'var(--high)' }, { k: 'Skipped', v: 708, c: 'var(--mid)' }, { k: 'Failed', v: 12, c: 'var(--low)' }] },
+  { kind: 'chart', title: 'Assets by data source', span: 2, chart: 'bars', q: 'assets_by_source',
+    data: [{ k: 'Snowflake-PROD', v: 3640 }, { k: 'S3-raw', v: 2610 }, { k: 'Postgres-billing', v: 2140 }, { k: 'Oracle-legacy', v: 1450 }, { k: 'BigQuery-mart', v: 860 }, { k: 'Kafka-streams', v: 640 }], opts: { h: 170 } },
+  { kind: 'chart', title: 'Scan & profile activity', sub: 'daily · 14d', span: 4, chart: 'line', q: 'scan_activity',
+    data: [9, 11, 10, 12, 9, 13, 11, 12, 10, 13, 12, 11, 13, 12] },
+  { kind: 'chart', title: 'Stale & failed assets', chip: 'work the queue', span: 4, chart: 'table', q: 'stale_failed',
+    cols: ['Asset', 'Source', 'Status', 'Last attempt'],
+    rows: [
+      ['S3-raw/batch', 'S3-raw', pill('6 failed', 'hi'), '1h ago'],
+      ['Oracle-legacy/batch', 'Oracle-legacy', pill('4 failed', 'hi'), '3h ago'],
+      ['SharePoint-docs/batch', 'SharePoint-docs', pill('3 failed', 'md'), '2d ago'],
+      ['BigQuery-mart/batch', 'BigQuery-mart', pill('2 failed', 'md'), '1d ago']] },
+] })
+
+DASHBOARDS.governance.push({ id: 'trust-deep-dive', name: 'Trust deep-dive', desc: 'The trust spectrum, source by source', panels: [
+  K('Highly trusted', '27%', 'up', '+2 pts', 'var(--high)', '✓', [22, 23, 24, 25, 26, 26, 27], 'var(--high-t)'),
+  K('Term coverage', '61%', 'up', '+4 pts', 'var(--c2)', '❏', [48, 52, 53, 55, 57, 59, 61], 'var(--c2-t)'),
+  K('Lineage verified', '58%', 'up', '+5 pts', 'var(--c4)', '⇄', [45, 48, 50, 52, 54, 56, 58], 'var(--c4-t)'),
+  K('Untermed critical', '47', 'down', '−9', 'var(--mid)', '!', [68, 64, 60, 56, 53, 50, 47], 'var(--mid-t)'),
+  { kind: 'chart', title: 'Trust spectrum', sub: '8,214 scored assets', span: 2, chart: 'spectrum', q: 'trust_distribution',
+    data: [{ k: 'Untrusted', v: 2104, r: '0–50' }, { k: 'Trusted', v: 3890, r: '51–75' }, { k: 'Highly Trusted', v: 2220, r: '76–100' }] },
+  { kind: 'chart', title: 'Trust by source', sub: 'bucket share', span: 2, chart: 'stacked', q: 'trust_by_source',
+    data: [{ k: 'Snow', Untrusted: 300, Trusted: 900, High: 2440 }, { k: 'S3', Untrusted: 940, Trusted: 1100, High: 570 }, { k: 'PG', Untrusted: 340, Trusted: 1000, High: 800 }, { k: 'Ora', Untrusted: 300, Trusted: 520, High: 630 }, { k: 'Docs', Untrusted: 224, Trusted: 370, High: 126 }],
+    keys: ['Untrusted', 'Trusted', 'High'], colors: SCORE },
+  { kind: 'chart', title: 'Coverage trend', sub: '% with a term · 12 wk', span: 2, chart: 'line', q: 'coverage_trend',
+    data: [48, 50, 51, 53, 53, 55, 56, 57, 58, 59, 60, 61], opts: { fmt: (v) => v + '%' } },
+  { kind: 'chart', title: 'Untermed critical elements', chip: 'review', span: 2, chart: 'table', q: 'untermed_critical',
+    cols: ['Element', 'Source', 'Sensitivity'],
+    rows: [
+      ['S3-raw.critical', 'S3-raw', pill('High', 'hi')],
+      ['SharePoint-docs.critical', 'SharePoint-docs', pill('High', 'hi')],
+      ['Oracle-legacy.critical', 'Oracle-legacy', pill('High', 'md')],
+      ['Kafka-streams.critical', 'Kafka-streams', pill('Medium', 'md')]] },
+] })
+
+DASHBOARDS.governance.push({ id: 'glossary-adoption', name: 'Glossary adoption', desc: 'Terms in use & where they are missing', panels: [
+  K('Glossary coverage', '61%', 'up', '+4 pts', 'var(--high)', '❏', [48, 52, 53, 55, 57, 59, 61], 'var(--high-t)'),
+  K('Catalog assets', '12,480', 'up', '3.1% vs last wk', 'var(--brand)', '◳', [9, 10, 10, 11, 11, 12, 12.4]),
+  K('Clarity', '71', 'flat', 'DQ dimension', 'var(--mid)', '❏', dimSpark(71), 'var(--mid-t)'),
+  K('Lineage verified', '58%', 'up', '+5 pts', 'var(--c4)', '⇄', [45, 48, 50, 52, 54, 56, 58], 'var(--c4-t)'),
+  { kind: 'chart', title: 'Top business terms', sub: 'assets bound', span: 2, chart: 'donut', q: 'top_terms',
+    data: [{ k: 'Customer', v: 980, c: 'var(--c1)' }, { k: 'Account', v: 760, c: 'var(--c2)' }, { k: 'Meter', v: 540, c: 'var(--c3)' }, { k: 'Invoice', v: 430, c: 'var(--c4)' }, { k: 'Usage', v: 320, c: 'var(--c5)' }] },
+  { kind: 'chart', title: 'Coverage by source', sub: '% with a term', span: 2, chart: 'bars', q: 'term_coverage',
+    data: [{ k: 'Snowflake-PROD', v: 74, c: 'var(--high)' }, { k: 'Postgres-billing', v: 68, c: 'var(--high)' }, { k: 'MySQL-crm', v: 66, c: 'var(--mid)' }, { k: 'Oracle-legacy', v: 41, c: 'var(--mid)' }, { k: 'S3-raw', v: 34, c: 'var(--low)' }, { k: 'SharePoint-docs', v: 22, c: 'var(--low)' }], opts: { h: 170, max: 100 } },
+  { kind: 'chart', title: 'Coverage trend', sub: '12 wk', span: 2, chart: 'line', q: 'coverage_trend',
+    data: [48, 50, 51, 53, 53, 55, 56, 57, 58, 59, 60, 61], opts: { fmt: (v) => v + '%' } },
+  { kind: 'chart', title: 'Untermed critical elements', chip: 'assign terms', span: 2, chart: 'table', q: 'untermed_critical',
+    cols: ['Element', 'Source', 'Sensitivity'],
+    rows: [
+      ['S3-raw.critical', 'S3-raw', pill('High', 'hi')],
+      ['SharePoint-docs.critical', 'SharePoint-docs', pill('High', 'hi')],
+      ['Kafka-streams.critical', 'Kafka-streams', pill('Medium', 'md')]] },
+] })
+
+DASHBOARDS.sensitivity.push({ id: 'pii-deep-dive', name: 'PII deep-dive', desc: 'Types, spread & the unprotected list', panels: [
+  K('High sensitivity', '842', 'down', '−18 unowned', 'var(--low)', '🔒', [60, 58, 55, 52, 50, 46, 42], 'var(--low-t)'),
+  K('PII columns', '3,895', 'up', '+240 scanned', 'var(--brand)', '◎', [3.2, 3.3, 3.5, 3.6, 3.7, 3.8, 3.9]),
+  K('Encrypted', '74%', 'up', '+3 pts', 'var(--high)', '⛨', [66, 68, 70, 71, 72, 73, 74], 'var(--high-t)'),
+  K('Masked', '61%', 'up', '+2 pts', 'var(--c2)', '▩', [54, 55, 57, 58, 59, 60, 61], 'var(--c2-t)'),
+  { kind: 'chart', title: 'PII types discovered', sub: 'content scan', span: 2, chart: 'donut', q: 'pii_discoveries',
+    data: [{ k: 'EMAIL', v: 1203, c: 'var(--c1)' }, { k: 'PHONE', v: 980, c: 'var(--c2)' }, { k: 'ADDRESS', v: 760, c: 'var(--c3)' }, { k: 'DOB', v: 540, c: 'var(--c4)' }, { k: 'SSN', v: 412, c: 'var(--low)' }] },
+  { kind: 'chart', title: 'High sensitivity by source', sub: 'high vs other', span: 2, chart: 'stacked', q: 'sensitive_by_source',
+    data: [{ k: 'S3', High: 280, Other: 2330 }, { k: 'Snow', High: 240, Other: 3400 }, { k: 'Ora', High: 120, Other: 1330 }, { k: 'PG', High: 80, Other: 2060 }, { k: 'Docs', High: 72, Other: 648 }],
+    keys: ['High', 'Other'], colors: ['var(--low)', 'var(--surface-3)'] },
+  { kind: 'chart', title: 'Sensitivity mix', sub: 'all assets', span: 2, chart: 'donut', q: 'sensitivity_mix', data: SENS },
+  { kind: 'chart', title: 'Assets containing PII', chip: 'protect first', span: 2, chart: 'table', q: 'pii_assets',
+    cols: ['Asset', 'Source', 'PII types', 'Masked'],
+    rows: [
+      ['S3-raw.pii', 'S3-raw', pill('EMAIL, SSN', 'hi'), 'no'],
+      ['Snowflake-PROD.pii', 'Snowflake-PROD', pill('EMAIL, SSN', 'hi'), 'no'],
+      ['SharePoint-docs.pii', 'SharePoint-docs', pill('EMAIL, DOB', 'md'), 'no'],
+      ['Oracle-legacy.pii', 'Oracle-legacy', pill('EMAIL, SSN', 'md'), 'no']] },
+] })
+
+DASHBOARDS.user.push({ id: 'ownership-program', name: 'Ownership program', desc: 'Who owns what — and what nobody owns', panels: [
+  K('Assets owned', '65%', 'up', '+3 pts', 'var(--high)', '♟', [58, 59, 60, 62, 63, 64, 65], 'var(--high-t)'),
+  K('Data sources', '18', 'flat', 'no change', 'var(--c2)', '⛁', [16, 16, 17, 17, 18, 18, 18], 'var(--c2-t)'),
+  K('High sensitivity', '842', 'down', '−18 unowned', 'var(--low)', '🔒', [60, 58, 55, 52, 50, 46, 42], 'var(--low-t)'),
+  K('Catalog assets', '12,480', 'up', '3.1% vs last wk', 'var(--brand)', '◳', [9, 10, 10, 11, 11, 12, 12.4]),
+  { kind: 'chart', title: 'Owned vs unowned by source', sub: 'assets', span: 2, chart: 'stacked', q: 'owners_coverage',
+    data: [{ k: 'Snow', Owned: 2690, Unowned: 950 }, { k: 'S3', Owned: 1250, Unowned: 1360 }, { k: 'PG', Owned: 1650, Unowned: 490 }, { k: 'Ora', Owned: 860, Unowned: 590 }, { k: 'Docs', Owned: 300, Unowned: 420 }],
+    keys: ['Owned', 'Unowned'], colors: ['var(--high)', 'var(--low)'] },
+  { kind: 'chart', title: 'Owner workload', sub: 'assets per steward', span: 2, chart: 'bars', q: 'owner_workload',
+    data: [{ k: 'a.rivera', v: 1820 }, { k: 'j.chen', v: 1240 }, { k: 'm.okafor', v: 980 }, { k: 's.patel', v: 760 }, { k: 'l.nguyen', v: 540 }], opts: { h: 170 } },
+  { kind: 'chart', title: 'Edits by action', sub: '30 days', span: 2, chart: 'donut', q: 'edit_activity',
+    data: [{ k: 'Tagged', v: 1840, c: 'var(--c1)' }, { k: 'Termed', v: 1260, c: 'var(--c2)' }, { k: 'Owned', v: 980, c: 'var(--c3)' }, { k: 'Rated', v: 720, c: 'var(--c4)' }, { k: 'Described', v: 540, c: 'var(--c5)' }] },
+  { kind: 'chart', title: 'Unowned high-value assets', chip: 'assign owners', span: 2, chart: 'table', q: 'unowned_high_value',
+    cols: ['Asset', 'Source', 'Sensitivity', 'Trust'],
+    rows: [
+      ['S3-raw.asset', 'S3-raw', pill('High', 'hi'), '64'],
+      ['SharePoint-docs.asset', 'SharePoint-docs', pill('High', 'hi'), '58'],
+      ['Oracle-legacy.asset', 'Oracle-legacy', pill('High', 'md'), '81'],
+      ['BigQuery-mart.asset', 'BigQuery-mart', pill('Low', 'md'), '73']] },
+] })
+
 /* Headline KPI tiles whose meaning maps exactly to a resolver query, so they
    can show the real catalog value (live PDC or demo sample) instead of a
    baked one. */
@@ -340,6 +517,14 @@ export const KPI_QUERY = {
   'Assets owned': 'owners_coverage',
   'Encrypted': 'encryption_status',
   'Masked': 'masking_status',
+  'Highly trusted': 'trust_distribution',
+  'Untermed critical': 'untermed_critical',
+  'PII columns': 'pii_discoveries',
+  // The nine DQ best-practice dimensions — bare name and "<dim> score" both
+  // resolve, so the dimension boards' headline tiles show live values.
+  ...Object.fromEntries(['Completeness', 'Accuracy', 'Validity', 'Uniqueness',
+    'Consistency', 'Timeliness', 'Traceability', 'Clarity', 'Availability']
+    .flatMap((d) => [[d, `dq_${d.toLowerCase()}`], [`${d} score`, `dq_${d.toLowerCase()}`]])),
 }
 
 export const TRUST_BANDS = { Untrusted: '0–50', Trusted: '51–75', 'Highly Trusted': '76–100' }

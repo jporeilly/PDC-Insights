@@ -68,16 +68,27 @@ check("suggestion has why + generate_prompt + template + priority",
 
 print("\n[1b] standard dashboards — schema + query-catalog validity")
 import glob as _glob  # noqa: E402
+# 33 built-ins: the original three per section, plus the nine DQ dimension
+# boards in quality and one operational addition per section (two in
+# governance). index.json is the authority on the split.
+_EXPECTED_COUNTS = {"overview": 4, "system": 4, "user": 4,
+                    "governance": 5, "quality": 12, "sensitivity": 4}
 _specs = sorted(_glob.glob("app/dashboards/**/*.studio.json", recursive=True))
-check(f"standard set is 3 per section ({len(_specs)})", len(_specs) == 3 * len(SECTIONS))
+check(f"standard set is 33 dashboards ({len(_specs)})",
+      len(_specs) == sum(_EXPECTED_COUNTS.values()))
 for _f in _specs:
     with open(_f, encoding="utf-8") as fh:
         _spec = json.load(fh)
     _errs = _validate(_spec, QUERY_CATALOG)
     check(f"{_f.replace(os.sep, '/').split('/')[-1]} validates", not _errs)
 _idx = json.load(open("app/dashboards/index.json", encoding="utf-8"))
-check("index.json lists every section with 3 dashboards",
-      set(_idx) == set(SECTIONS) and all(len(v) == 3 for v in _idx.values()))
+check("index.json matches the expected per-section split",
+      {k: len(v) for k, v in _idx.items()} == _EXPECTED_COUNTS)
+check("every DQ dimension has a quality board",
+      {f"dq-{d}" for d in ("completeness", "accuracy", "validity", "uniqueness",
+                           "consistency", "timeliness", "traceability", "clarity",
+                           "availability")}
+      <= {e["id"] for e in _idx["quality"]})
 
 print("\n[2] chat_build — deterministic builder")
 for sec in SECTIONS:
@@ -325,6 +336,51 @@ with tempfile.TemporaryDirectory() as _tmp:
 check("state dir back to the checkout root once unset",
       _paths.state_dir() == _paths.ROOT_DIR)
 
+print("\n[3k] DQ dimensions, explanations, health version")
+# One dq_<dimension> query serves every panel kind (worst_tables precedent).
+_dq = c.post("/api/dashboards/resolve",
+             json={"version": 1, "title": "t", "category": "quality",
+                   "panels": [{"id": "k", "kind": "kpi", "query": "dq_completeness"},
+                              {"id": "b", "kind": "chart", "chartType": "bar",
+                               "query": "dq_completeness"},
+                              {"id": "t", "kind": "table", "query": "dq_completeness"}]}).json()
+check("dq dimension KPI reads the snapshot's dq block",
+      _dq["panels"]["k"]["value"] == 88)
+check("dq dimension chart lists every source",
+      len(_dq["panels"]["b"]["series"]) == 8)
+check("dq dimension table is the worst-first fix queue",
+      len(_dq["panels"]["t"]["rows"]) >= 1
+      and _dq["panels"]["t"]["columns"] == ["table", "source", "issue", "score"]
+      and _dq["panels"]["t"]["rows"][0][3] <= _dq["panels"]["t"]["rows"][-1][3])
+_radar = c.post("/api/dashboards/resolve",
+                json={"version": 1, "title": "t", "category": "quality",
+                      "panels": [{"id": "r", "kind": "chart", "chartType": "radar",
+                                  "query": "dq_dimensions"}]}).json()
+check("dq radar carries all nine best-practice dimensions",
+      len(_radar["panels"]["r"]["series"]) == 9)
+
+# Explanations: deterministic engine (LLM disabled in this suite), grounded on
+# the same resolve the dashboard shows.
+_exspec = json.loads(open("app/dashboards/quality/dq-traceability.studio.json",
+                          encoding="utf-8").read())
+_ex = c.post("/api/dashboards/explain", json={"spec": _exspec}).json()
+check("explain returns deterministic markdown offline",
+      _ex.get("engine") == "deterministic" and _ex.get("markdown", "").startswith("## "))
+check("explain names the dimension's operational lever",
+      "lineage capture" in _ex["markdown"])
+check("explain covers the fix-queue table",
+      "worst-first" in _ex["markdown"])
+check("explain without a spec -> 400",
+      c.post("/api/dashboards/explain", json={}).status_code == 400)
+
+check("GET /health carries the release version",
+      c.get("/health").json().get("version") == open("VERSION").read().strip())
+_tls = c.post("/api/settings/test-pdc",
+              json={"base_url": "http://127.0.0.1:1", "username": "u",
+                    "password": "p", "verify_tls": False}).json()
+check("test-pdc accepts the form's verify_tls choice", _tls["ok"] is False
+      and "verify_tls" not in str(_tls.get("error", "")).lower())
+
 print("\n[4] generator validation still guards")
 bad = {"version": 1, "title": "bad", "category": "overview",
        "panels": [{"id": "p", "kind": "chart", "title": "t",
@@ -337,12 +393,17 @@ try:
     import glob
     import re
     from pathlib import Path
-    keep = {"catalog-health", "risk-hotspots", "executive-scorecard",
-            "profiling-health", "source-inventory", "scan-operations",
-            "stewardship", "activity-ratings", "contribution-pulse",
+    keep = {"catalog-health", "risk-hotspots", "executive-scorecard", "dq-program",
+            "profiling-health", "source-inventory", "scan-operations", "source-operations",
+            "stewardship", "activity-ratings", "contribution-pulse", "ownership-program",
             "glossary-coverage", "policy-lineage", "governance-sla",
+            "trust-deep-dive", "glossary-adoption",
             "quality-scores", "dq-dimensions", "quality-posture",
-            "exposure-overview", "pii-discoveries", "protection-controls"}
+            "dq-completeness", "dq-accuracy", "dq-validity", "dq-uniqueness",
+            "dq-consistency", "dq-timeliness", "dq-traceability", "dq-clarity",
+            "dq-availability",
+            "exposure-overview", "pii-discoveries", "protection-controls",
+            "pii-deep-dive"}
     for f in glob.glob("app/dashboards/**/*.studio.json", recursive=True):
         # NB: strip the full ".studio.json" — Path().stem only drops ".json",
         # which would leave "name.studio" and match nothing (deleting everything).

@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "title": "PII deep-dive",
+  "category": "sensitivity",
+  "subtitle": "Types, spread & the unprotected list",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "High sensitivity",
+      "query": "sensitivity_mix",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "PII columns",
+      "query": "pii_discoveries",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Encrypted",
+      "query": "encryption_status",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Masked",
+      "query": "masking_status",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "PII types discovered",
+      "query": "pii_discoveries",
+      "chartType": "donut",
+      "bindings": {
+        "category": "pii_type",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "High sensitivity by source",
+      "query": "sensitive_by_source",
+      "chartType": "stackedBar",
+      "bindings": {
+        "category": "source",
+        "value": "count",
+        "series": "level"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Sensitivity mix",
+      "query": "sensitivity_mix",
+      "chartType": "donut",
+      "bindings": {
+        "category": "level",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Assets containing PII",
+      "query": "pii_assets",
+      "span": 2
+    }
+  ]
+}

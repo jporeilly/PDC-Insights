@@ -29,6 +29,11 @@ function Seg({ options, value, onChange }) {
 function ModelCombo({ value, onChange, models }) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
+  // Filter only by what was typed SINCE the menu opened. The field usually
+  // holds a preset (the .env default or the sizing recommendation), and that
+  // name may not be installed — filtering by it hid all 15 installed models
+  // behind "No match" on a fresh install, which read as "can't pick a model".
+  const [typed, setTyped] = useState(false)
   const boxRef = useRef(null)
 
   useEffect(() => {
@@ -39,16 +44,16 @@ function ModelCombo({ value, onChange, models }) {
 
   const q = value.trim().toLowerCase()
   const exact = models.some((m) => m.toLowerCase() === q)
-  const list = (!q || exact) ? models : models.filter((m) => m.toLowerCase().includes(q))
+  const list = (!typed || !q || exact) ? models : models.filter((m) => m.toLowerCase().includes(q))
 
-  const pick = (v) => { onChange(v); setOpen(false); setActive(-1) }
+  const pick = (v) => { onChange(v); setOpen(false); setActive(-1); setTyped(false) }
 
   return (
     <div className="combo" ref={boxRef}>
       <input className="text" value={value} autoComplete="off" placeholder="pick or type a model"
-             onFocus={() => { setActive(-1); setOpen(true) }}
-             onClick={() => { setActive(-1); setOpen(true) }}
-             onChange={(e) => { onChange(e.target.value); setActive(-1); setOpen(true) }}
+             onFocus={() => { setActive(-1); setTyped(false); setOpen(true) }}
+             onClick={() => { setActive(-1); setTyped(false); setOpen(true) }}
+             onChange={(e) => { onChange(e.target.value); setActive(-1); setTyped(true); setOpen(true) }}
              onKeyDown={(e) => {
                if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(a + 1, list.length - 1)) }
                else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)) }
@@ -94,6 +99,7 @@ export default function SettingsPage({ version, brand: brandProp }) {
   const [pdcPass, setPdcPass] = useState('')
   const [pdcPassPh, setPdcPassPh] = useState('set a password')
   const [cacheTtl, setCacheTtl] = useState('300')
+  const [verifyTls, setVerifyTls] = useState('true')
   const [demo, setDemo] = useState('true')
   const [pdcTest, setPdcTest] = useState(null)
   // branding / save
@@ -106,6 +112,7 @@ export default function SettingsPage({ version, brand: brandProp }) {
       const s = await getJSON('/api/settings')
       setPdcUrl(s.pdc.base_url || ''); setPdcUser(s.pdc.username || '')
       setPdcVer(s.pdc.version || 'v3'); setCacheTtl(String(s.pdc.cache_ttl ?? 300))
+      setVerifyTls(String(s.pdc.verify_tls ?? true))
       setPdcPassPh(s.pdc.has_password ? '•••••••••• (unchanged)' : 'set a password')
       setLlmUrl(s.llm.base_url || '')
       if (!touched.current) setModel(s.llm.model || '')
@@ -149,7 +156,8 @@ export default function SettingsPage({ version, brand: brandProp }) {
 
   async function testPDC() {
     setPdcTest({ cls: '', text: 'testing…' })
-    const payload = { base_url: pdcUrl.trim(), version: pdcVer, username: pdcUser.trim() }
+    const payload = { base_url: pdcUrl.trim(), version: pdcVer, username: pdcUser.trim(),
+                      verify_tls: verifyTls === 'true' }
     if (pdcPass) payload.password = pdcPass    // blank ⇒ use the saved one
     try {
       const d = await postJSON('/api/settings/test-pdc', payload)
@@ -194,7 +202,8 @@ export default function SettingsPage({ version, brand: brandProp }) {
     setSaving(true); setSaveRes({ cls: '', text: 'Saving…' })
     const payload = {
       demo: demo === 'true',
-      pdc: { base_url: pdcUrl.trim(), version: pdcVer, username: pdcUser.trim(), cache_ttl: parseInt(cacheTtl, 10) },
+      pdc: { base_url: pdcUrl.trim(), version: pdcVer, username: pdcUser.trim(),
+             cache_ttl: parseInt(cacheTtl, 10), verify_tls: verifyTls === 'true' },
       llm: { provider, base_url: llmUrl.trim(), model: model.trim(), json_mode: jsonMode === 'true' },
     }
     if (pdcPass) payload.pdc.password = pdcPass   // blank ⇒ keep existing
@@ -301,6 +310,14 @@ export default function SettingsPage({ version, brand: brandProp }) {
             </select>
           </div>
           <div className="field" style={{ marginBottom: '.9rem' }}>
+            <label>Verify TLS certificate</label>
+            <select className="text" value={verifyTls} onChange={(e) => setVerifyTls(e.target.value)}>
+              <option value="true">On (recommended)</option>
+              <option value="false">Off — lab / self-signed certificate</option>
+            </select>
+            <span className="hint">A lab PDC usually has a self-signed certificate; Off accepts it. Test connection uses this choice.</span>
+          </div>
+          <div className="field" style={{ marginBottom: '.9rem' }}>
             <label>Data source</label>
             <div><Seg options={[['false', 'Live PDC'], ['true', 'Demo data']]} value={demo} onChange={setDemo} /></div>
             <span className="hint">Live reads from the PDC above; Demo serves the bundled sample.</span>
@@ -341,7 +358,7 @@ export default function SettingsPage({ version, brand: brandProp }) {
           <dl>
             <dt>Version</dt><dd>{version}</dd>
             <dt>Service</dt><dd>{brand?.name || 'Catalog Insights'} — dashboards over the catalog’s REST API</dd>
-            <dt>Backend</dt><dd>Flask API · /api + /health</dd>
+            <dt>Backend</dt><dd>FastAPI · /api + /health</dd>
             <dt>PDC</dt><dd>validated against Pentaho Data Catalog 11.0.0 (public API v3)</dd>
           </dl>
         </section>

@@ -30,6 +30,13 @@ def table(i, title, query, span=4):
     return {"id": f"t{i}", "kind": "table", "title": title, "query": query, "span": span}
 
 
+def text(i, title, query, markdown, span=2):
+    # The schema requires a query on every panel; a text panel names the feed
+    # it annotates so the reference stays valid.
+    return {"id": f"x{i}", "kind": "text", "title": title, "query": query,
+            "markdown": markdown, "span": span}
+
+
 # section -> [dashboards]
 DASHBOARDS = {
  "overview": [
@@ -227,6 +234,178 @@ DASHBOARDS = {
    ]},
  ],
 }
+
+
+# ── the DQ best-practice dimension boards (Quality section) ──────────────────
+# One dashboard per dimension. Each follows the same teaching shape — the
+# dimension's score (gauge + per-source), the OPERATIONAL companion panel that
+# actually moves the dimension, the worst-first fix queue, and a definition —
+# so the Quality section reads as a data-quality practice, not just charts.
+# (dimension, characteristic issue, companion panel, definition markdown)
+DQ_BOARDS = [
+    ("Completeness", "null rate above threshold",
+     chart(3, "Profiling status", "profile_status", "donut",
+           {"category": "status", "value": "count"}),
+     "**Are required values present?** The share of expected values actually "
+     "populated — null and empty rates measured against profiled expectations. "
+     "**How to move it:** widen profile coverage; unprofiled columns hide "
+     "missing values."),
+    ("Accuracy", "value drift vs reference",
+     chart(3, "Quality vs target", "quality_by_source", "bullet",
+           {"category": "source", "value": "score"}, options={"target": 80}),
+     "**Do values reflect the real world?** Drift against governed reference "
+     "data and known-good distributions. **How to move it:** reference-data "
+     "checks against the governed source of truth."),
+    ("Validity", "format/pattern violations",
+     chart(3, "At/above vs below target", "dq_by_source", "stackedBar",
+           {"category": "source", "value": "value", "series": "dimension"}),
+     "**Do values conform to their rules?** Format, pattern, range and "
+     "vocabulary checks. **How to move it:** deploy the governed "
+     "data-identification patterns — invalid rows fail the governed regex."),
+    ("Uniqueness", "duplicate key values",
+     chart(3, "Lowest-scoring tables", "worst_tables", "bar",
+           {"category": "table", "value": "score"}),
+     "**Is each real-world thing recorded once?** Duplicate detection on "
+     "primary and business keys. **How to move it:** key profiling — PK and "
+     "unique expectations induced from the scan."),
+    ("Consistency", "cross-source value mismatch",
+     chart(3, "Quality score distribution", "quality_distribution", "bar",
+           {"category": "bucket", "value": "count"}),
+     "**Does the same fact agree everywhere?** Cross-source comparison of the "
+     "same business fact. **How to move it:** shared business terms — one "
+     "governed definition applied everywhere."),
+    ("Timeliness", "stale since last load",
+     chart(3, "Scan & profile activity", "scan_activity", "line",
+           {"x": "date", "y": "count"}),
+     "**Is the data fresh enough to use?** Age since the last successful load "
+     "or scan against the agreed refresh window. **How to move it:** scan "
+     "scheduling — batch sources age between loads."),
+    ("Traceability", "lineage unverified",
+     chart(3, "Lineage status", "lineage_status", "donut",
+           {"category": "status", "value": "count"}),
+     "**Can you follow the data to its origin?** Verified lineage upstream and "
+     "downstream of each asset. **How to move it:** lineage capture and "
+     "verification per asset — the programme's current weakest dimension."),
+    ("Clarity", "missing description or term",
+     chart(3, "Term coverage by source", "term_coverage", "bar",
+           {"category": "source", "value": "pct"}),
+     "**Can a consumer understand it?** Descriptions, business terms and "
+     "documentation coverage. **How to move it:** glossary coverage — "
+     "undocumented assets read as unclear data."),
+    ("Availability", "asset unreachable at scan",
+     chart(3, "Assets by data source", "assets_by_source", "bar",
+           {"category": "source", "value": "count"}),
+     "**Can consumers actually reach it?** Successful-scan and connection "
+     "health as a proxy for consumability. **How to move it:** connection "
+     "health — failed scans mean consumers cannot rely on the asset."),
+]
+
+for _dim, _issue, _companion, _definition in DQ_BOARDS:
+    _q = f"dq_{_dim.lower()}"
+    DASHBOARDS["quality"].append({
+        "id": _q.replace("_", "-"), "title": _dim, "category": "quality",
+        "subtitle": f"DQ dimension · {_issue}",
+        "panels": [
+            kpi(1, f"{_dim} score", _q),
+            kpi(2, "Mean quality", "quality_by_source"),
+            chart(1, f"{_dim} score", _q, "gauge", {"value": "score"}),
+            chart(2, f"{_dim} by source", _q, "bar",
+                  {"category": "source", "value": "score"}),
+            _companion,
+            text(1, f"What {_dim} measures", _q, _definition),
+            table(1, f"Fix queue — {_issue}", _q),
+        ]})
+
+# ── operational additions across the other sections ──────────────────────────
+DASHBOARDS["overview"].append(
+  {"id": "dq-program", "title": "DQ program", "category": "overview",
+   "subtitle": "The nine dimensions, one page",
+   "panels": [
+     kpi(1, "Mean quality", "quality_by_source"), kpi(2, "Availability", "dq_availability"),
+     kpi(3, "Timeliness", "dq_timeliness"), kpi(4, "Traceability", "dq_traceability"),
+     chart(1, "DQ dimensions", "dq_dimensions", "radar",
+           {"category": "dimension", "value": "value"}),
+     chart(2, "Dimension scores", "dq_dimensions", "bar",
+           {"category": "dimension", "value": "value"}),
+     text(1, "Reading this page", "dq_dimensions",
+          "Each Analytics · Quality dashboard drills one of these dimensions "
+          "with its fix queue and the operational lever that moves it. Start "
+          "with the lowest bar."),
+     table(1, "Weakest dimension — Traceability fix queue", "dq_traceability", span=2),
+   ]})
+
+DASHBOARDS["system"].append(
+  {"id": "source-operations", "title": "Source operations", "category": "system",
+   "subtitle": "Connections, throughput & the fix queue",
+   "panels": [
+     kpi(1, "Data sources", "source_counts"), kpi(2, "Profiled assets", "profile_status"),
+     kpi(3, "Catalog assets", "asset_counts"), kpi(4, "Availability", "dq_availability"),
+     chart(1, "Profiling status", "profile_status", "donut",
+           {"category": "status", "value": "count"}),
+     chart(2, "Assets by data source", "assets_by_source", "bar",
+           {"category": "source", "value": "count"}),
+     chart(3, "Scan & profile activity", "scan_activity", "line",
+           {"x": "date", "y": "count"}, span=4),
+     table(1, "Stale & failed assets", "stale_failed"),
+   ]})
+
+DASHBOARDS["governance"].append(
+  {"id": "trust-deep-dive", "title": "Trust deep-dive", "category": "governance",
+   "subtitle": "The trust spectrum, source by source",
+   "panels": [
+     kpi(1, "Highly trusted", "trust_distribution"), kpi(2, "Term coverage", "term_coverage"),
+     kpi(3, "Lineage verified", "lineage_status"), kpi(4, "Untermed critical", "untermed_critical"),
+     chart(1, "Trust spectrum", "trust_distribution", "bar",
+           {"category": "bucket", "value": "count"}, options={"scoreBands": True}),
+     chart(2, "Trust by source", "trust_by_source", "stackedBar",
+           {"category": "source", "value": "count", "series": "bucket"}),
+     chart(3, "Coverage trend", "coverage_trend", "line", {"x": "week", "y": "pct"}),
+     table(1, "Untermed critical elements", "untermed_critical", span=2),
+   ]})
+
+DASHBOARDS["governance"].append(
+  {"id": "glossary-adoption", "title": "Glossary adoption", "category": "governance",
+   "subtitle": "Terms in use & where they are missing",
+   "panels": [
+     kpi(1, "Glossary coverage", "term_coverage"), kpi(2, "Catalog assets", "asset_counts"),
+     kpi(3, "Clarity", "dq_clarity"), kpi(4, "Lineage verified", "lineage_status"),
+     chart(1, "Top business terms", "top_terms", "donut",
+           {"category": "term", "value": "count"}),
+     chart(2, "Coverage by source", "term_coverage", "bar",
+           {"category": "source", "value": "pct"}),
+     chart(3, "Coverage trend", "coverage_trend", "line", {"x": "week", "y": "pct"}),
+     table(1, "Untermed critical elements", "untermed_critical", span=2),
+   ]})
+
+DASHBOARDS["sensitivity"].append(
+  {"id": "pii-deep-dive", "title": "PII deep-dive", "category": "sensitivity",
+   "subtitle": "Types, spread & the unprotected list",
+   "panels": [
+     kpi(1, "High sensitivity", "sensitivity_mix"), kpi(2, "PII columns", "pii_discoveries"),
+     kpi(3, "Encrypted", "encryption_status"), kpi(4, "Masked", "masking_status"),
+     chart(1, "PII types discovered", "pii_discoveries", "donut",
+           {"category": "pii_type", "value": "count"}),
+     chart(2, "High sensitivity by source", "sensitive_by_source", "stackedBar",
+           {"category": "source", "value": "count", "series": "level"}),
+     chart(3, "Sensitivity mix", "sensitivity_mix", "donut",
+           {"category": "level", "value": "count"}),
+     table(1, "Assets containing PII", "pii_assets", span=2),
+   ]})
+
+DASHBOARDS["user"].append(
+  {"id": "ownership-program", "title": "Ownership program", "category": "user",
+   "subtitle": "Who owns what — and what nobody owns",
+   "panels": [
+     kpi(1, "Assets owned", "owners_coverage"), kpi(2, "Data sources", "source_counts"),
+     kpi(3, "High sensitivity", "sensitivity_mix"), kpi(4, "Catalog assets", "asset_counts"),
+     chart(1, "Owned vs unowned by source", "owners_coverage", "stackedBar",
+           {"category": "source", "value": "count", "series": "status"}),
+     chart(2, "Owner workload", "owner_workload", "bar",
+           {"category": "owner", "value": "count"}),
+     chart(3, "Edits by action", "edit_activity", "donut",
+           {"category": "action", "value": "count"}),
+     table(1, "Unowned high-value assets", "unowned_high_value", span=2),
+   ]})
 
 
 def main():

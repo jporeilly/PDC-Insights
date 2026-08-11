@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "title": "Governance SLA",
+  "category": "governance",
+  "subtitle": "Coverage targets, tracked like SLAs",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Term coverage",
+      "query": "term_coverage",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Policy coverage",
+      "query": "policy_coverage",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Lineage verified",
+      "query": "lineage_status",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Terms in review",
+      "query": "term_status",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Term coverage",
+      "query": "term_coverage",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "pct"
+      },
+      "span": 2,
+      "options": {
+        "target": 75
+      }
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Policy coverage",
+      "query": "policy_coverage",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "pct"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Lineage verified",
+      "query": "lineage_status",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c4",
+      "kind": "chart",
+      "title": "Term coverage vs target",
+      "query": "term_coverage",
+      "chartType": "bullet",
+      "bindings": {
+        "category": "source",
+        "value": "pct"
+      },
+      "span": 2,
+      "options": {
+        "target": 75
+      }
+    }
+  ]
+}

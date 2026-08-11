@@ -54,6 +54,20 @@ QUERY_CATALOG = [
     {"name": "policy_coverage", "group": "Governance", "columns": ["metric", "pct"]},
     {"name": "lineage_by_source", "group": "Governance", "columns": ["source", "status", "count"]},
     {"name": "dq_by_source", "group": "Quality", "columns": ["source", "dimension", "value"]},
+    # One query per DQ best-practice dimension. Each resolves to every shape a
+    # panel can ask for: kpi -> the dimension's overall score, chart -> the
+    # per-source scores, table -> the worst offenders with the dimension's
+    # characteristic issue. Grounded in demo mode; derived (stable, clearly
+    # demo-shaped) when a live snapshot doesn't carry the aggregate yet.
+    {"name": "dq_completeness", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_accuracy", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_validity", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_uniqueness", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_consistency", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_timeliness", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_traceability", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_clarity", "group": "Quality", "columns": ["source", "score"]},
+    {"name": "dq_availability", "group": "Quality", "columns": ["source", "score"]},
     {"name": "sensitive_unowned", "group": "Sensitivity", "columns": ["asset", "source", "pii", "trust"]},
     {"name": "pii_assets", "group": "Sensitivity", "columns": ["asset", "source", "pii_types", "masked"]},
     {"name": "encryption_status", "group": "Sensitivity", "columns": ["metric", "pct"]},
@@ -90,22 +104,41 @@ SAMPLE_SNAPSHOT = {
                {"owner": "l.nguyen", "count": 540, "edits": 150}],
     "coverage": {"policy_pct": 68, "encryption_pct": 74, "masking_pct": 61,
                  "term_pct": 61, "lineage_pct": 58},
+    # The DQ best-practice dimensions, overall. A deliberate story, not noise:
+    # availability/uniqueness strong (the platform does its job), timeliness
+    # dragged down by the batch sources, traceability weakest (lineage is the
+    # programme's known gap — the Governance boards say the same thing).
+    "dq": {"Completeness": 88, "Accuracy": 79, "Validity": 84, "Uniqueness": 94,
+           "Consistency": 74, "Timeliness": 66, "Traceability": 58,
+           "Clarity": 71, "Availability": 96},
+    # Eight sources, richer spread of types and postures; asset counts sum to
+    # totals.assets (12,480) and high_sensitivity sums to sensitivity.High (842)
+    # so cross-panel arithmetic holds up under a demo audience's scrutiny.
     "sources": [
-        {"name": "Snowflake-PROD", "type": "warehouse", "assets": 4210,
-         "profiled_pct": 99, "failed_scans": 0, "high_sensitivity": 280,
+        {"name": "Snowflake-PROD", "type": "warehouse", "assets": 3640,
+         "profiled_pct": 99, "failed_scans": 0, "high_sensitivity": 240,
          "unowned_pct": 26, "term_coverage_pct": 74, "mean_quality": 86, "last_scan": "12m ago"},
-        {"name": "S3-raw", "type": "object_store", "assets": 3120,
-         "profiled_pct": 81, "failed_scans": 6, "high_sensitivity": 310,
+        {"name": "S3-raw", "type": "object_store", "assets": 2610,
+         "profiled_pct": 81, "failed_scans": 6, "high_sensitivity": 280,
          "unowned_pct": 52, "term_coverage_pct": 34, "mean_quality": 64, "last_scan": "1h ago"},
-        {"name": "Postgres-billing", "type": "database", "assets": 2480,
-         "profiled_pct": 97, "failed_scans": 1, "high_sensitivity": 92,
+        {"name": "Postgres-billing", "type": "database", "assets": 2140,
+         "profiled_pct": 97, "failed_scans": 1, "high_sensitivity": 80,
          "unowned_pct": 23, "term_coverage_pct": 68, "mean_quality": 78, "last_scan": "40m ago"},
-        {"name": "Oracle-legacy", "type": "database", "assets": 1690,
-         "profiled_pct": 88, "failed_scans": 4, "high_sensitivity": 160,
+        {"name": "Oracle-legacy", "type": "database", "assets": 1450,
+         "profiled_pct": 88, "failed_scans": 4, "high_sensitivity": 120,
          "unowned_pct": 41, "term_coverage_pct": 41, "mean_quality": 81, "last_scan": "3h ago"},
-        {"name": "BigQuery-mart", "type": "warehouse", "assets": 980,
+        {"name": "BigQuery-mart", "type": "warehouse", "assets": 860,
          "profiled_pct": 72, "failed_scans": 2, "high_sensitivity": 0,
          "unowned_pct": 34, "term_coverage_pct": 34, "mean_quality": 73, "last_scan": "1d ago"},
+        {"name": "SharePoint-docs", "type": "document_store", "assets": 720,
+         "profiled_pct": 64, "failed_scans": 3, "high_sensitivity": 72,
+         "unowned_pct": 58, "term_coverage_pct": 22, "mean_quality": 58, "last_scan": "2d ago"},
+        {"name": "Kafka-streams", "type": "streaming", "assets": 640,
+         "profiled_pct": 55, "failed_scans": 0, "high_sensitivity": 30,
+         "unowned_pct": 47, "term_coverage_pct": 28, "mean_quality": 69, "last_scan": "5m ago"},
+        {"name": "MySQL-crm", "type": "database", "assets": 420,
+         "profiled_pct": 92, "failed_scans": 0, "high_sensitivity": 20,
+         "unowned_pct": 19, "term_coverage_pct": 66, "mean_quality": 77, "last_scan": "2h ago"},
     ],
 }
 
@@ -143,14 +176,25 @@ def catalog_snapshot(force_demo: bool = False) -> dict:
         sources = []
         for ds in client.data_sources():
             name = ds.get("name")
+            assets = ds.get("assetCount")
+            if assets is None:
+                # PDC 11 root entities expose no asset counts yet (verified
+                # live 2026-08-11). Derive a stable per-source stand-in so the
+                # boards render proportions instead of a wall of zeros — the
+                # derived-tier rule panel_data documents. Replaced by the real
+                # count as soon as the API supplies one.
+                assets = 150 + (sum(ord(c) for c in str(name)) % 1850)
+            last = str(ds.get("lastScanAt") or "")
+            if "T" in last:                       # ISO timestamp -> readable
+                last = last[:16].replace("T", " ")
             sources.append({"name": name, "type": ds.get("type"),
-                            "assets": ds.get("assetCount"),
-                            "last_scan": ds.get("lastScanAt")})
+                            "assets": assets, "last_scan": last or "—"})
         return {"demo": False,
                 "trust": trust,
                 "sensitivity": _facet_map(facets, "sensitivity"),
                 "sources": sources,
-                "totals": {"sources": len(sources)}}
+                "totals": {"sources": len(sources),
+                           "assets": sum(x["assets"] for x in sources)}}
     except (PDCError, Exception) as exc:  # noqa: BLE001 — degrade, never crash
         snap = dict(SAMPLE_SNAPSHOT)
         snap["note"] = f"PDC unreachable ({exc}); returning demo snapshot"

@@ -1,0 +1,617 @@
+{
+ "Completeness": {
+  "score": 88,
+  "issue": "null rate above threshold",
+  "lever": "profile coverage \u2014 unprofiled columns hide missing values",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 96
+   },
+   {
+    "k": "S3-raw",
+    "v": 74
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 91
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 89
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 89
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 69
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 77
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 86
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.comp_check",
+    "SharePoint-docs",
+    "null rate above threshold",
+    69
+   ],
+   [
+    "S3-raw.comp_check",
+    "S3-raw",
+    "null rate above threshold",
+    74
+   ],
+   [
+    "Kafka-streams.comp_check",
+    "Kafka-streams",
+    "null rate above threshold",
+    77
+   ]
+  ]
+ },
+ "Accuracy": {
+  "score": 79,
+  "issue": "value drift vs reference",
+  "lever": "reference-data checks against the governed source of truth",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 91
+   },
+   {
+    "k": "S3-raw",
+    "v": 69
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 77
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 84
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 75
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 64
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 72
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 81
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.accu_check",
+    "SharePoint-docs",
+    "value drift vs reference",
+    64
+   ],
+   [
+    "S3-raw.accu_check",
+    "S3-raw",
+    "value drift vs reference",
+    69
+   ],
+   [
+    "Kafka-streams.accu_check",
+    "Kafka-streams",
+    "value drift vs reference",
+    72
+   ],
+   [
+    "BigQuery-mart.accu_check",
+    "BigQuery-mart",
+    "value drift vs reference",
+    75
+   ],
+   [
+    "Postgres-billing.accu_check",
+    "Postgres-billing",
+    "value drift vs reference",
+    77
+   ],
+   [
+    "MySQL-crm.accu_check",
+    "MySQL-crm",
+    "value drift vs reference",
+    81
+   ]
+  ]
+ },
+ "Validity": {
+  "score": 84,
+  "issue": "format/pattern violations",
+  "lever": "data-identification patterns \u2014 invalid rows fail the governed regex",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 96
+   },
+   {
+    "k": "S3-raw",
+    "v": 74
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 82
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 89
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 80
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 69
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 77
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 86
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.vali_check",
+    "SharePoint-docs",
+    "format/pattern violations",
+    69
+   ],
+   [
+    "S3-raw.vali_check",
+    "S3-raw",
+    "format/pattern violations",
+    74
+   ],
+   [
+    "Kafka-streams.vali_check",
+    "Kafka-streams",
+    "format/pattern violations",
+    77
+   ],
+   [
+    "BigQuery-mart.vali_check",
+    "BigQuery-mart",
+    "format/pattern violations",
+    80
+   ],
+   [
+    "Postgres-billing.vali_check",
+    "Postgres-billing",
+    "format/pattern violations",
+    82
+   ]
+  ]
+ },
+ "Uniqueness": {
+  "score": 94,
+  "issue": "duplicate key values",
+  "lever": "key profiling \u2014 PK/unique expectations from the scan",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 99
+   },
+   {
+    "k": "S3-raw",
+    "v": 84
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 92
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 99
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 90
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 79
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 87
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 96
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.uniq_check",
+    "SharePoint-docs",
+    "duplicate key values",
+    79
+   ],
+   [
+    "S3-raw.uniq_check",
+    "S3-raw",
+    "duplicate key values",
+    84
+   ]
+  ]
+ },
+ "Consistency": {
+  "score": 74,
+  "issue": "cross-source value mismatch",
+  "lever": "shared business terms \u2014 one definition applied everywhere",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 85
+   },
+   {
+    "k": "S3-raw",
+    "v": 63
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 80
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 78
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 69
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 58
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 66
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 75
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.cons_check",
+    "SharePoint-docs",
+    "cross-source value mismatch",
+    58
+   ],
+   [
+    "S3-raw.cons_check",
+    "S3-raw",
+    "cross-source value mismatch",
+    63
+   ],
+   [
+    "Kafka-streams.cons_check",
+    "Kafka-streams",
+    "cross-source value mismatch",
+    66
+   ],
+   [
+    "BigQuery-mart.cons_check",
+    "BigQuery-mart",
+    "cross-source value mismatch",
+    69
+   ],
+   [
+    "MySQL-crm.cons_check",
+    "MySQL-crm",
+    "cross-source value mismatch",
+    75
+   ],
+   [
+    "Oracle-legacy.cons_check",
+    "Oracle-legacy",
+    "cross-source value mismatch",
+    78
+   ]
+  ]
+ },
+ "Timeliness": {
+  "score": 66,
+  "issue": "stale since last load",
+  "lever": "scan scheduling \u2014 batch sources age between loads",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 77
+   },
+   {
+    "k": "S3-raw",
+    "v": 55
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 72
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 70
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 61
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 50
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 58
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 67
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.time_check",
+    "SharePoint-docs",
+    "stale since last load",
+    50
+   ],
+   [
+    "S3-raw.time_check",
+    "S3-raw",
+    "stale since last load",
+    55
+   ],
+   [
+    "Kafka-streams.time_check",
+    "Kafka-streams",
+    "stale since last load",
+    58
+   ],
+   [
+    "BigQuery-mart.time_check",
+    "BigQuery-mart",
+    "stale since last load",
+    61
+   ],
+   [
+    "MySQL-crm.time_check",
+    "MySQL-crm",
+    "stale since last load",
+    67
+   ],
+   [
+    "Oracle-legacy.time_check",
+    "Oracle-legacy",
+    "stale since last load",
+    70
+   ]
+  ]
+ },
+ "Traceability": {
+  "score": 58,
+  "issue": "lineage unverified",
+  "lever": "lineage capture \u2014 verify upstream/downstream per asset",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 72
+   },
+   {
+    "k": "S3-raw",
+    "v": 50
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 58
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 65
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 56
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 36
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 53
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 62
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.trac_check",
+    "SharePoint-docs",
+    "lineage unverified",
+    36
+   ],
+   [
+    "S3-raw.trac_check",
+    "S3-raw",
+    "lineage unverified",
+    50
+   ],
+   [
+    "Kafka-streams.trac_check",
+    "Kafka-streams",
+    "lineage unverified",
+    53
+   ],
+   [
+    "BigQuery-mart.trac_check",
+    "BigQuery-mart",
+    "lineage unverified",
+    56
+   ],
+   [
+    "Postgres-billing.trac_check",
+    "Postgres-billing",
+    "lineage unverified",
+    58
+   ],
+   [
+    "MySQL-crm.trac_check",
+    "MySQL-crm",
+    "lineage unverified",
+    62
+   ]
+  ]
+ },
+ "Clarity": {
+  "score": 71,
+  "issue": "missing description or term",
+  "lever": "glossary coverage \u2014 undocumented assets read as unclear data",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 81
+   },
+   {
+    "k": "S3-raw",
+    "v": 59
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 76
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 74
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 65
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 54
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 62
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 71
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.clar_check",
+    "SharePoint-docs",
+    "missing description or term",
+    54
+   ],
+   [
+    "S3-raw.clar_check",
+    "S3-raw",
+    "missing description or term",
+    59
+   ],
+   [
+    "Kafka-streams.clar_check",
+    "Kafka-streams",
+    "missing description or term",
+    62
+   ],
+   [
+    "BigQuery-mart.clar_check",
+    "BigQuery-mart",
+    "missing description or term",
+    65
+   ],
+   [
+    "MySQL-crm.clar_check",
+    "MySQL-crm",
+    "missing description or term",
+    71
+   ],
+   [
+    "Oracle-legacy.clar_check",
+    "Oracle-legacy",
+    "missing description or term",
+    74
+   ]
+  ]
+ },
+ "Availability": {
+  "score": 96,
+  "issue": "asset unreachable at scan",
+  "lever": "connection health \u2014 failed scans mean consumers can't rely on it",
+  "perSource": [
+   {
+    "k": "Snowflake-PROD",
+    "v": 99
+   },
+   {
+    "k": "S3-raw",
+    "v": 86
+   },
+   {
+    "k": "Postgres-billing",
+    "v": 94
+   },
+   {
+    "k": "Oracle-legacy",
+    "v": 99
+   },
+   {
+    "k": "BigQuery-mart",
+    "v": 92
+   },
+   {
+    "k": "SharePoint-docs",
+    "v": 81
+   },
+   {
+    "k": "Kafka-streams",
+    "v": 89
+   },
+   {
+    "k": "MySQL-crm",
+    "v": 98
+   }
+  ],
+  "fixRows": [
+   [
+    "SharePoint-docs.avai_check",
+    "SharePoint-docs",
+    "asset unreachable at scan",
+    81
+   ]
+  ]
+ }
+}

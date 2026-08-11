@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "title": "Source inventory",
+  "category": "system",
+  "subtitle": "What is connected & how much",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Connected sources",
+      "query": "source_counts",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Total assets",
+      "query": "asset_counts",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Tables",
+      "query": "asset_counts",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Files",
+      "query": "asset_counts",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Assets by data source",
+      "query": "assets_by_source",
+      "chartType": "bar",
+      "bindings": {
+        "category": "source",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Assets by type",
+      "query": "assets_by_type",
+      "chartType": "donut",
+      "bindings": {
+        "category": "type",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Sources",
+      "query": "source_inventory",
+      "span": 4
+    }
+  ]
+}

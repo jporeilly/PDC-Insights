@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "title": "Executive scorecard",
+  "category": "overview",
+  "subtitle": "Targets & posture on one page",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Catalog assets",
+      "query": "asset_counts",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Term coverage",
+      "query": "term_coverage",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Lineage verified",
+      "query": "lineage_status",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Quality vs target",
+      "query": "quality_by_source",
+      "chartType": "bullet",
+      "bindings": {
+        "category": "source",
+        "value": "score"
+      },
+      "span": 2,
+      "options": {
+        "target": 80
+      }
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "DQ dimensions",
+      "query": "dq_dimensions",
+      "chartType": "radar",
+      "bindings": {
+        "category": "dimension",
+        "value": "value"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Term coverage",
+      "query": "term_coverage",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "pct"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Watchlist",
+      "query": "risk_assets",
+      "span": 2
+    }
+  ]
+}

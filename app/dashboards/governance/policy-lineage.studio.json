@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "title": "Policy & lineage",
+  "category": "governance",
+  "subtitle": "Policy posture & lineage health",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Lineage verified",
+      "query": "lineage_status",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Policies applied",
+      "query": "policy_counts",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Assets in policy",
+      "query": "policy_coverage",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Unverified lineage",
+      "query": "lineage_status",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Lineage verified",
+      "query": "lineage_status",
+      "chartType": "donut",
+      "bindings": {
+        "category": "status",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Assets per policy",
+      "query": "policy_counts",
+      "chartType": "bar",
+      "bindings": {
+        "category": "policy",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Lineage coverage by source",
+      "query": "lineage_by_source",
+      "chartType": "stackedBar",
+      "bindings": {
+        "category": "source",
+        "value": "count",
+        "series": "status"
+      },
+      "span": 4
+    }
+  ]
+}

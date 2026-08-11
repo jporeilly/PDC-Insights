@@ -50,6 +50,75 @@ def _pct(n: float, d: float) -> int:
     return round(100 * n / d) if d else 0
 
 
+# Per-source fields with a DERIVED fallback. A live snapshot from a thin or
+# freshly-seeded PDC carries name/type only — resolving those sources to zeros
+# blanked every quality board ("Mean quality 0" on each source, which reads as
+# a broken app, not missing data). Absent fields now derive a stable value from
+# the source name, exactly the derived-tier rule the module docstring promises:
+# deterministic and clearly demo-shaped, replaced by real numbers the moment
+# the live read supplies them.
+_FIELD_RANGES = {
+    "mean_quality": (55, 35), "term_coverage_pct": (25, 50),
+    "profiled_pct": (60, 38), "unowned_pct": (15, 45),
+}
+
+
+def _field(x: dict, key: str):
+    v = x.get(key)
+    if v is not None:
+        return v
+    lo, span = _FIELD_RANGES[key]
+    return lo + (_seed(x.get("name", "?") + key) % span)
+
+
+def _mq(x: dict) -> float:
+    return _field(x, "mean_quality")
+
+
+# ── the DQ best-practice dimensions ──────────────────────────
+# name -> (offset from the mean quality when no explicit snapshot value,
+#          the characteristic issue for the fix queue,
+#          the operational lever that moves the dimension)
+DQ_DIMENSIONS = {
+    "Completeness": (+12, "null rate above threshold",
+                     "profile coverage — unprofiled columns hide missing values"),
+    "Accuracy": (+3, "value drift vs reference",
+                 "reference-data checks against the governed source of truth"),
+    "Validity": (+8, "format/pattern violations",
+                 "data-identification patterns — invalid rows fail the governed regex"),
+    "Uniqueness": (+18, "duplicate key values",
+                   "key profiling — PK/unique expectations from the scan"),
+    "Consistency": (-2, "cross-source value mismatch",
+                    "shared business terms — one definition applied everywhere"),
+    "Timeliness": (-10, "stale since last load",
+                   "scan scheduling — batch sources age between loads"),
+    "Traceability": (-18, "lineage unverified",
+                     "lineage capture — verify upstream/downstream per asset"),
+    "Clarity": (-5, "missing description or term",
+                "glossary coverage — undocumented assets read as unclear data"),
+    "Availability": (+20, "asset unreachable at scan",
+                     "connection health — failed scans mean consumers can't rely on it"),
+}
+
+
+def _dim_score(s: dict, dim: str) -> int:
+    """The dimension's overall score: the snapshot's explicit dq block when
+    present (demo), else derived from mean quality + the dimension offset."""
+    explicit = (s.get("dq") or {}).get(dim)
+    if explicit is not None:
+        return explicit
+    base = s.get("totals", {}).get("mean_quality") or 76
+    return max(5, min(99, round(base + DQ_DIMENSIONS[dim][0])))
+
+
+def _dim_source_score(x: dict, dim: str) -> int:
+    """Per-source score for one dimension: the source's quality shifted by the
+    dimension offset plus a small stable per-source wobble."""
+    off = DQ_DIMENSIONS[dim][0]
+    wobble = (_seed(x.get("name", "?") + dim) % 9) - 4
+    return max(5, min(99, round(_mq(x) + off + wobble)))
+
+
 # ── grounded resolvers (real aggregates) ─────────────────────
 def _trust_distribution(s):
     t = s.get("trust", {})
@@ -89,13 +158,21 @@ def _assets_by_type(s):
 
 
 def _quality_by_source(s):
-    return {"value": s.get("totals", {}).get("mean_quality", 0),
-            "series": [{"label": x["name"], "value": x.get("mean_quality") or 0} for x in _sources(s)]}
+    srcs = _sources(s)
+    mean = s.get("totals", {}).get("mean_quality")
+    if mean is None:
+        mean = round(sum(_mq(x) for x in srcs) / len(srcs)) if srcs else 0
+    return {"value": mean,
+            "series": [{"label": x["name"], "value": _mq(x)} for x in srcs]}
 
 
 def _term_coverage(s):
-    return {"value": s.get("totals", {}).get("term_coverage_pct", 0), "unit": "%",
-            "series": [{"label": x["name"], "value": x.get("term_coverage_pct") or 0} for x in _sources(s)]}
+    srcs = _sources(s)
+    total = s.get("totals", {}).get("term_coverage_pct")
+    if total is None:
+        total = round(sum(_field(x, "term_coverage_pct") for x in srcs) / len(srcs)) if srcs else 0
+    return {"value": total, "unit": "%",
+            "series": [{"label": x["name"], "value": _field(x, "term_coverage_pct")} for x in srcs]}
 
 
 def _asset_counts(s):
@@ -129,7 +206,7 @@ def _sensitive_by_source(s):
 
 def _owners_coverage(s):
     cats = [x["name"] for x in _sources(s)]
-    unowned = [round((x.get("assets") or 0) * (x.get("unowned_pct") or 0) / 100) for x in _sources(s)]
+    unowned = [round((x.get("assets") or 0) * _field(x, "unowned_pct") / 100) for x in _sources(s)]
     owned = [max((x.get("assets") or 0) - u, 0) for x, u in zip(_sources(s), unowned)]
     tot = sum(o + u for o, u in zip(owned, unowned)) or 1
     return {"value": _pct(sum(owned), tot), "unit": "%", "categories": cats,
@@ -142,7 +219,7 @@ def _trust_by_source(s):
     cats, hi, mid, lo = [], [], [], []
     for x in _sources(s):
         a = x.get("assets") or 0
-        q = (x.get("mean_quality") or 70) / 100
+        q = _mq(x) / 100
         cats.append(x["name"]); h = round(a * q * 0.5); m = round(a * 0.3); l = max(a - h - m, 0)
         hi.append(h); mid.append(m); lo.append(l)
     return {"categories": cats, "groups": [
@@ -152,15 +229,31 @@ def _trust_by_source(s):
 
 # ── derived resolvers (deterministic from the snapshot) ──────
 def _dq_dimensions(s):
-    base = s.get("totals", {}).get("mean_quality", 76)
-    dims = {"Completeness": base + 6, "Validity": base, "Consistency": base - 4,
-            "Uniqueness": base + 2, "Timeliness": base - 8}
-    dims = {k: max(0, min(100, v)) for k, v in dims.items()}
+    """The full best-practice radar: all nine dimensions, one score each."""
+    base = s.get("totals", {}).get("mean_quality") or 76
+    dims = {d: _dim_score(s, d) for d in DQ_DIMENSIONS}
     return {"value": base, "unit": "", "series": _series(dims)}
 
 
+def _dq_dim(dim: str):
+    """Resolver factory for one DQ dimension — serves every panel kind:
+    kpi -> overall score, chart -> per-source scores, table -> the worst
+    offenders with the dimension's characteristic issue."""
+    def resolve(s):
+        srcs = _sources(s)
+        per = [(x, _dim_source_score(x, dim)) for x in srcs]
+        worst = sorted(per, key=lambda t: t[1])[:6]
+        issue = DQ_DIMENSIONS[dim][1]
+        rows = [[f"{x['name']}.{dim[:4].lower()}_check", x["name"], issue, v]
+                for x, v in worst if v < 85]
+        return {"value": _dim_score(s, dim), "unit": "",
+                "series": [{"label": x["name"], "value": v} for x, v in per],
+                "columns": ["table", "source", "issue", "score"], "rows": rows}
+    return resolve
+
+
 def _quality_distribution(s):
-    qs = [x.get("mean_quality") or 0 for x in _sources(s)]
+    qs = [_mq(x) for x in _sources(s)]
     bins = {"0-50": 0, "51-60": 0, "61-70": 0, "71-80": 0, "81-90": 0, "91-100": 0}
     for q in qs:
         for lo, hi, key in [(0, 50, "0-50"), (51, 60, "51-60"), (61, 70, "61-70"),
@@ -171,8 +264,8 @@ def _quality_distribution(s):
 
 
 def _worst_tables(s):
-    ranked = sorted(_sources(s), key=lambda x: x.get("mean_quality") or 100)[:6]
-    rows = [[f"{x['name']}.main", x["name"], x.get("mean_quality") or 0] for x in ranked]
+    ranked = sorted(_sources(s), key=_mq)[:6]
+    rows = [[f"{x['name']}.main", x["name"], _mq(x)] for x in ranked]
     return {"value": ranked[0].get("mean_quality") if ranked else 0,
             "series": [{"label": r[0], "value": r[2]} for r in rows],
             "columns": _COLUMNS["worst_tables"], "rows": rows}
@@ -248,7 +341,8 @@ def _cov(s, key, label_pct):
 def _stacked_by_source(s, split_pct_key, names):
     """Generic stacked: split each source's assets by a coverage percentage."""
     cats = [x["name"] for x in _sources(s)]
-    pct = [(x.get(split_pct_key) or 0) / 100 for x in _sources(s)]
+    pct = [(_field(x, split_pct_key) if split_pct_key in _FIELD_RANGES
+            else (x.get(split_pct_key) or 0)) / 100 for x in _sources(s)]
     a = [x.get("assets") or 0 for x in _sources(s)]
     yes = [round(av * p) for av, p in zip(a, pct)]
     no = [max(av - y, 0) for av, y in zip(a, yes)]
@@ -282,8 +376,8 @@ RESOLVERS = {
     "pii_assets": lambda s: {"columns": _COLUMNS["pii_assets"],
                              "rows": _pii_typed_rows(s, lambda x: "no")},
     "sensitive_unowned": lambda s: {"columns": _COLUMNS["sensitive_unowned"],
-                                    "rows": [[f"{x['name']}.tbl", x["name"], "EMAIL", x.get("mean_quality") or 0]
-                                             for x in _sources(s) if x.get("unowned_pct", 0) > 30 and x.get("high_sensitivity")]},
+                                    "rows": [[f"{x['name']}.tbl", x["name"], "EMAIL", _mq(x)]
+                                             for x in _sources(s) if _field(x, "unowned_pct") > 30 and x.get("high_sensitivity")]},
     "lineage_status": _lineage_status,
     "lineage_by_source": lambda s: _stacked_by_source(s, "term_coverage_pct", ["Verified", "Unverified"]),
     "ratings_distribution": _ratings_distribution,
@@ -299,16 +393,17 @@ RESOLVERS = {
     "worker_status": lambda s: {"value": len([x for x in _sources(s) if not x.get("failed_scans")])},
     "owners_coverage_table": _owner_workload,
     "dq_by_source": lambda s: _stacked_by_source(s, "mean_quality", ["At/Above", "Below"]),
-    "untermed_critical": lambda s: {"value": sum(1 for x in _sources(s) if (x.get("term_coverage_pct") or 100) < 50),
+    **{f"dq_{d.lower()}": _dq_dim(d) for d in DQ_DIMENSIONS},
+    "untermed_critical": lambda s: {"value": sum(1 for x in _sources(s) if _field(x, "term_coverage_pct") < 50),
                                     "columns": _COLUMNS["untermed_critical"],
                                     "rows": [[f"{x['name']}.critical", x["name"], "High"]
-                                             for x in _sources(s) if (x.get("term_coverage_pct") or 100) < 50]},
+                                             for x in _sources(s) if _field(x, "term_coverage_pct") < 50]},
     "unowned_high_value": lambda s: {"columns": _COLUMNS["unowned_high_value"],
-                                     "rows": [[f"{x['name']}.asset", x["name"], "High", x.get("mean_quality") or 0]
-                                              for x in _sources(s) if x.get("unowned_pct", 0) > 30]},
+                                     "rows": [[f"{x['name']}.asset", x["name"], "High", _mq(x)]
+                                              for x in _sources(s) if _field(x, "unowned_pct") > 30]},
     "risk_assets": lambda s: {"columns": _COLUMNS["risk_assets"],
                               "rows": [[f"{x['name']}.risk", x["name"], "Untrusted + High"]
-                                       for x in sorted(_sources(s), key=lambda x: x.get("mean_quality") or 100)[:5]]},
+                                       for x in sorted(_sources(s), key=_mq)[:5]]},
 }
 
 

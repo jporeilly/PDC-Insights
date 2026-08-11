@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "title": "Contribution pulse",
+  "category": "user",
+  "subtitle": "Daily edits & ownership momentum",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Edits total",
+      "query": "edit_activity",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Avg rating",
+      "query": "ratings_distribution",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Assets owned",
+      "query": "owners_coverage",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Modified 7d",
+      "query": "recently_modified",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Edit activity",
+      "query": "recently_modified",
+      "chartType": "calendarHeatmap",
+      "bindings": {
+        "x": "date",
+        "value": "count"
+      },
+      "span": 4
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Edits by action",
+      "query": "edit_activity",
+      "chartType": "donut",
+      "bindings": {
+        "category": "action",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Assets owned",
+      "query": "owners_coverage",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "count"
+      },
+      "span": 2
+    }
+  ]
+}

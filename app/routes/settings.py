@@ -77,11 +77,19 @@ async def test_pdc(request: Request,
     if not (username and password):
         return {"ok": False, "error": "Username and password are required."}
 
+    # The request's TLS choice wins over the saved one: the Settings page tests
+    # BEFORE saving, and a lab PDC with a self-signed certificate was untestable
+    # while this ignored the form's toggle — the error told people to edit .env
+    # by hand instead.
+    verify = body.get("verify_tls")
+    if verify is None:
+        verify = settings.pdc.verify_tls
+
     # Throwaway client built from the submitted values; no fixed bearer so it
     # genuinely authenticates with the credentials under test.
     probe_cfg = PDCConfig(
         base_url=base, version=version, username=username, password=password,
-        bearer_token="", verify_tls=settings.pdc.verify_tls,
+        bearer_token="", verify_tls=bool(verify),
         auth_method=body.get("auth_method") or settings.pdc.auth_method,
         kc_realm=body.get("kc_realm") or settings.pdc.kc_realm,
         kc_client=body.get("kc_client") or settings.pdc.kc_client,
@@ -94,7 +102,8 @@ async def test_pdc(request: Request,
         token = probe.token()
     except requests.exceptions.SSLError:
         return {"ok": False,
-                "error": "TLS/SSL error — certificate not trusted. (Self-signed? set PDC_VERIFY_TLS=false in .env.)"}
+                "error": "TLS/SSL error — certificate not trusted. Self-signed lab cert? "
+                         "Set 'Verify TLS certificate' to Off above and test again."}
     except requests.exceptions.ConnectTimeout:
         return {"ok": False, "error": f"Timed out connecting to {base} — host/port reachable?"}
     except requests.exceptions.ConnectionError:

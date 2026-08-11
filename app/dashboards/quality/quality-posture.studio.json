@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Quality posture",
+  "category": "quality",
+  "subtitle": "The mean, the bands & the fix list",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Mean quality",
+      "query": "quality_by_source",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Lowest score",
+      "query": "worst_tables",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Completeness",
+      "query": "dq_dimensions",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Profiled assets",
+      "query": "profile_status",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Mean quality score",
+      "query": "quality_by_source",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "score"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Score bands",
+      "query": "quality_distribution",
+      "chartType": "donut",
+      "bindings": {
+        "category": "bucket",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "Fix list",
+      "query": "worst_tables",
+      "span": 4
+    }
+  ]
+}

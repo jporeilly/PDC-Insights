@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "title": "Activity & ratings",
+  "category": "user",
+  "subtitle": "Edits, ratings & freshness",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Edits this week",
+      "query": "edit_activity",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Avg rating",
+      "query": "ratings_distribution",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "Assets rated",
+      "query": "ratings_distribution",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "Modified 7d",
+      "query": "recently_modified",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Ratings distribution",
+      "query": "ratings_distribution",
+      "chartType": "bar",
+      "bindings": {
+        "category": "rating",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Recently modified",
+      "query": "recently_modified",
+      "chartType": "line",
+      "bindings": {
+        "x": "date",
+        "y": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c3",
+      "kind": "chart",
+      "title": "Edits by action",
+      "query": "edit_activity",
+      "chartType": "bar",
+      "bindings": {
+        "category": "action",
+        "value": "count"
+      },
+      "span": 2
+    },
+    {
+      "id": "c4",
+      "kind": "chart",
+      "title": "Most active stewards",
+      "query": "owner_workload",
+      "chartType": "bar",
+      "bindings": {
+        "category": "owner",
+        "value": "edits"
+      },
+      "span": 2
+    }
+  ]
+}

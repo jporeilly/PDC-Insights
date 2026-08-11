@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "title": "Protection controls",
+  "category": "sensitivity",
+  "subtitle": "Encryption & masking posture",
+  "panels": [
+    {
+      "id": "k1",
+      "kind": "kpi",
+      "title": "Encrypted",
+      "query": "encryption_status",
+      "span": 1
+    },
+    {
+      "id": "k2",
+      "kind": "kpi",
+      "title": "Masked",
+      "query": "masking_status",
+      "span": 1
+    },
+    {
+      "id": "k3",
+      "kind": "kpi",
+      "title": "High sensitivity",
+      "query": "sensitivity_mix",
+      "span": 1
+    },
+    {
+      "id": "k4",
+      "kind": "kpi",
+      "title": "PII columns",
+      "query": "pii_discoveries",
+      "span": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chart",
+      "title": "Encryption coverage",
+      "query": "encryption_status",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "pct"
+      },
+      "span": 2
+    },
+    {
+      "id": "c2",
+      "kind": "chart",
+      "title": "Masking coverage",
+      "query": "masking_status",
+      "chartType": "gauge",
+      "bindings": {
+        "value": "pct"
+      },
+      "span": 2
+    },
+    {
+      "id": "t1",
+      "kind": "table",
+      "title": "PII protection status",
+      "query": "pii_assets",
+      "span": 4
+    }
+  ]
+}
