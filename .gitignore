@@ -16,5 +16,10 @@ desktop/src-tauri/vendor/
 desktop/src-tauri/target/
 desktop/src-tauri/gen/
 
+# collected build artifacts (installers copied here by desktop's collect
+# script for one short path) - 32MB binaries never belong in git.
+# Anchored: desktop/dist (the splash) and frontend/dist have their own rules.
+/dist/
+
 # per-user state when INSIGHTS_STATE_DIR points into the checkout
 audit.log
