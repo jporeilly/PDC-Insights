@@ -2347,7 +2347,7 @@ dependencies = [
 
 [[package]]
 name = "pdc-insights-desktop"
-version = "1.18.0"
+version = "1.18.1"
 dependencies = [
  "serde",
  "serde_json",

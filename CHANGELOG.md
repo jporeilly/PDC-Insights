@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.18.1 (2026-08-19) — the swirl retires: Pentaho, capital P, white on black
+
+The approved 2026 rebrand, ported from the Glossary Generator (1.38.28) so the
+whole suite matches. Branding verified against the live pentaho.com and
+user-approved from rendered previews:
+
+- **App icon**: black tile, white capital P, short brand-red accent bar, the
+  teal bar-chart badge kept (a word is mush at 24 px; the badge is what tells
+  the suite's taskbar pins apart). Full Tauri icon set regenerated.
+- **Installer art**: NSIS header and welcome sidebar go black — white
+  "Pentaho" wordmark, red accent bar, the P-tile with the chart badge on the
+  sidebar.
+- **Splash**: black field with a faint red floor-glow, white Pentaho wordmark
+  over "Catalog Insights", and the animated red bar inherits the swirl's
+  alive-signal job — draws in on launch, breathes faster while more startup
+  checks remain.
+
 ## 1.18.0 (2026-08-11) — editable Branding, installer parity with the Glossary, clean uninstall
 
 - **Branding is editable on the Settings page.** Product name, Catalog label
