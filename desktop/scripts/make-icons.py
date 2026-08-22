@@ -1,14 +1,16 @@
 # Pentaho-branded icon + NSIS installer art.
 #
-# Default run (no args): the stock set - red app icon master
-# (icon-source.png) plus red NSIS header/sidebar bitmaps.
+# Default run (no args): the stock set - the app icon master
+# (icon-source.png) as a BLACK tile carrying a white capital P, plus black
+# NSIS header/sidebar bitmaps with a red accent. The swirl was retired in
+# 1.18.1: the mark is the WORD Pentaho, white on black.
 #
-# Course-seeded installer builds recolor the NSIS art per course:
+# Course-seeded installer builds recolor that accent per course:
 #   python scripts/make-icons.py --nsis-only \
 #       --accent "#16a34a" --title "Pentaho Analyst - BA Practitioner"
-# (--nsis-only leaves the app icon untouched; the swirl/wordmark masks
-# in src-tauri/icons/brand/ come from the classic Pentaho logo with
-# the Hitachi tagline stripped.)
+# (--nsis-only leaves the app icon untouched. The wordmark mask in
+# src-tauri/icons/brand/ carries the Pentaho word alone - no swirl, no
+# Hitachi tagline.)
 #
 # After changing the app icon master, regenerate the full set with:
 #   npx @tauri-apps/cli icon src-tauri/icons/icon-source.png
