@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.18.2 (2026-08-22) - fields say which connection they belong to
+
+The PDC settings card's fields were labelled Base URL / Username / Password
+with nothing saying WHOSE. These apps are generic and their forms distinguish
+the KIND of connection (PDC catalog login vs Keycloak console admin), never a
+specific account: the labels now read PDC Base URL / PDC Username / PDC
+Password, matching the suite. Also carries the 1.18.1 finish-up: version
+stamps agree everywhere (VERSION is what the app SERVES), the dead swirl
+assets are gone, and the app's first test suite pins both.
+
 ## 1.18.1 (2026-08-19) — the swirl retires: Pentaho, capital P, white on black
 
 The approved 2026 rebrand, ported from the Glossary Generator (1.38.28) so the

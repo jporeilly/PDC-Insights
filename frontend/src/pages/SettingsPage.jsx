@@ -295,7 +295,7 @@ export default function SettingsPage({ version, brand: brandProp, onBrandSaved }
           <h2>PDC connection</h2>
           <p className="desc">The {brand?.product || 'Pentaho Data Catalog'} instance to report on. Reads only — no writes are made to the catalog.</p>
           <div className="field" style={{ marginBottom: '.9rem' }}>
-            <label>Base URL</label>
+            <label>PDC Base URL</label>
             <input className="text" value={pdcUrl} placeholder="https://your-pdc-host"
                    onChange={(e) => setPdcUrl(e.target.value)} />
           </div>
@@ -306,11 +306,11 @@ export default function SettingsPage({ version, brand: brandProp, onBrandSaved }
             </select>
           </div>
           <div className="field" style={{ marginBottom: '.9rem' }}>
-            <label>Username</label>
+            <label>PDC Username</label>
             <input className="text" value={pdcUser} onChange={(e) => setPdcUser(e.target.value)} />
           </div>
           <div className="field" style={{ marginBottom: '.9rem' }}>
-            <label>Password</label>
+            <label>PDC Password</label>
             <input className="text" type="password" value={pdcPass} placeholder={pdcPassPh}
                    onChange={(e) => setPdcPass(e.target.value)} />
           </div>
