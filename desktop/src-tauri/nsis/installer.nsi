@@ -656,6 +656,82 @@ Section "-WebView2"
   ${EndIf}
 SectionEnd
 
+; ---------------------------------------------------------------------------
+; DETERMINATE delete-phase progress (spec backlog 12, refined W20; ported
+; from the Glossary Generator's template - keep in sync). NSIS weights its
+; gauge almost entirely by extraction bytes, so removing the old vendored
+; Python tree (thousands of files, most of an upgrade's wall time) leaves
+; the bar parked near 0% and the install reads as a hang. The marquee was
+; the first fix; the field verdict on it (2026-08-24): "cant the progress
+; bar just show the progress of the deletion instead of pulsing across,
+; same as install progress." So: the bulk of the tree (site-packages, one
+; directory per package) deletes ONE CHILD PER INSTRUCTION while this macro
+; drives the bar itself - count the children, take the bar over (range
+; 0..count), step it per deletion, hand it back (range 0..30000, NSIS's own
+; scale) when done. NSIS's own updates during the phase are ~1 unit per
+; instruction on the 30000 scale - they round to no message at all, so the
+; takeover holds. Degrades harmlessly: if the control lookup fails the
+; deletes still run, just without the bar. Per-file "Delete file:" lines
+; are the caller's job to silence (SetDetailsPrint textonly) - the status
+; line above the bar counts instead.
+!define /ifndef PBM_SETPOS     0x0402
+!define /ifndef PBM_SETRANGE32 0x0406
+
+!macro StepDeleteChildren DIR WHAT
+  Push $R4
+  Push $R5
+  Push $R6
+  Push $R7
+  Push $R9
+  FindWindow $R9 "#32770" "" $HWNDPARENT
+  GetDlgItem $R9 $R9 0x3EC              ; 1004 = the InstFiles progress bar
+  ; pass 1: count the children so the bar has an honest denominator
+  StrCpy $R6 0
+  FindFirst $R4 $R5 "${DIR}\*"
+  ${DoUntil} $R5 == ""
+    ${If} $R5 != "."
+    ${AndIf} $R5 != ".."
+      IntOp $R6 $R6 + 1
+    ${EndIf}
+    FindNext $R4 $R5
+  ${LoopUntil} $R5 == ""
+  FindClose $R4
+  ${If} $R6 > 0
+    ${If} $R9 <> 0
+      SendMessage $R9 ${PBM_SETRANGE32} 0 $R6
+      SendMessage $R9 ${PBM_SETPOS} 0 0
+    ${EndIf}
+    ; pass 2: delete child by child, stepping the bar and the status line
+    StrCpy $R7 0
+    FindFirst $R4 $R5 "${DIR}\*"
+    ${DoUntil} $R5 == ""
+      ${If} $R5 != "."
+      ${AndIf} $R5 != ".."
+        ${If} ${FileExists} "${DIR}\$R5\*.*"
+          RMDir /r "${DIR}\$R5"
+        ${Else}
+          Delete "${DIR}\$R5"
+        ${EndIf}
+        IntOp $R7 $R7 + 1
+        ${If} $R9 <> 0
+          SendMessage $R9 ${PBM_SETPOS} $R7 0
+        ${EndIf}
+        DetailPrint "${WHAT} ($R7 of $R6)..."
+      ${EndIf}
+      FindNext $R4 $R5
+    ${LoopUntil} $R5 == ""
+    FindClose $R4
+    ${If} $R9 <> 0
+      SendMessage $R9 ${PBM_SETRANGE32} 0 30000   ; hand the bar back to NSIS
+    ${EndIf}
+  ${EndIf}
+  Pop $R9
+  Pop $R7
+  Pop $R6
+  Pop $R5
+  Pop $R4
+!macroend
+
 Section "-Install"
   SectionIn 1 2 RO
   SetOutPath $INSTDIR
@@ -671,12 +747,17 @@ Section "-Install"
   ; adds and overwrites, so a dependency dropped between releases would linger
   ; and keep being importable. Left in place would make "what shipped" and
   ; "what is installed" quietly different.
+  ; The bar shows real deletion progress (one step per old package) and the
+  ; per-file "Delete file:" torrent stays out of the details list - the log
+  ; records the phase in one line, the status line counts the steps (W20).
+  DetailPrint "Removing the previous version's files..."
+  SetDetailsPrint textonly
+  !insertmacro StepDeleteChildren "$INSTDIR\python\Lib\site-packages" "Removing the previous version's files"
   RMDir /r "$INSTDIR\python"
 
   ; Status line only for the extraction: the progress text at the top keeps
   ; moving, but 12,000 "Extract: ..." lines stay out of the log, which exists to
   ; show what the install DID, not every file it wrote.
-  SetDetailsPrint textonly
   DetailPrint "Installing application files (bundled Python and drivers)..."
 
   ; Copy main executable
@@ -884,6 +965,14 @@ Section Uninstall
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
 
   DetailPrint "Removing ${PRODUCTNAME} from $INSTDIR"
+  ; the whole uninstall is deletes - weightless in NSIS's gauge - but
+  ; uninstall progress weighs every INSTRUCTION equally, so the native bar
+  ; already moves honestly across the per-file torrent below. No marquee and
+  ; no stepped takeover here (field-caught: the marquee "whizzes across";
+  ; and a takeover would sweep near-empty folders in a blink, because the
+  ; per-file deletes have emptied most of the tree first). Just silence the
+  ; per-file lines.
+  SetDetailsPrint textonly
 
   ; Delete the app directory and its content from disk
   ; Copy main executable
@@ -922,17 +1011,19 @@ Section Uninstall
   RMDir /REBOOTOK "$INSTDIR\\{{this}}"
   {{/each}}
 
-  ; Belt and braces on the two vendored trees. The per-file deletes above
-  ; remove exactly what the installer SHIPPED - but Python compiles bytecode
-  ; caches at runtime and pip tooling leaves other debris, and any such file
-  ; keeps its directory (and therefore $INSTDIR) behind after uninstall.
-  ; Both trees are entirely ours: user data lives in the per-user data
-  ; directory, never under $INSTDIR, so removing them wholesale is safe -
-  ; the same rule the install section applies when it replaces \python.
+  ; Belt and braces on the vendored trees. The per-file deletes above remove
+  ; exactly what the installer SHIPPED - but Python compiles bytecode caches
+  ; at runtime and pip tooling leaves other debris, and any such file keeps
+  ; its directory (and therefore $INSTDIR) behind after uninstall. All three
+  ; trees are entirely ours: user data lives in the per-user data directory,
+  ; never under $INSTDIR, so removing them wholesale is safe - the same rule
+  ; the install section applies when it replaces \python.
+  ; Near-instant by now (the torrent above emptied them), which is honest.
   RMDir /r "$INSTDIR\python"
   RMDir /r "$INSTDIR\app"
   RMDir /r "$INSTDIR\provisioning"
   RMDir "$INSTDIR"
+  SetDetailsPrint both
 
   ; Remove shortcuts if not updating
   ${If} $UpdateMode <> 1
