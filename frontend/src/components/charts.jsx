@@ -2,8 +2,13 @@
    (ui/mock/index.html). Pure components — no chart library needed.
    Colors come through CSS variables so every theme restyles the charts. */
 
-export const C = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)']
+/* Categorical cycle ordered for contrast between neighbours:
+   blue, orange, teal, purple, gold, rose. */
+export const C = ['var(--c1)', 'var(--c2)', 'var(--c6)', 'var(--c4)', 'var(--c3)', 'var(--c5)']
 export const SCORE = ['var(--low)', 'var(--mid)', 'var(--high)']
+
+/* Score banding (0–100): red / amber / green, same cut points as Histo. */
+export const bandColor = (v) => (v > 75 ? 'var(--high)' : v > 50 ? 'var(--mid)' : 'var(--low)')
 
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : (n ?? '—'))
 
@@ -52,22 +57,33 @@ export function Donut({ data, total }) {
 export function Bars({ data, horizontal = true, h = 200, max, color }) {
   const W = 360
   const m = max || Math.max(...data.map((d) => d.v)) * 1.1 || 1
+  // Per-bar colour: explicit d.c wins; a 0–100 scale means "score", banded
+  // red/amber/green; otherwise a uniform colour if given, else the
+  // categorical cycle so multi-bar charts don't read as one blue block.
+  const barCol = (d, i) => d.c || (max === 100 ? bandColor(d.v) : color || C[i % C.length])
   if (horizontal) {
     const bh = Math.min(26, (h - 10) / data.length - 8)
     const gap = (h - 10) / data.length
+    // Label gutter sized to the longest label (live source names run long);
+    // anything that still doesn't fit is ellipsized with a hover title.
+    const longest = Math.max(...data.map((d) => String(d.k).length))
+    const lw = Math.min(150, Math.max(96, 10 + 6.2 * longest))
+    const maxChars = Math.floor((lw - 10) / 6.2)
+    const clip = (s) => (String(s).length > maxChars ? `${String(s).slice(0, maxChars - 1)}…` : String(s))
+    const span = W - lw - 52          // room for the value text after the bar
     return (
       <svg className="chart-svg" viewBox={`0 0 ${W} ${h}`} width="100%" height={h}>
         {data.map((d, i) => {
           const y = 8 + i * gap
-          const bw = (d.v / m) * (W - 120)
+          const bw = (d.v / m) * span
           return (
             <g key={i}>
-              <text x={0} y={y + bh / 2 + 4} className="bar-lbl">{d.k}</text>
-              <rect x={96} y={y} width={Math.max(2, bw)} height={bh} rx={4}
-                    fill={d.c || color || 'var(--c1)'}>
+              <text x={0} y={y + bh / 2 + 4} className="bar-lbl"><title>{String(d.k)}</title>{clip(d.k)}</text>
+              <rect x={lw} y={y} width={Math.max(2, bw)} height={bh} rx={4}
+                    fill={barCol(d, i)}>
                 <title>{`${d.k}: ${fmt(d.v)}`}</title>
               </rect>
-              <text x={96 + bw + 7} y={y + bh / 2 + 4} fontSize="11"
+              <text x={lw + bw + 7} y={y + bh / 2 + 4} fontSize="11"
                     style={{ fill: 'var(--text-secondary)' }}>{fmt(d.v)}</text>
             </g>
           )
@@ -84,7 +100,7 @@ export function Bars({ data, horizontal = true, h = 200, max, color }) {
         return (
           <g key={i}>
             <rect x={x} y={h - 22 - bh} width={bw} height={bh} rx={4}
-                  fill={d.c || color || 'var(--c1)'}><title>{`${d.k}: ${fmt(d.v)}`}</title></rect>
+                  fill={barCol(d, i)}><title>{`${d.k}: ${fmt(d.v)}`}</title></rect>
             <text x={x + bw / 2} y={h - 6} textAnchor="middle" fontSize="10">{d.k}</text>
           </g>
         )
@@ -134,6 +150,7 @@ export function Stacked({ data, keys, colors, h = 200 }) {
 /* ---- line / area -------------------------------------------------------- */
 export function Line({ series, h = 190, area = true, color = 'var(--c1)', fmt: f = (v) => v }) {
   const W = 360; const pad = 28
+  if (!series || !series.length) return null   // empty series would render NaN geometry
   const max = Math.max(...series) * 1.15 || 1
   const min = Math.min(...series) * 0.9
   const xs = (i) => pad + i * ((W - pad - 8) / (series.length - 1 || 1))
@@ -194,6 +211,7 @@ export function Gauge({ val, label = 'have a term' }) {
 /* ---- radar (DQ dimensions) ---------------------------------------------- */
 export function Radar({ axes }) {
   const W = 300; const H = 200; const cx = 150; const cy = 100; const R = 78; const n = axes.length || 1
+  if (!axes.length) return null                // empty axes would render bare "Z" paths
   const pt = (i, f) => [
     cx + R * f * Math.cos(-Math.PI / 2 + (i * 2 * Math.PI) / n),
     cy + R * f * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / n),
@@ -307,20 +325,23 @@ export function Calendar({ weeks = 24, seed = 7 }) {
 /* ---- trust spectrum ------------------------------------------------------ */
 export function Spectrum({ seg }) {
   const sum = seg.reduce((a, s) => a + s.v, 0) || 1
+  const col = (s, i) => s.c || SCORE[i % SCORE.length]
+  const pct = (s) => Math.round((s.v / sum) * 100)
   return (
     <div>
       <div className="spectrum-bar">
         {seg.map((s, i) => (
           <div key={s.k} className="spectrum-seg"
-               style={{ width: `${(s.v / sum) * 100}%`, background: SCORE[i] }}>
-            {Math.round((s.v / sum) * 100)}%
+               style={{ width: `${(s.v / sum) * 100}%`, background: col(s, i) }}
+               title={`${s.k}: ${fmt(s.v)} (${pct(s)}%)`}>
+            {pct(s) >= 7 ? `${pct(s)}%` : ''}
           </div>
         ))}
       </div>
       <div className="spectrum-legend">
         {seg.map((s, i) => (
           <div key={s.k} className="leg">
-            <span className="sw" style={{ background: SCORE[i] }} />
+            <span className="sw" style={{ background: col(s, i) }} />
             {s.k} <b>{fmt(s.v)}</b> <span>{s.r}</span>
           </div>
         ))}

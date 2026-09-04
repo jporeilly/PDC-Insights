@@ -1,8 +1,8 @@
-# Catalog Insights
+# PDC Insights
 
 AI-assisted reporting and dashboards for **Pentaho Data Catalog (PDC)**.
 
-Catalog Insights reads governance metrics straight from the PDC public REST
+PDC Insights reads governance metrics straight from the PDC public REST
 API (trust, quality, sensitivity/PII, glossary coverage, profiling health,
 lineage), renders them as navigable dashboards, and lets you **design new
 dashboards by hand or generate them from a plain-language prompt** using a
@@ -19,7 +19,7 @@ metadata is reached over its API, not a JDBC source.
 
 PDC catalog data lives behind the REST API (OpenSearch underneath), so the
 traditional CDF/CDE/CDA dashboarding route is an awkward fit — you'd be
-writing a CDA data access that just proxies the API anyway. Catalog Insights
+writing a CDA data access that just proxies the API anyway. PDC Insights
 talks to the API directly. The one endpoint that makes this easy is
 `POST /api/public/v3/search/facets`, which returns **pre-aggregated counts**
 per facet option — a dashboard data feed in a single call.
@@ -101,7 +101,7 @@ then `ollama pull <model>`.
 
 > **Do you need the MCP server for local LLM? No.** Ollama is called directly by
 > the web app for `/chat` and dashboard generation. Start `--mcp` only to drive
-> Catalog Insights from an *external* chat/agent like Claude Desktop.
+> PDC Insights from an *external* chat/agent like Claude Desktop.
 
 No PDC yet? Set `INSIGHTS_DEMO=true` and everything runs on a bundled sample.
 

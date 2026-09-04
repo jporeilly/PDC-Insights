@@ -93,7 +93,7 @@ function Test-Port([string]$TargetHost, [int]$Port, [int]$TimeoutMs = 1500) {
 $script:AppRoot = Resolve-AppRoot $PSScriptRoot
 
 Say ""
-Say "  PDC Catalog Insights - environment check" "Cyan"
+Say "  PDC Insights - environment check" "Cyan"
 Say "  Reports what is missing and how to fix it. Only WebView2 and Python are" "DarkGray"
 Say "  hard requirements; everything else is optional and says so." "DarkGray"
 Say ""

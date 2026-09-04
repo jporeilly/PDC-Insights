@@ -252,18 +252,36 @@ import app.catalog as _cat  # noqa: E402
 
 
 class _StubPDC:
-    """Reachable fake PDC: live snapshots resolve from this, never the sample."""
-
-    def facets(self, q, f):
-        return [{"key": "sensitivity",
-                 "options": [{"name": "Low", "count": 30}, {"name": "High", "count": 12}]}]
-
-    def trust_distribution(self):
-        return [{"name": "Trusted", "count": 25}, {"name": "Untrusted", "count": 17}]
+    """Reachable fake PDC speaking the ENTITY-SWEEP contract the live
+    snapshot aggregates from (data_sources + a paged entities generator):
+    42 columns under one connection, a third of them HIGH sensitivity.
+    The connection surfaces as TWO roots — the named resource plus the
+    schema under it that every entity actually hangs off — the shape a
+    real estate has ("Arizona_Water_Operations" resource over its
+    "awc_operations" schema), so the resource rollup is exercised."""
 
     def data_sources(self):
-        return [{"name": "LiveSrc", "type": "database", "assetCount": 42,
-                 "lastScanAt": "5m ago"}]
+        return [{"name": "LiveSrc", "type": "POSTGRES", "rootId": "res-1",
+                 "resourceId": "res-1", "assetCount": None,
+                 "lastScanAt": "2026-08-25T09:00:00Z"},
+                {"name": "live_schema", "type": "SCHEMA", "rootId": "r1",
+                 "resourceId": "res-1", "assetCount": None,
+                 "lastScanAt": "2026-08-25T09:00:00Z"}]
+
+    def entities(self, filters, size=500, extended=True):
+        for i in range(42):
+            feats = {"sensitivity": "HIGH" if i % 3 == 0 else "LOW",
+                     "qualityScore": 80}
+            if i % 7 == 0:                      # dataset-level trust: sparse
+                feats["trustScore"] = {"value": 80}
+            yield {"type": "COLUMN", "rootId": "r1", "name": f"col_{i}",
+                   "attributes": {
+                       "features": feats,
+                       "businessTerms": [{"name": "Customer"}] if i % 2 == 0 else [],
+                       "tags": [{"name": "pii"}] if i % 3 == 0 else [],
+                   },
+                   "system": {"scannedAt": "2026-08-25T09:00:00Z",
+                              "profiledAt": "2026-08-25T09:01:00Z"}}
 
 
 _spec_k = {"version": 1, "title": "t", "category": "overview",
@@ -275,6 +293,30 @@ try:
     _lv = c.post("/api/dashboards/resolve", json=_spec_k).json()
     check("live-mode resolve without the flag uses the (stub) PDC",
           _lv["demo"] is False and _lv["panels"]["k"]["value"] == 42)
+    _snapl = _cat.catalog_snapshot()
+    check("schema root collapses into its resource (one source, resource-named)",
+          [s["name"] for s in _snapl["sources"]] == ["LiveSrc"]
+          and _snapl["sources"][0]["assets"] == 42)
+    check("sparse dataset-level trust is banded from the sweep",
+          _snapl["trust"] == {"Untrusted": 0, "Trusted": 0, "Highly Trusted": 6})
+    # Real per-asset table rows off the same sweep: HIGH+untermed = every 6th
+    # entity (i%3==0 high, i%2==1 untermed -> 7 of 42); all HIGH rows are
+    # tagged, so the PII list holds real names attributed to the resource.
+    check("untermed-critical rows are real assets under the resource",
+          len(_snapl["untermed_rows"]) == 7
+          and _snapl["untermed_hi_total"] == 7
+          and all(r[1] == "LiveSrc" for r in _snapl["untermed_rows"]))
+    check("pii rows list the tagged HIGH-sensitivity assets",
+          len(_snapl["pii_rows"]) == 12
+          and _snapl["pii_rows"][0][2] == "pii")
+    _tsp = c.post("/api/dashboards/resolve", json={
+        "version": 1, "title": "t", "category": "overview",
+        "panels": [{"id": "t", "kind": "chart", "chartType": "spectrum",
+                    "query": "trust_distribution"}]}).json()
+    check("trust spectrum carries its dataset scoring basis",
+          _tsp["panels"]["t"].get("scored") == 6
+          and _tsp["panels"]["t"].get("assets") == 6      # score carriers, not columns
+          and _tsp["panels"]["t"].get("basis") == "datasets")
     _ov = c.post("/api/dashboards/resolve", json={**_spec_k, "demo": True}).json()
     check("resolve with demo:true returns the bundled sample",
           _ov["demo"] is True and _ov["panels"]["k"]["value"] == 12480)
@@ -297,6 +339,7 @@ try:
           len(_dl.get("rows", [])) >= 1 and all(r[1] == "LiveSrc" for r in _dl["rows"]))
 finally:
     _cat.client = _prev_client
+    _cat._LIVE_CACHE.update(ts=0.0, snap=None)   # stub snapshot must not outlive the stub
     os.environ["INSIGHTS_DEMO"] = _prev_env if _prev_env is not None else "true"
 
 print("\n[3j] state directory (packaged install: writes never target the install)")

@@ -1,5 +1,99 @@
 # Changelog
 
+## 1.19.2 (2026-09-04) — honest live charts, semantic colour, metric tooltips
+
+- **One source per connection.** A PDC connection surfaces as several roots
+  (the resource plus its schema/database containers), and every entity hangs
+  off the innermost one — so the same connection appeared twice: the named
+  resource ("Arizona_Water_Operations") with zero assets and its inner schema
+  ("awc_operations") holding all of them. Live aggregation now collapses
+  roots by `resourceId`, so the schema name is gone from sources, the scope
+  picker, and every per-source chart.
+- **Trust spectrum tells the truth.** PDC calculates trust per *dataset*
+  (tables/files) — never per column. The live spectrum now shows a grey
+  "No score" segment for datasets not yet calculated and states its basis in
+  the sub-header ("13 of 29 datasets scored") instead of keeping the baked
+  sample text ("8,214 scored assets"). Verified against the live estate:
+  13 datasets carry SYSTEM-calculated trustScores of 85.5–95.
+- **Sensitivity house colours.** High = red, Medium = orange, Low = blue —
+  in the baked boards, the live donuts/stacks, and everywhere in between.
+- **Colour, everywhere it means something.** Live series get semantic
+  colours (profiling Completed green / Pending amber, lineage Verified
+  green / Unverified red, trust bands, High/Other stacks); every connected
+  source keeps one stable identity colour across all charts of a page;
+  0–100 score bars band red/amber/green; count bars cycle a real palette
+  (the second categorical colour is no longer a second blue). Long source
+  labels get a wider gutter + ellipsis instead of overlapping their bars.
+- **Real rows, not stand-ins.** The live sweep now records the actual
+  worst-quality assets, the tagged HIGH-sensitivity assets (PII lists), the
+  untermed-critical elements, entity-type counts and distinct-term totals —
+  the tables and tiles that used to synthesise "source.main"-style rows now
+  show real names. Headline tiles for untrusted count, failed scans,
+  tables/files, connected sources, terms defined and weakest source are
+  wired to live values; metrics this catalog simply doesn't record
+  (encryption, masking, owner workload, edit activity) say so — an explicit
+  "—  not tracked by this catalog" tile or an in-panel note, never a
+  sample number or a fake zero.
+- **Live tables state their own chip** ("2 listed" / "all clear") instead of
+  keeping baked counts like "12 need attention" over an empty queue.
+- **Metric tooltips.** Every panel title and wired KPI tile explains what
+  the metric measures on hover (dotted underline marks them).
+- Empty line/radar series no longer emit NaN SVG geometry (guards + honest
+  empty-state notes).
+
+## 1.19.1 (2026-08-25) — live mode reads the real catalog (the entity sweep)
+
+- **Live dashboards now show the catalog's actual numbers.** The first live
+  connection rendered an empty trust spectrum, a blank sensitivity donut and
+  zero high-sensitivity — because PDC 11's `/search` requires a literal
+  `searchTerm` and treats `"*"` as a string that matches nothing (verified
+  live: `"*"` → every facet option list empty; term omitted → 400; `"a"` →
+  734 substring hits), so the facet endpoint can never answer "the whole
+  catalog". `catalog_snapshot()`'s live path now aggregates one cached, paged
+  `/entities/filter` sweep instead — the endpoint the sibling apps already
+  proved, which needs no term and carries every governed fact per record:
+  `attributes.features` (sensitivity, qualityScore, the TABLE-level
+  trustScore, rating, isLineageVerified), `attributes.businessTerms` and
+  `.tags`, `system.scannedAt/profiledAt`. One sweep yields real trust bands,
+  sensitivity mix, per-source asset counts/quality/coverage/profiling,
+  lineage, ratings, top terms — and the PII panel now shows the governed
+  tags actually marking HIGH-sensitivity data (pii, privacy, financial, …)
+  rather than the sample's EMAIL/SSN. Derived stand-ins remain only for what
+  the estate genuinely doesn't carry.
+- Container roots that double-list beside their schema (a Postgres RESOURCE
+  above its SCHEMA) are dropped from the source list when they hold no
+  assets, so the scope dropdown and per-source charts stop showing a
+  zero row dressed in derived numbers.
+- Sweep is cached for `PDC_CACHE_TTL` seconds and capped at 20k entities
+  (noted in the snapshot when hit). The `[3i]` test stub now speaks the
+  entity-sweep contract.
+- Rename stragglers: the built UI's page `<title>` still said the old name.
+
+## 1.19.0 (2026-08-24) — the product is now PDC Insights
+
+- **Renamed from "PDC Catalog Insights" / "Catalog Insights" to
+  "PDC Insights"** everywhere a person sees a name: the Windows product name
+  (window title, Start-menu/desktop shortcuts, `C:\Program Files\PDC
+  Insights`, Add/Remove entry, installer exe), the in-app brand default and
+  sidebar wordmark, the splash, the FastAPI title, the environment check,
+  the NSIS sidebar art, and the docs. The brand stays editable — a saved
+  `INSIGHTS_BRAND_NAME` still wins, so an install whose state .env carries
+  the old default is migrated once by the upgrade notes below.
+- **Unchanged on purpose:** the bundle identifier
+  (`com.pentaho.pdc-insights`) — it keys the per-user state directory, and
+  renaming it would orphan every saved dashboard and setting. Repo, crate
+  and binary names likewise stay `pdc-insights-*`.
+- **Upgrading an existing install:** the product name keys the install
+  directory and registry entry, so the renamed installer does NOT upgrade
+  "PDC Catalog Insights" in place — uninstall the old entry first (state
+  survives; proven by the marker experiments), then install PDC Insights.
+- **Installer delete-phase progress (the suite's settled shape, ported):**
+  upgrades now remove the old vendored Python tree under a determinate bar
+  (one step per old site-packages entry, counted in the status line)
+  instead of a whole-tree delete the byte-weighted gauge showed as a hang;
+  the uninstaller keeps the native instruction-weighted bar - already
+  honest - and now silences the per-file "Delete file:" torrent.
+
 ## 1.18.2 (2026-08-22) - fields say which connection they belong to
 
 The PDC settings card's fields were labelled Base URL / Username / Password

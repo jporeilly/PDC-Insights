@@ -20,11 +20,79 @@ const K = (label, val, dir, delta, col, ico, spark, tint) => ({
   kind: 'kpi', label, val, dir, delta, col, ico, spark, tint: tint || 'var(--brand-tint)',
 })
 
+/* Sensitivity bands, house rule: High = red, Medium = orange, Low = blue.
+   Low is a literal blue (not the theme accent) so the meaning survives a
+   green/orange accent theme; the same trio lives in SENS_COLOR below for
+   the live overlay. */
 const SENS = [
-  { k: 'Low', v: 9180, c: 'var(--high)' },
-  { k: 'Medium', v: 2458, c: 'var(--mid)' },
+  { k: 'Low', v: 9180, c: '#4f8fd0' },
+  { k: 'Medium', v: 2458, c: '#ee7d1e' },
   { k: 'High', v: 842, c: 'var(--low)' },
 ]
+
+export const SENS_COLOR = { High: 'var(--low)', Medium: '#ee7d1e', Low: '#4f8fd0' }
+
+/* One-line explanations per metric, surfaced as hover tooltips on panel
+   titles and KPI tiles so a viewer can tell WHAT each number measures
+   without opening the docs. Keyed by resolver query. */
+const DQ_MEANING = {
+  Completeness: 'required fields actually populated (no missing values)',
+  Accuracy: 'values matching the real-world facts they describe',
+  Validity: 'values conforming to their expected format, type and range',
+  Uniqueness: 'no duplicate records where one thing should exist once',
+  Consistency: 'the same fact agreeing across tables and sources',
+  Timeliness: 'data fresh enough for its consumers (recent loads/scans)',
+  Traceability: 'lineage known — where the data came from and how it moved',
+  Clarity: 'assets documented with business terms people can understand',
+  Availability: 'data reachable by the people and systems that need it',
+}
+
+export const METRIC_HELP = {
+  asset_counts: 'Total entities catalogued across every connected source (tables, files, columns…).',
+  source_counts: 'How many data connections the catalog is reading from.',
+  trust_distribution: 'PDC trust score per dataset (0–100, tables/files only): 0–50 untrusted, 51–75 trusted, 76–100 highly trusted. Datasets PDC has not calculated yet show as "No score".',
+  trust_by_source: 'How each source’s datasets spread across the trust bands.',
+  sensitivity_mix: 'Assets per sensitivity level from data identification — High (red) needs the strongest controls, Medium (orange) restricted, Low (blue) general use.',
+  sensitive_by_source: 'Where the sensitive assets physically live, per connected source.',
+  pii_discoveries: 'Assets the content scan flagged with governed tags (PII-style findings), by tag.',
+  quality_by_source: 'Mean data-quality score (0–100) of the profiled assets in each source.',
+  quality_distribution: 'How many assets fall into each quality-score band.',
+  worst_tables: 'The lowest-scoring datasets — the best place to start fixing quality.',
+  dq_dimensions: 'The nine data-quality best-practice dimensions scored 0–100 — the shape shows strengths and gaps at a glance.',
+  term_coverage: 'Share of assets linked to a business-glossary term — how findable and understandable the estate is.',
+  top_terms: 'The glossary terms attached to the most assets.',
+  coverage_trend: 'Glossary coverage over time — is documentation keeping up with growth?',
+  untermed_critical: 'High-sensitivity assets with no business term: sensitive data nobody has described.',
+  lineage_status: 'Assets whose lineage PDC has verified vs not — can you trace where the data came from?',
+  lineage_by_source: 'Lineage verification split per source.',
+  profile_status: 'Whether profiling (statistics + identification) has run on each asset.',
+  assets_by_source: 'How many catalogued assets each connection contributes.',
+  assets_by_type: 'The mix of entity types in the catalog (tables, files, columns…).',
+  scan_activity: 'Scan and profile runs over time.',
+  source_inventory: 'Every connection: type, how much it holds, and when it was last scanned.',
+  stale_failed: 'Assets whose last scan failed or is overdue — empty means the estate is current.',
+  worker_status: 'Catalog worker processes and their health.',
+  risk_assets: 'Assets combining risk signals — high sensitivity, no owner, low quality or failed scans.',
+  owners_coverage: 'Assets with a named steward vs unowned, per source.',
+  owner_workload: 'How many assets each steward owns (and their recent edits).',
+  ratings_distribution: 'Star ratings users have given catalogued assets.',
+  recently_modified: 'Catalogue changes over recent days.',
+  edit_activity: 'Curation actions by type — tagging, terming, describing, rating.',
+  ownership_time: 'How long assets wait before somebody claims ownership.',
+  unowned_high_value: 'Valuable or sensitive assets that still have no owner.',
+  term_status: 'Glossary terms by lifecycle state.',
+  policy_counts: 'Assets governed by each policy.',
+  policy_coverage: 'Share of assets covered by at least one policy.',
+  encryption_status: 'Share of sensitive assets stored encrypted.',
+  masking_status: 'Share of sensitive fields masked for general access.',
+  pii_assets: 'The actual assets carrying PII-style findings, with their protection state.',
+  sensitive_unowned: 'High-sensitivity assets with no owner — the riskiest gap to close.',
+  dq_by_source: 'Data-quality dimensions compared across sources.',
+  ...Object.fromEntries(Object.entries(DQ_MEANING).map(([d, m]) => [
+    `dq_${d.toLowerCase()}`,
+    `${d} (0–100): ${m}. KPI = overall score; bars = per source; table = worst offenders.`,
+  ])),
+}
 
 export const SCORE = ['var(--low)', 'var(--mid)', 'var(--high)']
 
@@ -59,8 +127,8 @@ export const DASHBOARDS = {
         data: [{ k: 'Snow', Untrusted: 300, Trusted: 600, High: 900 }, { k: 'S3', Untrusted: 700, Trusted: 400, High: 200 }, { k: 'PG', Untrusted: 200, Trusted: 700, High: 500 }, { k: 'Ora', Untrusted: 340, Trusted: 520, High: 410 }],
         keys: ['Untrusted', 'Trusted', 'High'], colors: SCORE },
       { kind: 'chart', title: 'Sensitivity mix', span: 2, chart: 'donut', q: 'sensitivity_mix', data: SENS },
-      { kind: 'chart', title: 'Coverage gap by source', sub: '% untermed', span: 2, chart: 'bars', q: 'lineage_by_source',
-        data: [{ k: 'S3-raw', v: 58, c: 'var(--low)' }, { k: 'Oracle', v: 41, c: 'var(--mid)' }, { k: 'BigQuery', v: 34, c: 'var(--mid)' }, { k: 'Postgres', v: 22, c: 'var(--high)' }], opts: { h: 170, max: 100 } },
+      { kind: 'chart', title: 'Term coverage by source', sub: '% with a term', span: 2, chart: 'bars', q: 'term_coverage',
+        data: [{ k: 'S3-raw', v: 42 }, { k: 'Oracle', v: 59 }, { k: 'BigQuery', v: 66 }, { k: 'Postgres', v: 78 }], opts: { h: 170, max: 100 } },
     ] },
     { id: 'executive-scorecard', name: 'Executive scorecard', desc: 'Targets & posture on one page', panels: [
       K('Catalog assets', '12,480', 'up', '3.1% vs last wk', 'var(--brand)', '◳', [9, 10, 10, 11, 11, 12, 12.4]),
@@ -279,9 +347,9 @@ export const DASHBOARDS = {
       K('Encrypted', '58%', 'up', '+7 pts', 'var(--high)', '✔', [44, 47, 50, 52, 54, 56, 58], 'var(--high-t)'),
       K('In residency policy', '81%', 'up', '+4 pts', 'var(--c2)', '▤', [72, 74, 76, 77, 79, 80, 81], 'var(--c2-t)'),
       { kind: 'chart', title: 'Sensitivity breakdown', span: 2, chart: 'donut', q: 'sensitivity_mix', data: SENS },
-      { kind: 'chart', title: 'Sensitive by source', sub: 'High / Medium', span: 2, chart: 'stacked', q: 'sensitive_by_source',
+      { kind: 'chart', title: 'Sensitive by source', sub: 'high vs rest', span: 2, chart: 'stacked', q: 'sensitive_by_source',
         data: [{ k: 'Snowflake', High: 280, Medium: 640 }, { k: 'S3-raw', High: 310, Medium: 520 }, { k: 'Oracle', High: 160, Medium: 410 }, { k: 'Postgres', High: 92, Medium: 380 }],
-        keys: ['High', 'Medium'], colors: ['var(--low)', 'var(--mid)'] },
+        keys: ['High', 'Medium'], colors: [SENS_COLOR.High, SENS_COLOR.Medium] },
       { kind: 'chart', title: 'High sensitivity · no owner', chip: 'risk', span: 4, chart: 'table', q: 'sensitive_unowned',
         cols: ['Asset', 'Source', 'PII', 'Trust'],
         rows: [
@@ -507,6 +575,16 @@ DASHBOARDS.user.push({ id: 'ownership-program', name: 'Ownership program', desc:
 export const KPI_QUERY = {
   'Catalog assets': 'asset_counts',
   'Data sources': 'source_counts',
+  'Untrusted assets': 'untrusted_count',
+  'Failed scans': 'failed_scans_total',
+  'Connected sources': 'source_counts',
+  'Total assets': 'asset_counts',
+  'Tables': 'table_count',
+  'Files': 'file_count',
+  'Critical untermed': 'untermed_critical',
+  'Unverified lineage': 'unverified_lineage',
+  'Terms defined': 'terms_defined_total',
+  'Weakest source': 'weakest_source',
   'Glossary coverage': 'term_coverage',
   'High sensitivity': 'sensitivity_mix',
   'Profiled assets': 'profile_status',

@@ -1,6 +1,6 @@
 # Install guide
 
-Step-by-step setup for **Catalog Insights** — the web app and the MCP server.
+Step-by-step setup for **PDC Insights** — the web app and the MCP server.
 Both are thin, stateless clients to the PDC public REST API and an LLM endpoint,
 so installation is mostly: get the code, fill in `.env`, run a container.
 
@@ -42,7 +42,7 @@ so installation is mostly: get the code, fill in `.env`, run a container.
 
 ## 1. How it connects
 
-Catalog Insights talks to **one thing**: the PDC public REST API. PDC keeps its
+PDC Insights talks to **one thing**: the PDC public REST API. PDC keeps its
 data in several stores behind that API — OpenSearch (search/facets), MongoDB
 (operational & user metadata; FerretDB/PostgreSQL from PDC 11.0), and a BIDB for
 JDBC/ODBC BI access. **You never connect to those directly, and you shouldn't.**
@@ -52,7 +52,7 @@ version changes.
 ```
   You install:                    Already exists (you connect to it):
   ┌────────────────────┐          ┌──────────────────────────────┐
-  │ Catalog Insights   │  REST    │ PDC  (Linux, Docker)         │
+  │ PDC Insights       │  REST    │ PDC  (Linux, Docker)         │
   │  web app  :5002    │─────────▶│  REST API ─▶ OpenSearch      │
   │  MCP svr  :8765    │          │            ─▶ MongoDB        │
   └─────────┬──────────┘          │            ─▶ BIDB           │
@@ -69,8 +69,8 @@ No Pentaho Server, CTools, or Semantic Model Editor is installed or required.
 
 | Port | Used by | Notes |
 | ---- | ------- | ----- |
-| **5002** | Catalog Insights web app | default; override with `INSIGHTS_PORT` |
-| **8765** | Catalog Insights MCP (HTTP) | override with `MCP_PORT` |
+| **5002** | PDC Insights web app | default; override with `INSIGHTS_PORT` |
+| **8765** | PDC Insights MCP (HTTP) | override with `MCP_PORT` |
 | 5000 | Glossary Generator (sibling app) | avoid |
 | 5001 | Policy Generator (sibling app) | avoid |
 | 8080 | Pentaho Server / PUC (Tomcat) | avoid |
@@ -141,7 +141,7 @@ The web app runs on **uvicorn** (FastAPI's ASGI server, every platform).
 
 > **Local LLM does not need the MCP server.** Ollama is called directly by the
 > web app for the `/chat` builder and dashboard generation. The MCP server is a
-> separate process you start (`--mcp`) only to drive Catalog Insights from an
+> separate process you start (`--mcp`) only to drive PDC Insights from an
 > *external* chat/agent such as Claude Desktop. The rest of this guide covers the
 > manual steps the script automates.
 
@@ -355,7 +355,7 @@ docker compose --profile mcp up insights-mcp    # serves on :8765
 
 > **The MCP server is a separate process from the web app** — two front doors on
 > the same engine. You do **not** need it to use the dashboards or the built-in
-> `/chat` builder; start it only to drive Catalog Insights from an *external*
+> `/chat` builder; start it only to drive PDC Insights from an *external*
 > chat/agent (Claude Desktop, an IDE). Run the web app with `uvicorn`
 > (§6) and, if you want it, the MCP server with the command above in a second
 > terminal.
@@ -551,9 +551,9 @@ instance. The footer **PDC** dot turns green and the demo banner disappears.
 When you're on demo data, a banner at the top of the app links straight here, and
 `run.sh` / `run.bat` print the same hint after their health check.
 
-> **Data sources are configured in PDC, not in Catalog Insights.** You add,
+> **Data sources are configured in PDC, not in PDC Insights.** You add,
 > test, and scan sources inside PDC (Management → Add Data Source → Test
-> Connection → Scan Files). Catalog Insights is read-only over PDC's public API,
+> Connection → Scan Files). PDC Insights is read-only over PDC's public API,
 > so once a source is connected and scanned in PDC it appears here automatically —
 > dashboards and suggestions build from whatever PDC has already catalogued.
 

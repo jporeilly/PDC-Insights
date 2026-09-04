@@ -1,4 +1,4 @@
-// PDC Catalog Insights - desktop shell.
+// PDC Insights - desktop shell.
 //
 // The app itself is unchanged: a FastAPI server serving the React SPA. This
 // binary only starts that server on a free port, waits for it to answer, and
@@ -266,7 +266,7 @@ fn save_report(handle: tauri::AppHandle) -> serde_json::Value {
     let env = env_report(handle.clone());
 
     let mut out = String::new();
-    out.push_str("PDC Catalog Insights - startup report\n");
+    out.push_str("PDC Insights - startup report\n");
     out.push_str("=====================================\n\n");
     out.push_str(&format!("version   : {}\n", handle.package_info().version));
     out.push_str(&format!("os        : {} {}\n", std::env::consts::OS, std::env::consts::ARCH));
@@ -414,5 +414,5 @@ fn main() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running the PDC Catalog Insights shell");
+        .expect("error while running the PDC Insights shell");
 }

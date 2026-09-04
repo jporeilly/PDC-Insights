@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 
+from .config import settings
 from .pdc_client import client, PDCError
 
 # The Query Library the generator grounds on. Names match the standard
@@ -111,6 +112,8 @@ SAMPLE_SNAPSHOT = {
     "dq": {"Completeness": 88, "Accuracy": 79, "Validity": 84, "Uniqueness": 94,
            "Consistency": 74, "Timeliness": 66, "Traceability": 58,
            "Clarity": 71, "Availability": 96},
+    "terms_total": 412,
+    "types": {"Table": 9640, "File": 2840},
     # Eight sources, richer spread of types and postures; asset counts sum to
     # totals.assets (12,480) and high_sensitivity sums to sensitivity.High (842)
     # so cross-panel arithmetic holds up under a demo audience's scrutiny.
@@ -151,6 +154,245 @@ def _facet_map(rows: list[dict], key: str) -> dict:
     return {}
 
 
+# ── live snapshot: one entity sweep, aggregated client-side ──
+# PDC 11's /search requires a literal searchTerm and treats "*" as a string
+# that matches nothing, so the facet endpoint cannot answer "the whole
+# catalog" (verified live 2026-08-25: term="*" -> every option list empty,
+# term omitted -> 400, term "a" -> 734 substring hits). /entities/filter
+# needs no term and pages the entire catalog, and the governed facts all ride
+# on each record: attributes.features carries sensitivity, qualityScore, the
+# TABLE-level trustScore, rating and isLineageVerified; attributes holds
+# businessTerms and tags; system holds scannedAt/profiledAt. One cached sweep
+# therefore yields every distribution the dashboards need — real numbers,
+# not the derived stand-ins.
+_CONTAINER_TYPES = {"RESOURCE", "SCHEMA", "DATABASE"}
+# Trust scores exist per DATASET (a table or file), never per column — the
+# spectrum's denominator must be datasets or the "no score" share is inflated
+# by columns that could never carry one.
+_DATASET_TYPES = {"TABLE", "FILE", "VIEW", "DATASET"}
+_TRUST_BANDS = [("Untrusted", 0, 50), ("Trusted", 51, 75), ("Highly Trusted", 76, 100)]
+_SWEEP_PAGE = 500
+_SWEEP_MAX = 20000          # safety cap for very large estates; noted in snap
+_LIVE_CACHE: dict = {"ts": 0.0, "snap": None}
+
+
+def _short_ts(iso: str | None) -> str:
+    s = str(iso or "")
+    return s[:16].replace("T", " ") if "T" in s else (s or "—")
+
+
+def _live_snapshot() -> dict:
+    """Aggregate the live catalog from one paged /entities/filter sweep."""
+    import time as _time
+    ttl = settings.pdc.cache_ttl
+    if ttl and _LIVE_CACHE["snap"] is not None and _time.time() - _LIVE_CACHE["ts"] < ttl:
+        return _LIVE_CACHE["snap"]
+
+    roots = client.data_sources()
+    # A connection surfaces as SEVERAL roots: the resource itself plus the
+    # schema/database containers under it, with every entity hanging off the
+    # innermost one. Presented raw, the same connection appears twice — the
+    # named resource ("Arizona_Water_Operations") with zero assets and its
+    # inner schema ("awc_operations") holding them all. Collapse by
+    # resourceId: the resource-typed row names the source, and every root in
+    # the group feeds that one row.
+    groups: dict[str, list[dict]] = {}
+    for r in roots:
+        rid = r.get("resourceId") or r.get("rootId") or r.get("name")
+        groups.setdefault(str(rid), []).append(r)
+
+    root_name: dict[str, str] = {}
+    per: dict[str, dict] = {}
+    for rows in groups.values():
+        head = next((r for r in rows if r.get("rootId") == r.get("resourceId")), None)
+        if head is None:  # no self-row: prefer a connector-typed row over a container
+            head = next((r for r in rows
+                         if str(r.get("type") or "").upper() not in _CONTAINER_TYPES),
+                        rows[0])
+        name = head.get("name")
+        for r in rows:
+            if r.get("rootId"):
+                root_name[r.get("rootId")] = name
+        per[name] = {"assets": 0, "hi": 0, "termed": 0, "prof": 0,
+                     "q": [], "type": head.get("type"), "scan": ""}
+
+    sens: dict[str, int] = {}
+    trust = {b[0]: 0 for b in _TRUST_BANDS}
+    lineage = {"Verified": 0, "Unverified": 0}
+    ratings: dict[str, int] = {}
+    terms: dict[str, int] = {}
+    tags_all: dict[str, int] = {}
+    tags_hi: dict[str, int] = {}
+    prof = {"Completed": 0, "Pending": 0}
+    total = termed = 0
+    capped = False
+    # Real per-asset rows for the governance tables, gathered on the same
+    # pass: HIGH-sensitivity elements missing a business term, and assets
+    # carrying governed tags (the estate's stand-in for content-scan PII).
+    untermed_rows: list[list] = []
+    pii_rows: list[list] = []
+    untermed_hi = 0
+    datasets = 0          # trust-score basis: tables/files, not columns
+    types: dict[str, int] = {}
+    worst: list[tuple] = []   # (score, name, source) — lowest quality assets
+
+    for e in client.entities({}, size=_SWEEP_PAGE, extended=True):
+        if e.get("type") in _CONTAINER_TYPES:
+            continue
+        total += 1
+        if total > _SWEEP_MAX:
+            capped = True
+            break
+        a = e.get("attributes") or {}
+        f = a.get("features") or {}
+        sysb = e.get("system") or {}
+        src = per.get(root_name.get(e.get("rootId")))
+        etype = str(e.get("type") or "OTHER").title()
+        types[etype] = types.get(etype, 0) + 1
+
+        if src is not None:
+            src["assets"] += 1
+            src["scan"] = max(src["scan"], str(sysb.get("scannedAt") or ""))
+
+        s = str(f.get("sensitivity") or "").title()
+        if s:
+            sens[s] = sens.get(s, 0) + 1
+            if s == "High" and src is not None:
+                src["hi"] += 1
+
+        q = f.get("qualityScore")
+        if isinstance(q, (int, float)):
+            if src is not None:
+                src["q"].append(q)
+            worst.append((q, e.get("name") or "—",
+                          root_name.get(e.get("rootId")) or "—"))
+            if len(worst) > 400:          # keep the running set small
+                worst.sort()
+                del worst[12:]
+
+        ts = (f.get("trustScore") or {}).get("value") if isinstance(f.get("trustScore"), dict) else None
+        if e.get("type") in _DATASET_TYPES or isinstance(ts, (int, float)):
+            datasets += 1
+        if isinstance(ts, (int, float)):
+            for label, lo, hi in _TRUST_BANDS:
+                if lo <= ts <= hi:
+                    trust[label] += 1
+                    break
+
+        if "isLineageVerified" in f:
+            lineage["Verified" if f.get("isLineageVerified") else "Unverified"] += 1
+
+        rating = (f.get("rating") or {}).get("value") if isinstance(f.get("rating"), dict) else None
+        if isinstance(rating, (int, float)):
+            k = str(int(rating))
+            ratings[k] = ratings.get(k, 0) + 1
+
+        bts = a.get("businessTerms") or []
+        if bts:
+            termed += 1
+            if src is not None:
+                src["termed"] += 1
+            for bt in bts:
+                name = (bt or {}).get("name")
+                if name:
+                    terms[name] = terms.get(name, 0) + 1
+        elif s == "High":
+            untermed_hi += 1
+            if len(untermed_rows) < 12:
+                untermed_rows.append([e.get("name") or "—",
+                                      root_name.get(e.get("rootId")) or "—", "High"])
+
+        tag_names = [str((t or {}).get("name"))
+                     for t in a.get("tags") or [] if (t or {}).get("name")]
+        for name in tag_names:
+            tags_all[name] = tags_all.get(name, 0) + 1
+            if s == "High":
+                tags_hi[name] = tags_hi.get(name, 0) + 1
+        if tag_names and s == "High" and len(pii_rows) < 12:
+            pii_rows.append([e.get("name") or "—",
+                             root_name.get(e.get("rootId")) or "—",
+                             " · ".join(tag_names[:3]), "—"])
+
+        if sysb.get("profiledAt"):
+            prof["Completed"] += 1
+            if src is not None:
+                src["prof"] += 1
+        else:
+            prof["Pending"] += 1
+
+    def _pct(n, d):
+        return round(100 * n / d, 1) if d else 0
+
+    sources = []
+    for name, x in per.items():
+        n = x["assets"]
+        row = {
+            "name": name, "type": x["type"], "assets": n,
+            "high_sensitivity": x["hi"],
+            "term_coverage_pct": _pct(x["termed"], n),
+            "profiled_pct": _pct(x["prof"], n),
+            "failed_scans": 0,
+            "last_scan": _short_ts(x["scan"]),
+        }
+        # Omitted rather than None when no entity carried a score: consumers
+        # treat a MISSING key as "derive/ignore", but a present None reaches
+        # comparisons (recommend's `< threshold`) and arithmetic raw.
+        if x["q"]:
+            row["mean_quality"] = round(sum(x["q"]) / len(x["q"]))
+        sources.append(row)
+
+    # A resource root and the schema under it can BOTH surface as "sources"
+    # (data_sources enumerates every root type), with all entities hanging off
+    # the inner one — the outer container then shows as a zero-asset row that
+    # the derived tier would decorate with stand-in numbers. Keep only rows
+    # that actually hold assets, unless nothing does (a genuinely unscanned
+    # catalog should still list what is connected).
+    holding = [s for s in sources if s["assets"] > 0]
+    if holding:
+        sources = holding
+
+    all_q = [s["mean_quality"] for s in sources if s.get("mean_quality") is not None]
+    top_terms = dict(sorted(terms.items(), key=lambda kv: -kv[1])[:8])
+    # The governed tags marking HIGH-sensitivity data stand in for content-scan
+    # PII types: real names from this catalog, not the sample's EMAIL/SSN.
+    pii = dict(sorted((tags_hi or tags_all).items(), key=lambda kv: -kv[1])[:6])
+
+    totals = {"assets": total, "sources": len(sources),
+              "profiled_pct": _pct(prof["Completed"], total),
+              "term_coverage_pct": _pct(termed, total)}
+    if all_q:
+        totals["mean_quality"] = round(sum(all_q) / len(all_q))
+    snap = {
+        "demo": False,
+        "totals": totals,
+        "trust": trust,
+        "sensitivity": sens,
+        "profiling": prof,
+        "lineage": lineage,
+        "ratings": ratings,
+        "terms": top_terms,
+        "pii_types": pii,
+        "coverage": {"term_pct": _pct(termed, total),
+                     "lineage_pct": _pct(lineage["Verified"],
+                                         lineage["Verified"] + lineage["Unverified"])},
+        "sources": sources,
+        # Real asset rows from the sweep — the table resolvers prefer these
+        # over the source-derived stand-ins when the key is present.
+        "untermed_rows": untermed_rows,
+        "untermed_hi_total": untermed_hi,
+        "pii_rows": pii_rows,
+        "trust_datasets": datasets,
+        "types": types,
+        "terms_total": len(terms),
+        "worst_rows": [[n, srcn, round(sc)] for sc, n, srcn in sorted(worst)[:6]],
+    }
+    if capped:
+        snap["note"] = f"aggregates cover the first {_SWEEP_MAX} entities"
+    if ttl:
+        _LIVE_CACHE.update(ts=_time.time(), snap=snap)
+    return snap
+
+
 def catalog_snapshot(force_demo: bool = False) -> dict:
     """Assemble the catalog state the recommender and host LLM reason over.
 
@@ -169,32 +411,9 @@ def catalog_snapshot(force_demo: bool = False) -> dict:
     if force_demo or _demo():
         return dict(SAMPLE_SNAPSHOT)
     try:
-        # One facet call covers the headline distributions; trust needs its own
-        # banded counts; data_sources() supplies the per-source inventory.
-        facets = client.facets("*", {"sensitivity": [], "type": [], "rootIds": []})
-        trust = {b["name"]: b["count"] for b in client.trust_distribution()}
-        sources = []
-        for ds in client.data_sources():
-            name = ds.get("name")
-            assets = ds.get("assetCount")
-            if assets is None:
-                # PDC 11 root entities expose no asset counts yet (verified
-                # live 2026-08-11). Derive a stable per-source stand-in so the
-                # boards render proportions instead of a wall of zeros — the
-                # derived-tier rule panel_data documents. Replaced by the real
-                # count as soon as the API supplies one.
-                assets = 150 + (sum(ord(c) for c in str(name)) % 1850)
-            last = str(ds.get("lastScanAt") or "")
-            if "T" in last:                       # ISO timestamp -> readable
-                last = last[:16].replace("T", " ")
-            sources.append({"name": name, "type": ds.get("type"),
-                            "assets": assets, "last_scan": last or "—"})
-        return {"demo": False,
-                "trust": trust,
-                "sensitivity": _facet_map(facets, "sensitivity"),
-                "sources": sources,
-                "totals": {"sources": len(sources),
-                           "assets": sum(x["assets"] for x in sources)}}
+        # One cached entity sweep aggregates every distribution the dashboards
+        # need — see _live_snapshot() for why the facet endpoint can't do it.
+        return _live_snapshot()
     except (PDCError, Exception) as exc:  # noqa: BLE001 — degrade, never crash
         snap = dict(SAMPLE_SNAPSHOT)
         snap["note"] = f"PDC unreachable ({exc}); returning demo snapshot"

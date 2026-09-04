@@ -36,7 +36,7 @@ function initialView() {
 
 export default function App() {
   const [{ view, section }, setNav] = useState(initialView)
-  const [brand, setBrand] = useState({ name: 'Catalog Insights', product: 'Pentaho Data Catalog' })
+  const [brand, setBrand] = useState({ name: 'PDC Insights', product: 'Pentaho Data Catalog' })
   // The RUNNING backend's release, from /health. pkg.version is only the UI
   // bundle's label and drifts (an installed 1.16 showed "v1.12.0" from it);
   // the backend reads the VERSION file, which is the single source of truth.
@@ -90,8 +90,8 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <div className="brand-name">{brand.name === 'Catalog Insights'
-              ? <>Catalog <em>Insights</em></> : brand.name}</div>
+            <div className="brand-name">{brand.name === 'PDC Insights'
+              ? <>PDC <em>Insights</em></> : brand.name}</div>
             <div className="brand-sub">{brand.product}</div>
           </div>
           <span className="version-pill" title="PDC-Insights release">v{version}</span>

@@ -122,9 +122,16 @@ def _dim_source_score(x: dict, dim: str) -> int:
 # ── grounded resolvers (real aggregates) ─────────────────────
 def _trust_distribution(s):
     t = s.get("trust", {})
-    total = sum(t.values()) or 1
-    return {"value": _pct(t.get("Highly Trusted", 0), total), "unit": "%",
-            "series": _series(t)}
+    scored = sum(t.values())
+    # PDC computes trustScore per DATASET (table/file), never per column —
+    # a live snapshot carries that basis so the spectrum can say
+    # "13 of 29 datasets scored" instead of implying columns lack scores.
+    basis = s.get("trust_datasets")
+    return {"value": _pct(t.get("Highly Trusted", 0), scored or 1), "unit": "%",
+            "series": _series(t),
+            "scored": scored,
+            "assets": basis if basis is not None else s.get("totals", {}).get("assets"),
+            "basis": "datasets" if basis is not None else "assets"}
 
 
 def _sensitivity_mix(s):
@@ -151,6 +158,10 @@ def _assets_by_source(s):
 
 
 def _assets_by_type(s):
+    # A live sweep counts real entity types (Table/File/Column…); the
+    # source-type rollup only backs snapshots without that detail.
+    if s.get("types"):
+        return {"series": _series(s["types"])}
     agg: dict[str, int] = {}
     for x in _sources(s):
         agg[x.get("type") or "other"] = agg.get(x.get("type") or "other", 0) + (x.get("assets") or 0)
@@ -264,9 +275,13 @@ def _quality_distribution(s):
 
 
 def _worst_tables(s):
-    ranked = sorted(_sources(s), key=_mq)[:6]
-    rows = [[f"{x['name']}.main", x["name"], _mq(x)] for x in ranked]
-    return {"value": ranked[0].get("mean_quality") if ranked else 0,
+    # Real lowest-scoring assets from the live sweep when present; the
+    # per-source stand-ins only back the sample snapshot.
+    rows = s.get("worst_rows")
+    if not rows:
+        ranked = sorted(_sources(s), key=_mq)[:6]
+        rows = [[f"{x['name']}.main", x["name"], _mq(x)] for x in ranked]
+    return {"value": rows[0][2] if rows else 0,
             "series": [{"label": r[0], "value": r[2]} for r in rows],
             "columns": _COLUMNS["worst_tables"], "rows": rows}
 
@@ -290,11 +305,24 @@ def _scan_activity(s):
 
 
 def _pii_typed_rows(s, masked_flag):
+    # A live sweep records the actual tagged HIGH-sensitivity assets; the
+    # per-source stand-ins only back the sample snapshot.
+    if "pii_rows" in s:
+        return s["pii_rows"]
     rows = []
     for x in _sources(s):
         if x.get("high_sensitivity"):
             rows.append([f"{x['name']}.pii", x["name"], "EMAIL, SSN", masked_flag(x)])
     return rows
+
+
+def _untermed_critical(s):
+    rows = s.get("untermed_rows")
+    if rows is None:   # sample snapshot: derive representative rows per source
+        rows = [[f"{x['name']}.critical", x["name"], "High"]
+                for x in _sources(s) if _field(x, "term_coverage_pct") < 50]
+    return {"value": s.get("untermed_hi_total", len(rows)),
+            "columns": _COLUMNS["untermed_critical"], "rows": rows}
 
 
 # ── remaining panels (governance / user / quality detail) ────
@@ -335,7 +363,9 @@ def _owner_workload(s):
 
 
 def _cov(s, key, label_pct):
-    return {"value": s.get("coverage", {}).get(key, 0), "unit": "%"}
+    # None (not 0) when the snapshot has no such aggregate: a live catalog
+    # without encryption/masking facts must show "unknown", never "0%".
+    return {"value": s.get("coverage", {}).get(key), "unit": "%"}
 
 
 def _stacked_by_source(s, split_pct_key, names):
@@ -375,9 +405,13 @@ RESOLVERS = {
     "scan_activity": _scan_activity,
     "pii_assets": lambda s: {"columns": _COLUMNS["pii_assets"],
                              "rows": _pii_typed_rows(s, lambda x: "no")},
+    # Live: the real tagged HIGH-sensitivity assets (this estate tracks no
+    # owners at all, so every one of them is unowned); sample: stand-ins.
     "sensitive_unowned": lambda s: {"columns": _COLUMNS["sensitive_unowned"],
-                                    "rows": [[f"{x['name']}.tbl", x["name"], "EMAIL", _mq(x)]
-                                             for x in _sources(s) if _field(x, "unowned_pct") > 30 and x.get("high_sensitivity")]},
+                                    "rows": [[r[0], r[1], r[2], "—"] for r in s["pii_rows"][:6]]
+                                    if s.get("pii_rows")
+                                    else [[f"{x['name']}.tbl", x["name"], "EMAIL", _mq(x)]
+                                          for x in _sources(s) if _field(x, "unowned_pct") > 30 and x.get("high_sensitivity")]},
     "lineage_status": _lineage_status,
     "lineage_by_source": lambda s: _stacked_by_source(s, "term_coverage_pct", ["Verified", "Unverified"]),
     "ratings_distribution": _ratings_distribution,
@@ -394,16 +428,29 @@ RESOLVERS = {
     "owners_coverage_table": _owner_workload,
     "dq_by_source": lambda s: _stacked_by_source(s, "mean_quality", ["At/Above", "Below"]),
     **{f"dq_{d.lower()}": _dq_dim(d) for d in DQ_DIMENSIONS},
-    "untermed_critical": lambda s: {"value": sum(1 for x in _sources(s) if _field(x, "term_coverage_pct") < 50),
-                                    "columns": _COLUMNS["untermed_critical"],
-                                    "rows": [[f"{x['name']}.critical", x["name"], "High"]
-                                             for x in _sources(s) if _field(x, "term_coverage_pct") < 50]},
+    "untermed_critical": _untermed_critical,
+    # Headline-tile helpers: real counts for KPIs that previously kept baked
+    # sample values in live mode.
+    "untrusted_count": lambda s: {"value": s.get("trust", {}).get("Untrusted", 0)},
+    "failed_scans_total": lambda s: {"value": sum(x.get("failed_scans") or 0
+                                                  for x in _sources(s))},
+    "table_count": lambda s: {"value": s.get("types", {}).get("Table")},
+    "file_count": lambda s: {"value": s.get("types", {}).get("File")},
+    "unverified_lineage": lambda s: {"value": s.get("lineage", {}).get("Unverified", 0)},
+    "terms_defined_total": lambda s: {"value": s.get("terms_total")},
+    "weakest_source": lambda s: {"value": (min(_sources(s), key=_mq) or {}).get("name")
+                                 if _sources(s) else None},
     "unowned_high_value": lambda s: {"columns": _COLUMNS["unowned_high_value"],
                                      "rows": [[f"{x['name']}.asset", x["name"], "High", _mq(x)]
                                               for x in _sources(s) if _field(x, "unowned_pct") > 30]},
     "risk_assets": lambda s: {"columns": _COLUMNS["risk_assets"],
-                              "rows": [[f"{x['name']}.risk", x["name"], "Untrusted + High"]
-                                       for x in sorted(_sources(s), key=_mq)[:5]]},
+                              # Real high-sensitivity untermed assets when the
+                              # sweep found them; per-source stand-ins otherwise.
+                              "rows": [[r[0], r[1], "Untermed + High"]
+                                       for r in s["untermed_rows"][:6]]
+                              if s.get("untermed_rows")
+                              else [[f"{x['name']}.risk", x["name"], "Untrusted + High"]
+                                    for x in sorted(_sources(s), key=_mq)[:5]]},
 }
 
 
@@ -429,6 +476,11 @@ def resolve_panel(panel: dict, snap: dict | None = None) -> dict:
         out["groups"] = data["groups"]
     else:
         out["series"] = data.get("series", [])
+    # Context values some renderers show beside the series (the trust
+    # spectrum's "N of M datasets scored" sub-header rides on these).
+    for extra in ("scored", "assets", "basis"):
+        if extra in data:
+            out[extra] = data[extra]
     return out
 
 

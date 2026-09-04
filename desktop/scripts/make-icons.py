@@ -20,7 +20,7 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--accent", default="#CC0000", help="background color for the NSIS art")
-parser.add_argument("--title", default="PDC Catalog Insights",
+parser.add_argument("--title", default="PDC Insights",
                     help="product title for the sidebar (split on ' - ')")
 parser.add_argument("--strapline", default="AI-assisted dashboards for the data catalog",
                     help="one line under the product title on the sidebar")
@@ -265,7 +265,7 @@ if args.title:
     f_str = fit_font(args.strapline, int(W * 0.90), int(W * 0.070))
     centered(d, y + H * 0.020, args.strapline, f_str, soft)
 else:
-    centered(d, H * 0.60, "Catalog Insights", f_med, WHITE)
+    centered(d, H * 0.60, "PDC Insights", f_med, WHITE)
     f_str = fit_font(args.strapline, int(W * 0.90), int(W * 0.070))
     centered(d, H * 0.695, args.strapline, f_str, soft)
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>PDC Catalog Insights</title>
+<title>PDC Insights</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -162,7 +162,7 @@
 <div class="stage">
   <header>
     <div class="brandword" aria-hidden="true">Pentaho<span class="brandbar"></span></div>
-    <h1 style="margin-top:.9rem">Catalog Insights <span class="ver" id="ver"></span></h1>
+    <h1 style="margin-top:.9rem">PDC Insights <span class="ver" id="ver"></span></h1>
     <p class="sub">AI-assisted dashboards for Pentaho Data Catalog</p>
   </header>
 
@@ -706,7 +706,7 @@
       // the clipboard - which is why this copies first and says so.
       return copyText(r.text).then(function () { return r; }, function () { return r; });
     }).then(function (r) {
-      var subject = 'PDC Catalog Insights - startup failure';
+      var subject = 'PDC Insights - startup failure';
       var body = 'The app did not start. Full details are on my clipboard - pasting below.\n\n'
                + 'Report also saved at:\n' + r.path + '\n\n----\n\n';
       var url = 'mailto:' + SUPPORT

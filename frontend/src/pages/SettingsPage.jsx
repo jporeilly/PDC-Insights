@@ -239,7 +239,7 @@ export default function SettingsPage({ version, brand: brandProp, onBrandSaved }
       <div className="page-head">
         <div>
           <h1>Settings</h1>
-          <p>Connect Catalog Insights to your {brand?.product || 'PDC'} instance and choose where dashboard generation runs.</p>
+          <p>Connect PDC Insights to your {brand?.product || 'PDC'} instance and choose where dashboard generation runs.</p>
         </div>
       </div>
 
@@ -351,7 +351,7 @@ export default function SettingsPage({ version, brand: brandProp, onBrandSaved }
           <p className="desc">Genericise the product for delivery. Save &amp; apply persists these as the <code>INSIGHTS_BRAND_*</code> settings (same pattern as the sibling apps) and the app relabels immediately — no restart.</p>
           <div className="form-grid">
             <label>Product name
-              <input className="text" value={brandName} placeholder="Catalog Insights"
+              <input className="text" value={brandName} placeholder="PDC Insights"
                      onChange={(e) => setBrandName(e.target.value)} />
             </label>
             <label>Catalog label
@@ -379,7 +379,7 @@ export default function SettingsPage({ version, brand: brandProp, onBrandSaved }
           <h2>About</h2>
           <dl>
             <dt>Version</dt><dd>{version}</dd>
-            <dt>Service</dt><dd>{brand?.name || 'Catalog Insights'} — dashboards over the catalog’s REST API</dd>
+            <dt>Service</dt><dd>{brand?.name || 'PDC Insights'} — dashboards over the catalog’s REST API</dd>
             <dt>Backend</dt><dd>FastAPI · /api + /health</dd>
             <dt>PDC</dt><dd>validated against Pentaho Data Catalog 11.0.0 (public API v3)</dd>
           </dl>

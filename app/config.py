@@ -38,7 +38,7 @@ def _clean_base(base_url: str) -> str:
 class Brand:
     """White-label knobs so the product can be renamed per delivery, mirroring
     the Glossary Generator's GLOSSARY_* pattern."""
-    name: str = os.getenv("INSIGHTS_BRAND_NAME", "Catalog Insights")
+    name: str = os.getenv("INSIGHTS_BRAND_NAME", "PDC Insights")
     product: str = os.getenv("INSIGHTS_BRAND_PRODUCT", "Pentaho Data Catalog")
     accent: str = os.getenv("INSIGHTS_BRAND_ACCENT", "#0F766E")
 

@@ -1,4 +1,4 @@
-"""Catalog Insights application package.
+"""PDC Insights application package.
 
 The web layer is FastAPI (see app/main.py — the port of the old Flask
 factory); create_app() is re-exported here so `from app import create_app`

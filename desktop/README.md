@@ -1,6 +1,6 @@
 # Desktop shell
 
-Wraps Catalog Insights into a Windows `.exe` installer, the same way the
+Wraps PDC Insights into a Windows `.exe` installer, the same way the
 Glossary and Policy Generators are packaged (Tauri + a vendored Python).
 
 The app itself is unchanged. This is a Tauri window that starts the existing
@@ -63,8 +63,8 @@ wired into Claude Desktop with no pip on the machine:
 {
   "mcpServers": {
     "catalog-insights": {
-      "command": "C:\\Program Files\\PDC Catalog Insights\\python\\python.exe",
-      "args": ["C:\\Program Files\\PDC Catalog Insights\\app\\boot.py", "--mcp"]
+      "command": "C:\\Program Files\\PDC Insights\\python\\python.exe",
+      "args": ["C:\\Program Files\\PDC Insights\\app\\boot.py", "--mcp"]
     }
   }
 }
@@ -125,7 +125,7 @@ Expect these, none of which are bugs:
   "Windows protected your PC" → *More info* → *Run anyway* — until the binary
   is code-signed.
 - **Admin rights, always.** `installMode` is `perMachine`, so it installs to
-  `C:\Program Files\PDC Catalog Insights` and always prompts for elevation.
+  `C:\Program Files\PDC Insights` and always prompts for elevation.
 - **Network is needed for two things only** — the WebView2 bootstrapper (if
   the machine lacks the runtime) and the Ollama model pull. The app and its
   Python are entirely inside the installer.
@@ -136,7 +136,7 @@ Expect these, none of which are bugs:
 Then verify:
 
 ```powershell
-& "$env:ProgramFiles\PDC Catalog Insights\provisioning\check-environment.ps1"
+& "$env:ProgramFiles\PDC Insights\provisioning\check-environment.ps1"
 ```
 
 On a clean machine expect `WebView2 OK`, `Python (bundled) OK`, `Python

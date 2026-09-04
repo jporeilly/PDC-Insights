@@ -49,7 +49,7 @@ def _plain(path):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Start the Catalog Insights backend.")
+    ap = argparse.ArgumentParser(description="Start the PDC Insights backend.")
     ap.add_argument("--port", type=int, default=None)
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--app-dir", default=None)

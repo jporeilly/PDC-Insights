@@ -60,7 +60,9 @@
   --high-t: color-mix(in srgb, var(--status-good) 16%, transparent);
   --panel-2: var(--surface-2);
   --border-strong: var(--baseline);
-  --c1: var(--accent); --c2: #4f8fd0; --c3: #caa53a;
+  /* --c2 was #4f8fd0 — a second blue that made every chart read as one
+     colour next to the blue accent. Orange gives the cycle real contrast. */
+  --c1: var(--accent); --c2: #e0762e; --c3: #caa53a;
   --c4: #8b6fd0; --c5: #d66a8a; --c6: #2a9d9d;
   --c2-t: color-mix(in srgb, var(--c2) 16%, transparent);
   --c4-t: color-mix(in srgb, var(--c4) 16%, transparent);
@@ -259,7 +261,22 @@ code, .mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: .84e
 
 /* trust spectrum */
 .spectrum-bar { display: flex; height: 32px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-.spectrum-seg { display: flex; align-items: center; justify-content: center; color: #fff; font-size: .74rem; font-weight: 650; min-width: 0; }
+.spectrum-seg { display: flex; align-items: center; justify-content: center; color: #fff; font-size: .74rem; font-weight: 650; min-width: 0; overflow: hidden; white-space: nowrap; }
+
+/* Metric-explainer tooltips: a dotted underline marks titles that answer
+   "what does this measure?" on hover (native title attribute). */
+.has-help {
+  cursor: help;
+  text-decoration: underline dotted color-mix(in srgb, var(--text-muted) 55%, transparent);
+  text-underline-offset: 3px;
+}
+
+/* Live panel resolved to nothing: an honest note instead of a blank frame. */
+.live-empty {
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  min-height: 120px; padding: 1rem; color: var(--text-muted); font-size: .82rem;
+  border: 1px dashed var(--border); border-radius: 10px;
+}
 .spectrum-legend { display: flex; gap: 1rem; margin-top: .7rem; flex-wrap: wrap; }
 .leg { display: flex; align-items: center; gap: .4rem; font-size: .76rem; color: var(--text-secondary); }
 .leg .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }

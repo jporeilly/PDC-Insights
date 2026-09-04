@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getJSON, postJSON } from '../api.js'
 import {
-  DASHBOARDS, SECTION_META, KPI_QUERY, TRUST_BANDS, resolverKind,
+  DASHBOARDS, SECTION_META, KPI_QUERY, TRUST_BANDS, SENS_COLOR, METRIC_HELP, resolverKind,
 } from '../data/dashboards.jsx'
 import {
   Donut, Bars, Stacked, Line, Spark, Gauge, Radar, Histo, Bullet, Calendar,
-  Spectrum, MiniTable,
+  Spectrum, MiniTable, C, bandColor,
 } from '../components/charts.jsx'
 import Markdown from '../components/Markdown.jsx'
 
@@ -20,24 +20,83 @@ const loadScope = (section) => {
   try { return sessionStorage.getItem(scopeKey(section)) || 'all' } catch { return 'all' }
 }
 
+/* Semantic colours for label-keyed live series. Sensitivity follows the
+   house rule (High red / Medium orange / Low blue); status-like labels
+   colour by outcome; anything unmapped falls through to the categorical
+   cycle so live charts don't render as a single blue block. */
+const LABEL_COLOR = {
+  high: SENS_COLOR.High, medium: SENS_COLOR.Medium, low: SENS_COLOR.Low,
+  untrusted: 'var(--low)', trusted: 'var(--mid)', 'highly trusted': 'var(--high)',
+  completed: 'var(--high)', pending: 'var(--mid)', skipped: 'var(--mid)', failed: 'var(--low)',
+  verified: 'var(--high)', partial: 'var(--mid)', unverified: 'var(--low)',
+  owned: 'var(--high)', unowned: 'var(--low)',
+  other: '#7b8794',
+}
+const labelColor = (l) => LABEL_COLOR[String(l || '').toLowerCase()]
+
+/* Queries whose values are 0–100 scores: the bars get a 100 ceiling and
+   red/amber/green banding. Everything else keeps its natural scale
+   (counts forced onto a 100-max axis overflowed the frame in live mode). */
+const isScoreQuery = (q) => ['quality_by_source', 'term_coverage', 'policy_coverage',
+  'worst_tables', 'dq_dimensions'].includes(q) || String(q || '').startsWith('dq_')
+
 /* Convert resolver output -> the props each chart renderer expects, so the
-   live overlay and the baked render share the same components. */
-function LiveChart({ chart, data, onRow }) {
+   live overlay and the baked render share the same components. srcColor keys
+   every data-source name to one stable colour, so "Operations" is the same
+   colour on every chart of the page. */
+function LiveChart({ chart, q, data, onRow, srcColor = {} }) {
   const series = data.series || []
-  const asKV = () => series.map((s) => ({ k: s.label, v: s.value }))
+  const keyColor = (label) => srcColor[label] || labelColor(label)
+  const asKV = () => series.map((s, i) => ({ k: s.label, v: s.value, c: keyColor(s.label) || C[i % C.length] }))
+
+  // An empty live result renders as an honest note, not a blank frame:
+  // tables say the queue is clear, charts say the catalog has no such data.
+  const blank = !series.length && !(data.groups || []).length
+  if (chart === 'table' && !(data.rows || []).length) {
+    return <div className="live-empty">Nothing to list — no assets in this catalog match this panel right now.</div>
+  }
+  if (blank && (['line', 'radar'].includes(chart)
+      || (['donut', 'bars', 'stacked', 'histo', 'bullet', 'gauge'].includes(chart)
+          && data.value == null))) {
+    return <div className="live-empty">No live data — this catalog doesn’t record this metric yet.</div>
+  }
+
   switch (chart) {
-    case 'spectrum':
-      return <Spectrum seg={series.map((s) => ({ k: s.label, v: s.value, r: TRUST_BANDS[s.label] || '' }))} />
+    case 'spectrum': {
+      const seg = series.map((s) => ({ k: s.label, v: s.value, r: TRUST_BANDS[s.label] || '' }))
+      const scored = series.reduce((a, s) => a + s.value, 0)
+      if (data.assets != null && data.assets > scored) {
+        // Trust is computed per dataset (tables/files) — most assets carry
+        // no score at all. Show them, or the bar overstates the estate.
+        seg.push({ k: 'No score', v: data.assets - scored, r: 'not yet calculated', c: '#7b8794' })
+      }
+      return <Spectrum seg={seg} />
+    }
     case 'donut': return <Donut data={asKV()} />
-    case 'bars': return <Bars data={asKV()} h={170} max={100} />
+    case 'bars': {
+      const score = isScoreQuery(q)
+      // A bars panel on a multi-series query (e.g. "PII by source" over
+      // sensitive_by_source) gets groups, not series: total per category.
+      const flat = !series.length && data.groups
+        ? (data.categories || []).map((cat, i) => ({
+            label: cat, value: (data.groups || []).reduce((a, g) => a + (g.values[i] || 0), 0),
+          }))
+        : series
+      const rows = flat.map((s, i) => ({
+        k: s.label, v: s.value,
+        c: keyColor(s.label) || (score ? bandColor(s.value) : C[i % C.length]),
+      }))
+      return <Bars data={rows} h={170} max={score ? 100 : undefined} />
+    }
     case 'line': return <Line series={series.map((s) => s.value)} />
     case 'stacked': {
       const cats = data.categories || []; const groups = data.groups || []
       const rows = cats.map((c, i) => {
         const o = { k: c }; groups.forEach((g) => { o[g.name] = g.values[i] || 0 }); return o
       })
+      const fallback = ['var(--c1)', 'var(--c2)', 'var(--c6)', 'var(--c4)']
       return <Stacked data={rows} keys={groups.map((g) => g.name)}
-                      colors={['var(--high)', 'var(--mid)', 'var(--low)', 'var(--c2)']} />
+                      colors={groups.map((g, j) => labelColor(g.name) || fallback[j % fallback.length])} />
     }
     case 'gauge': return <Gauge val={Math.round(data.value || 0)} />
     case 'radar': return <Radar axes={asKV()} />
@@ -65,15 +124,21 @@ function BakedChart({ p, onRow }) {
   }
 }
 
-function KpiTile({ p, liveVal }) {
+function KpiTile({ p, liveVal, isLive }) {
   const arrow = p.dir === 'up' ? '▲' : p.dir === 'down' ? '▼' : ''
+  const help = METRIC_HELP[KPI_QUERY[p.label]]
+  // Baked delta captions describe the SAMPLE story — beside a real live
+  // value they'd claim trends the catalog never reported.
+  const showDelta = !(isLive && liveVal != null)
   return (
-    <div className="panel-card">
+    <div className="panel-card" title={help}>
       <div className="kpi-top">
         <div>
-          <div className="kpi-label">{p.label}</div>
+          <div className={`kpi-label${help ? ' has-help' : ''}`}>{p.label}</div>
           <div className="kpi-val">{liveVal ?? p.val}</div>
-          <div className={`kpi-delta ${p.dir}`}>{arrow} {p.delta}</div>
+          <div className={`kpi-delta ${p.dir}`}>
+            {showDelta ? `${arrow} ${p.delta}` : liveVal === '—' ? 'not tracked by this catalog' : 'live value'}
+          </div>
         </div>
         <div className="kpi-ico" style={{ background: p.tint, color: p.col }}>{p.ico}</div>
       </div>
@@ -188,6 +253,15 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
 
   const liveFor = (i) => live && live.panels && live.panels[`p${i}`]
 
+  /* One stable colour per connected source, shared by every chart on the
+     page — "Operations" is the same colour in the quality bars, the asset
+     donut, and everywhere else. */
+  const srcColor = useMemo(() => {
+    const m = {}
+    sources.forEach((n, i) => { m[n] = C[i % C.length] })
+    return m
+  }, [sources])
+
   const openDrill = useCallback((query, label) => {
     const demo = scope === DEMO_SCOPE
     const source = demo ? 'all' : scope
@@ -295,7 +369,7 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
 
       <div className="print-head">
         <span className="pt">{dash.name}</span>
-        <span className="pm">{meta.name} · {brand.name || 'Catalog Insights'} · generated {new Date().toISOString().slice(0, 10)}</span>
+        <span className="pm">{meta.name} · {brand.name || 'PDC Insights'} · generated {new Date().toISOString().slice(0, 10)}</span>
       </div>
 
       <div className="dash-tabs">
@@ -328,23 +402,41 @@ export default function DashboardsPage({ section, brand, onOpenSettings }) {
         {dash.panels.map((p, i) => {
           if (p.kind === 'kpi') {
             const data = liveFor(i)
-            const liveVal = data && data.value != null ? fmtNum(data.value) + (data.unit || '') : null
-            return <KpiTile key={i} p={p} liveVal={liveVal} />
+            // A resolved-but-null value means "this catalog can't say" — show
+            // an explicit unknown rather than falling back to sample numbers.
+            const liveVal = data
+              ? (data.value != null ? fmtNum(data.value) + (data.unit || '') : '—')
+              : null
+            return <KpiTile key={i} p={p} liveVal={liveVal} isLive={!!(live && !live.demo)} />
           }
           const data = liveFor(i)
           const clickable = !!p.q
           const onRow = p.chart === 'table' && p.q ? (r) => openDrill(p.q, r[0]?.toString?.() ?? null) : undefined
+          // Resolved data replaces the baked sub-header too: a live spectrum
+          // must state its real basis — PDC scores trust per dataset
+          // (table/file), so "13 of 29 datasets scored", never the sample
+          // text ("8,214 scored assets") shipped with the baked render.
+          const sub = data && p.chart === 'spectrum' && data.scored != null
+            ? (data.assets != null
+                ? `${fmtNum(data.scored)} of ${fmtNum(data.assets)} ${data.basis === 'datasets' ? 'datasets' : 'assets'} scored`
+                : `${fmtNum(data.scored)} scored`)
+            : p.sub
+          // Baked chips carry sample counts ("12 need attention"); a live
+          // table states its own truth.
+          const chip = data && p.chart === 'table' && !live?.demo
+            ? ((data.rows || []).length ? `${(data.rows || []).length} listed` : 'all clear')
+            : p.chip
           return (
             <div key={i}
                  className={`panel-card s${p.span || 2}${clickable ? ' clickable' : ''}`}
                  onClick={clickable && p.chart !== 'table' ? () => openDrill(p.q, null) : undefined}>
               <div className="card-h">
-                <h3>{p.title}</h3>
-                {p.sub ? <span className="sub">{p.sub}</span> : p.chip ? <span className="chip-tag">{p.chip}</span> : null}
+                <h3 title={METRIC_HELP[p.q]} className={METRIC_HELP[p.q] ? 'has-help' : undefined}>{p.title}</h3>
+                {sub ? <span className="sub">{sub}</span> : chip ? <span className="chip-tag">{chip}</span> : null}
               </div>
               <div className="pbody">
                 {data
-                  ? <LiveChart chart={p.chart} data={data} onRow={onRow} />
+                  ? <LiveChart chart={p.chart} q={p.q} data={data} onRow={onRow} srcColor={srcColor} />
                   : <BakedChart p={p} onRow={onRow} />}
               </div>
             </div>

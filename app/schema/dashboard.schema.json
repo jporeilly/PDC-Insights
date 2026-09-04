@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://pentaho.space/schemas/dashboard.schema.json",
-  "title": "Catalog Insights Dashboard Spec",
+  "title": "PDC Insights Dashboard Spec",
   "description": "The single editable source of truth for a dashboard. Produced by the editor (Save spec) and by the LLM generator; consumed by the editor (Open file) and the CDF/CDE/CDA exporters.",
   "type": "object",
   "required": ["version", "title", "category", "panels"],

@@ -1,8 +1,8 @@
 {
   "name": "pdc-insights-desktop",
-  "version": "1.18.2",
+  "version": "1.19.2",
   "private": true,
-  "description": "Windows desktop shell for Catalog Insights (Pentaho Data Catalog)",
+  "description": "Windows desktop shell for PDC Insights (Pentaho Data Catalog)",
   "scripts": {
     "fetch:python": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fetch-python.ps1",
     "stage:app": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stage-app.ps1",

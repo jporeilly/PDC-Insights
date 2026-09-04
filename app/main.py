@@ -47,7 +47,7 @@ def _file_from(directory: Path, path: str) -> FileResponse:
 def create_app() -> FastAPI:
     logging.basicConfig(level=settings.log_level)
     app = FastAPI(
-        title="Catalog Insights",
+        title="PDC Insights",
         version=_app_version(),
         description=("AI-assisted reporting & dashboards for Pentaho Data Catalog. "
                      "Read-only against PDC; the only write is saving a dashboard "
