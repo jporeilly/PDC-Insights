@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.19.3 (2026-10-02) — links work in the desktop app
+
+- **Links that open a new tab did nothing in the installed app.** A link in
+  a rendered document or in a dashboard's explanation went nowhere: no
+  browser, no error. The desktop shell's opener plugin intercepts every click
+  on a link that opens a new tab and asks the shell to hand it to the system
+  browser, but the shell only granted that to its own start-up page — once
+  the window had moved on to the app at `http://127.0.0.1:<port>` the request
+  was refused, silently, after the click had already been cancelled. A second
+  capability (`desktop/src-tauri/capabilities/served-app.json`) now lets the
+  app's pages open web, mailto and tel links in the default handler, and
+  nothing else: the shell's own commands and the file opener still answer
+  only to the splash. Found in the OpenSight shell, confirmed on the installed
+  Policy Generator over the WebView2 debug port. The browser build was never
+  affected, and nothing in the app itself changed.
+
 ## 1.19.2 (2026-09-04) — honest live charts, semantic colour, metric tooltips
 
 - **One source per connection.** A PDC connection surfaces as several roots

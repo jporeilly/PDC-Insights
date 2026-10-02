@@ -1,6 +1,6 @@
 [package]
 name = "pdc-insights-desktop"
-version = "1.19.2"
+version = "1.19.3"
 description = "Desktop shell for Catalog Insights (Pentaho Data Catalog)"
 edition = "2021"
 rust-version = "1.77"
